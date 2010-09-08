@@ -1,3 +1,43 @@
-#!/bin/sh
+#!/usr/bin/perl
 
-exec git branch
+$| = 1;
+
+use strict;
+use warnings;
+
+my %judgement;
+{
+    open(my $fh, "-|", "git-judge-branches") || die "Cannot open 'git-judge-branches'";
+    while(my $line = <$fh>)
+    {
+        chomp $line;
+        if($line =~ /^(.*): (.*)$/)
+        {
+            my ($branch, $judgement) = ($1, $2);
+
+            $judgement{$branch} = $judgement;
+        }
+    }
+    close($fh) || die "Cannot close 'git-judge-branches'";
+}
+
+{
+    open(my $fh, "-|", "git", "branch", "-a") || die "Cannot open 'git branch -a'";
+    while(my $line = <$fh>)
+    {
+        chomp $line;
+
+        if($line =~ /^..(.*)$/)
+        {
+            my $name = $1;
+            my $judgement = $judgement{$name};
+            if($judgement ne "POSITIVE")
+            {
+                next;
+            }
+        }
+
+        print "$line\n";
+    }
+    close($fh) || die "Cannot close 'git branch -a'";
+}
