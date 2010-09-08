@@ -50,6 +50,7 @@ if($@)
         {
             next;
         }
+        $branch =~ s/ .*$//; # arggh, symbolics sometimes end up like this?
 
         my $judgement = $judger->($branch);
         print "$branch: $judgement\n";

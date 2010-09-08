@@ -27,7 +27,7 @@ my %judgement;
     {
         chomp $line;
 
-        if($line =~ /^..(.*)$/)
+        if($line =~ /^..([^ ]*)/)
         {
             my $name = $1;
             my $judgement = $judgement{$name};
