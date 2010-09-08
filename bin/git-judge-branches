@@ -33,22 +33,10 @@ if(-f $spec_file)
 
     close($fh) || die "Cannot close branch-types file: $!";
 }
-
-sub judge
+$judger = eval 'sub { local $_ = shift; ' . $judger . ' }';
+if($@)
 {
-    my $__MY__name = shift;
-    my $__MY__r;
-
-    {
-        local $_ = $__MY__name;
-        $__MY__r = eval $judger;
-    }
-    if($@)
-    {
-        $__MY__r = "ERROR";
-    }
-
-    return $__MY__r;
+    die "Could not compile judger: $@";
 }
 
 {
@@ -63,7 +51,7 @@ sub judge
             next;
         }
 
-        my $judgement = judge($branch);
+        my $judgement = $judger->($branch);
         print "$branch: $judgement\n";
     }
     close($fh) || die "Cannot open 'git branch -a'";
