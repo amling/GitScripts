@@ -31,7 +31,7 @@ my %judgement;
         {
             my $name = $1;
             my $judgement = $judgement{$name};
-            if($judgement ne "POSITIVE")
+            if(defined($judgement) && $judgement ne "POSITIVE")
             {
                 next;
             }
