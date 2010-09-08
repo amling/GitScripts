@@ -1,16 +1,32 @@
 #!/usr/bin/perl
 
+$| = 1;
+
+use strict;
+use warnings;
+
 my @args;
-
-open(my $fh, "-|", "git", "branch") || die;
-while(<$fh>)
 {
-    chomp;
-    s/^..//;
-    next if($_ eq "(no branch)");
+    open(my $fh, "-|", "git-judge-branches") || die;
+    while(my $line = <$fh>)
+    {
+        chomp $line;
 
-    push @args, $_;
+        if($line =~ /^(.*): (.*)$/)
+        {
+            my ($branch, $judgement) = ($1, $2);
+
+            if($judgement eq "POSITIVE")
+            {
+                push @args, $branch;
+            }
+            if($judgement eq "NEGATIVE")
+            {
+                push @args, "$branch..$branch";
+            }
+        }
+    }
+    close($fh) || die;
 }
-close($fh) || die;
 
 exec("gitk", @args, @ARGV);
