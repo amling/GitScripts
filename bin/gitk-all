@@ -7,7 +7,7 @@ use warnings;
 
 my @args;
 {
-    open(my $fh, "-|", "git-judge-branches") || die;
+    open(my $fh, "-|", "git-judge-branches", "gitk-all") || die "Cannot open 'git-judge-branches gitk-all'";
     while(my $line = <$fh>)
     {
         chomp $line;
@@ -16,17 +16,17 @@ my @args;
         {
             my ($branch, $judgement) = ($1, $2);
 
-            if($judgement eq "POSITIVE")
+            if($judgement eq "Y+")
             {
                 push @args, $branch;
             }
-            if($judgement eq "NEGATIVE")
+            if($judgement eq "Y-")
             {
                 push @args, "$branch..$branch";
             }
         }
     }
-    close($fh) || die;
+    close($fh) || die "Cannot close 'git-judge-branches gitk-all'";
 }
 
 exec("gitk", @args, @ARGV);

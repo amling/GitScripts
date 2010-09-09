@@ -7,7 +7,7 @@ use warnings;
 
 my %judgement;
 {
-    open(my $fh, "-|", "git-judge-branches") || die "Cannot open 'git-judge-branches'";
+    open(my $fh, "-|", "git-judge-branches", "list-branches") || die "Cannot open 'git-judge-branches list-branches'";
     while(my $line = <$fh>)
     {
         chomp $line;
@@ -18,7 +18,7 @@ my %judgement;
             $judgement{$branch} = $judgement;
         }
     }
-    close($fh) || die "Cannot close 'git-judge-branches'";
+    close($fh) || die "Cannot close 'git-judge-branches list-branches'";
 }
 
 {
@@ -31,7 +31,7 @@ my %judgement;
         {
             my $name = $1;
             my $judgement = $judgement{$name};
-            if(defined($judgement) && $judgement ne "POSITIVE")
+            if(defined($judgement) && $judgement eq "N")
             {
                 next;
             }

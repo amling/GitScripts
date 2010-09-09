@@ -7,7 +7,7 @@ use warnings;
 
 my %judgement;
 {
-    open(my $fh, "-|", "git-judge-branches") || die "Cannot open 'git-judge-branches'";
+    open(my $fh, "-|", "git-judge-branches", "gitk") || die "Cannot open 'git-judge-branches gitk'";
     while(my $line = <$fh>)
     {
         chomp $line;
@@ -18,7 +18,7 @@ my %judgement;
             $judgement{$branch} = $judgement;
         }
     }
-    close($fh) || die "Cannot close 'git-judge-branches'";
+    close($fh) || die "Cannot close 'git-judge-branches gitk'";
 }
 
 {
@@ -33,7 +33,7 @@ my %judgement;
             $name =~ s/^refs\/(heads\/)?//;
 
             my $judgement = $judgement{$name};
-            if(defined($judgement) && $judgement eq "HIDDEN")
+            if(defined($judgement) && $judgement eq "N")
             {
                 next;
             }

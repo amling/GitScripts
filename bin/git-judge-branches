@@ -8,6 +8,8 @@ use warnings;
 use Cwd ('abs_path');
 use File::Basename;
 
+my $type = shift || die "No type?";
+
 my $root = abs_path();
 while(1)
 {
@@ -22,7 +24,7 @@ while(1)
     $root = dirname($root);
 }
 
-my $judger = '"POSITIVE"';
+my $judger = '{}';
 my $spec_file = "$root/.git/branch-types";
 if(-f $spec_file)
 {
@@ -52,7 +54,12 @@ if($@)
         }
         $branch =~ s/ .*$//; # arggh, symbolics sometimes end up like this?
 
-        my $judgement = $judger->($branch);
+        my $judgement_hash = $judger->($branch);
+        my $judgement = "DEFAULT";
+        if(exists($judgement_hash->{$type}))
+        {
+            $judgement = $judgement_hash->{$type};
+        }
         print "$branch: $judgement\n";
     }
     close($fh) || die "Cannot open 'git branch -a'";
