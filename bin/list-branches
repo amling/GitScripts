@@ -31,6 +31,17 @@ my %judgement;
         {
             my $name = $1;
             my $judgement = $judgement{$name};
+            if($judgement eq "DEFAULT")
+            {
+                if($name =~ /^remotes\//)
+                {
+                    $judgement = "N";
+                }
+                else
+                {
+                    $judgement = "Y";
+                }
+            }
             if(defined($judgement) && $judgement eq "N")
             {
                 next;
