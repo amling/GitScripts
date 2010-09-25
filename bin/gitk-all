@@ -16,6 +16,17 @@ my @args;
         {
             my ($branch, $judgement) = ($1, $2);
 
+            if($judgement eq "DEFAULT")
+            {
+                if($branch =~ /^remotes\//)
+                {
+                    $judgement = "N";
+                }
+                else
+                {
+                    $judgement = "Y+";
+                }
+            }
             if($judgement eq "Y+")
             {
                 push @args, $branch;
