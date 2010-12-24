@@ -81,3 +81,5 @@ sub handler
 }
 
 Amling::GRD::Operation::add_operation(\&handler);
+
+1;

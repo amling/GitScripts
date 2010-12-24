@@ -29,7 +29,8 @@ sub parse
     return undef;
 }
 
-# TODO: actual commands
-#require Amling::GRD::Command::Push;
+# TODO: [more] actual commands
+require Amling::GRD::Command::Push;
+require Amling::GRD::Command::Pop;
 
 1;
