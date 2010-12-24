@@ -1,0 +1,159 @@
+#!/usr/bin/perl
+
+# Copyright (C) 2010   Keith Amling, keith.amling@gmail.com
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+$| = 1;
+
+use strict;
+use warnings;
+
+use Amling::GRD::Operation;
+use Amling::GRD::Parser;
+use Amling::GRD::Utils;
+use Amling::GRD::Exec::Context;
+use Getopt::Long;
+
+# TODO: no die's!  need to all call common bail() infrastructure so we can reset cleanly
+
+# TODO: triage old TODOs:
+
+# [OLD] TODO: if a branch fails to read during a run we should prompt for resolution (options are at least abort and skip)
+# [OLD] TODO: actually several failures (e.g.  any convert_commitlike) could probably stand for more graceful handling
+
+# [OLD] TODO: put branch comments in linear rebases indicating where branches were
+
+# [OLD] TODO: for correctness in the face of GC we need to checkpoint any commit we plan on using, probably with a branch like zzz-TS-rebase-checkpoint-SHA1, not sure about what's best for cleaning these guys up
+
+# [OLD] TODO: handle empty commits (if we get set up to do an empty commit it probably means the user wants a skip)
+
+# [OLD] TODO: real messages before each shell invocation indicating expected state and obvious options
+
+my $onto;
+
+my @options =
+(
+    "onto=s" => \$onto,
+    "help"   => sub { usage(0); },
+);
+
+GetOptions(@options) || usage(1);
+
+# needed since we use "<>" for STDIN very soon
+my @specs = @ARGV;
+@ARGV = ();
+
+Amling::GRD::Utils::run_shell(0, 0, 0);
+
+my @scripts;
+for my $spec (@specs)
+{
+    my ($ok, $onto1, $lines) = Amling::GRD::Operation::parse($spec);
+    if(!$ok)
+    {
+        die "Could not parse spec $spec";
+    }
+    if(!defined($onto1))
+    {
+        $onto1 = $onto;
+    }
+    if(!defined($onto1))
+    {
+        die "Spec $spec did not produce a target and --onto not specified";
+    }
+    if(!defined($onto))
+    {
+        $onto = $onto1;
+    }
+    else
+    {
+        if($onto ne $onto1)
+        {
+            die "Multiple targets specified: $onto, $onto1";
+        }
+    }
+    push @scripts, [$spec, $lines];
+}
+if(!defined($onto))
+{
+    print "No specs given?\n";
+    usage(1);
+}
+
+my $lines = [];
+if(@scripts == 1)
+{
+    push @$lines, @{$scripts[0]->[1]};
+}
+else
+{
+    for my $script (@scripts)
+    {
+        push @$lines, "" if(@$lines);
+        push @$lines, "# " . $script->[0];
+        push @$lines, "push";
+        push @$lines, map { "   $_" } @{$script->[1]};
+        push @$lines, "pop";
+    }
+}
+
+my @commands = @{Amling::GRD::Parser::edit_loop(@$lines)};
+
+my $ctx = Amling::GRD::Exec::Context->new();
+
+# TODO: probably save old HEAD?
+Amling::GRD::Utils::run("git", "checkout", $onto) || die "Cannot checkout $onto";
+
+my $ct = scalar(@commands);
+my $n = 1;
+for my $command (@commands)
+{
+    print "Interpretting ($n/$ct): " . $command->str() . "\n";
+    ++$n;
+
+    $command->execute($ctx);
+}
+
+# TODO: do something with the results
+# TODO: put HEAD somewhere
+
+print "Done.\n";
+my $grd_level = $ENV{'GRD_LEVEL'};
+if($grd_level)
+{
+    print "Still inside GRD!\n";
+    print "GRD level: " . $grd_level . "\n";
+}
+
+sub usage
+{
+    my $ec = shift;
+
+    print <<EOF;
+Usage: $0 <options> <operations>
+   --onto <commitlike>                Use this as the destination to rebase onto.
+   --help                             Print this help.
+EOF
+
+# TODO: help on operations!
+# TODO: triage good options
+#   -d | --dst | --destination <dir>   Build the bin here.
+#   -f | --force                       Unlink pre-existing collisions in destination.
+#   -n | --dry-run                     Dry run, only decide what would happen, do not do it.
+#   -q | --quiet                       Print nothing unless there is a problem.
+#   -v | --verbose                     Be verbose.
+
+    exit $ec;
+}
