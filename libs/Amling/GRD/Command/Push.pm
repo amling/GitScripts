@@ -24,7 +24,7 @@ sub execute_simple
     my $self = shift;
     my $ctx = shift;
 
-    $ctx->pushc(Amling::GRD::Utils::convert_commitlike('HEAD'));
+    push @{$ctx->get('commit-stack', [])}, Amling::GRD::Utils::convert_commitlike('HEAD');
 }
 
 Amling::GRD::Command::add_command(sub { return __PACKAGE__->handler(@_) });

@@ -24,7 +24,7 @@ sub execute_simple
     my $self = shift;
     my $ctx = shift;
 
-    $ctx->set_dhead(Amling::GRD::Utils::convert_commitlike("HEAD"));
+    $ctx->set('head', [0, Amling::GRD::Utils::convert_commitlike("HEAD")]);
 }
 
 Amling::GRD::Command::add_command(sub { return __PACKAGE__->handler(@_) });

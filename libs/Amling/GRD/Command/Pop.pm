@@ -24,7 +24,12 @@ sub execute_simple
     my $self = shift;
     my $ctx = shift;
 
-    my $commit = $ctx->popc();
+    my $commit = pop @{$ctx->get('commit-stack', [])};
+    if(!defined($commit))
+    {
+        die "Empty commit stack popped";
+    }
+
     Amling::GRD::Utils::run("git", "checkout", $commit) || die "Cannot checkout $commit";
 }
 

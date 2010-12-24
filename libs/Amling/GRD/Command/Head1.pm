@@ -25,8 +25,8 @@ sub execute_simple
     my $ctx = shift;
     my $branch = shift;
 
-    $ctx->set_branch($branch, Amling::GRD::Utils::convert_commitlike('HEAD'));
-    $ctx->set_head($branch);
+    $ctx->get('branches', {})->{$branch} = Amling::GRD::Utils::convert_commitlike('HEAD');
+    $ctx->set('head', [1, $branch]);
 }
 
 Amling::GRD::Command::add_command(sub { return __PACKAGE__->handler(@_) });
