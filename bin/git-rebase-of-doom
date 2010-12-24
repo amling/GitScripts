@@ -30,6 +30,10 @@ use Getopt::Long;
 # TODO: several failures (e.g.  any convert_commitlike) could probably stand for more graceful handling
 # TODO: correctness in the face of GC?  you'd have to run GRD longer than the cleanup period which is pretty big
 # TODO: audit messages before each shell invocation indicating expected state and obvious options
+# TODO: help on operations
+# TODO: help on commands
+# TODO: verbosity levels(?)
+# TODO: dry run?
 
 my $onto;
 
@@ -105,6 +109,11 @@ else
 }
 
 my @commands = @{Amling::GRD::Parser::edit_loop(@$lines)};
+unless(@commands)
+{
+    print "Nothing to do.\n";
+    exit 0;
+}
 
 my $ctx = Amling::GRD::Exec::Context->new();
 
@@ -140,15 +149,6 @@ Usage: $0 <options> <operations>
    --onto <commitlike>                Use this as the destination to rebase onto.
    --help                             Print this help.
 EOF
-
-# TODO: help on operations!
-# TODO: help on commands!
-# TODO: triage good options
-#   -d | --dst | --destination <dir>   Build the bin here.
-#   -f | --force                       Unlink pre-existing collisions in destination.
-#   -n | --dry-run                     Dry run, only decide what would happen, do not do it.
-#   -q | --quiet                       Print nothing unless there is a problem.
-#   -v | --verbose                     Be verbose.
 
     exit $ec;
 }
