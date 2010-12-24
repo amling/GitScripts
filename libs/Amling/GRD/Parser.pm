@@ -3,6 +3,7 @@ package Amling::GRD::Parser;
 use strict;
 use warnings;
 
+use Amling::GRD::Command;
 use File::Temp ('tempfile');
 
 sub edit_loop
@@ -63,7 +64,7 @@ sub edit_loop
     }
 }
 
-sub parse_commands
+sub parse
 {
     my @lines = @_;
 

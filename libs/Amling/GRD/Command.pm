@@ -18,11 +18,11 @@ sub parse
 
     for my $handler (@handlers)
     {
-        my @ret = $handler->($s);
+        my $ret = $handler->($s);
 
-        if(@ret)
+        if(defined($ret))
         {
-            return @ret;
+            return $ret;
         }
     }
 

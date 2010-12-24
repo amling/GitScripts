@@ -22,15 +22,14 @@ sub parse
 
         if(@ret)
         {
-            return @ret;
+            return (1, @ret);
         }
     }
 
-    return undef;
+    return (0);
 }
 
-# TODO: actual operations
-#require Amling::GRD::Operation::Tree;
-#require Amling::GRD::Operation::Linear;
+# TODO: require Amling::GRD::Operation::Tree;
+require Amling::GRD::Operation::Linear;
 
 1;

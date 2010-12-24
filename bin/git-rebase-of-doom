@@ -55,33 +55,36 @@ GetOptions(@options) || usage(1);
 my @specs = @ARGV;
 @ARGV = ();
 
-Amling::GRD::Utils::run_shell(0, 0, 0);
+if(defined($onto))
+{
+    $onto = Amling::GRD::Utils::convert_commitlike($onto);
+}
 
 my @scripts;
 for my $spec (@specs)
 {
-    my ($ok, $onto1, $lines) = Amling::GRD::Operation::parse($spec);
+    my ($ok, $base, $lines) = Amling::GRD::Operation::parse($spec);
     if(!$ok)
     {
-        die "Could not parse spec $spec";
+        die "Could not parse operation $spec";
     }
-    if(!defined($onto1))
+    if(!defined($base))
     {
-        $onto1 = $onto;
+        $base = $onto;
     }
-    if(!defined($onto1))
+    if(!defined($base))
     {
         die "Spec $spec did not produce a target and --onto not specified";
     }
     if(!defined($onto))
     {
-        $onto = $onto1;
+        $onto = $base;
     }
     else
     {
-        if($onto ne $onto1)
+        if($onto ne $base)
         {
-            die "Multiple targets specified: $onto, $onto1";
+            die "Multiple targets specified: $onto, $base";
         }
     }
     push @scripts, [$spec, $lines];
@@ -91,6 +94,8 @@ if(!defined($onto))
     print "No specs given?\n";
     usage(1);
 }
+
+Amling::GRD::Utils::run_shell(0, 0, 0);
 
 my $lines = [];
 if(@scripts == 1)
