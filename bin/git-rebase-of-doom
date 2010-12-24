@@ -27,19 +27,11 @@ use Amling::GRD::Exec::Context;
 use Getopt::Long;
 
 # TODO: no die's!  need to all call common bail() infrastructure so we can reset cleanly
-
-# TODO: triage old TODOs:
-
-# [OLD] TODO: if a branch fails to read during a run we should prompt for resolution (options are at least abort and skip)
-# [OLD] TODO: actually several failures (e.g.  any convert_commitlike) could probably stand for more graceful handling
-
-# [OLD] TODO: put branch comments in linear rebases indicating where branches were
-
-# [OLD] TODO: for correctness in the face of GC we need to checkpoint any commit we plan on using, probably with a branch like zzz-TS-rebase-checkpoint-SHA1, not sure about what's best for cleaning these guys up
+# TODO: several failures (e.g.  any convert_commitlike) could probably stand for more graceful handling
+# TODO: correctness in the face of GC?  you'd have to run GRD longer than the cleanup period which is pretty big
+# TODO: audit messages before each shell invocation indicating expected state and obvious options
 
 # [OLD] TODO: handle empty commits (if we get set up to do an empty commit it probably means the user wants a skip)
-
-# [OLD] TODO: real messages before each shell invocation indicating expected state and obvious options
 
 my $onto;
 
@@ -118,7 +110,6 @@ my @commands = @{Amling::GRD::Parser::edit_loop(@$lines)};
 
 my $ctx = Amling::GRD::Exec::Context->new();
 
-# TODO: probably save old HEAD?
 Amling::GRD::Utils::run("git", "checkout", $onto) || die "Cannot checkout $onto";
 
 my $ct = scalar(@commands);
@@ -131,8 +122,8 @@ for my $command (@commands)
     $command->execute($ctx);
 }
 
-# TODO: do something with the results
-# TODO: put HEAD somewhere
+# TODO: do something with the results (including placing HEAD somewhere)
+# TODO: if nowhere for HEAD, then where?  maybe where it started?
 
 print "Done.\n";
 my $grd_level = $ENV{'GRD_LEVEL'};

@@ -5,6 +5,9 @@ use warnings;
 
 use Amling::GRD::Utils;
 
+# TODO: extract "pick" command formatting, will be needed elsewhere
+# TODO: put branch comments in linear rebases indicating where branches were
+
 sub handler
 {
     my $s = shift;
