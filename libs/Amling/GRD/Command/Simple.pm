@@ -54,7 +54,14 @@ sub str
 {
     my $self = shift;
 
-    return join(" ", $self->name(), @{$self->{'args'}});
+    return $self->str_simple(@{$self->{'args'}});
+}
+
+sub str_simple
+{
+    my $self = shift;
+
+    return join(" ", $self->name(), @_);
 }
 
 1;

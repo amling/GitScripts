@@ -39,6 +39,5 @@ require Amling::GRD::Command::Pop;
 require Amling::GRD::Command::Push;
 require Amling::GRD::Command::Splatter;
 # TODO: fracture, split commit by path
-# TODO: reword
 
 1;
