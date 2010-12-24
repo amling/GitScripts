@@ -31,8 +31,6 @@ use Getopt::Long;
 # TODO: correctness in the face of GC?  you'd have to run GRD longer than the cleanup period which is pretty big
 # TODO: audit messages before each shell invocation indicating expected state and obvious options
 
-# [OLD] TODO: handle empty commits (if we get set up to do an empty commit it probably means the user wants a skip)
-
 my $onto;
 
 my @options =

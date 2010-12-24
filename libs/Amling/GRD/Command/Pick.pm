@@ -42,6 +42,7 @@ sub execute_simple
         Amling::GRD::Utils::run_shell(1, 1, 0);
         print "Continuing...\n";
 
+        # TODO: handle empty commits (if we get set up to do an empty commit it probably means the user wants a skip)
         Amling::GRD::Utils::run("git", "commit", "-c", $commit);
     }
 }
