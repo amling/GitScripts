@@ -29,7 +29,7 @@ sub parse
     return (0);
 }
 
-# TODO: require Amling::GRD::Operation::Tree;
 require Amling::GRD::Operation::Linear;
+require Amling::GRD::Operation::Tree;
 
 1;
