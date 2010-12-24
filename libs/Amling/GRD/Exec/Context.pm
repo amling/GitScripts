@@ -11,6 +11,7 @@ sub new
     {
         'stack'        => [],
         'set_branches' => {},
+        'head'         => undef,
     };
 
     bless $self, $class;
@@ -44,6 +45,20 @@ sub popc
     my ($self, $commit) = @_;
 
     return ((pop @{$self->{'stack'}}) || die "Empty stack popped?!");
+}
+
+sub set_dhead
+{
+    my ($self, $commit) = @_;
+
+    $self->{'head'} = [0, $commit];
+}
+
+sub set_head
+{
+    my ($self, $branch) = @_;
+
+    $self->{'head'} = [1, $branch];
 }
 
 1;
