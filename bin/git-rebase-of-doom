@@ -148,6 +148,7 @@ Usage: $0 <options> <operations>
 EOF
 
 # TODO: help on operations!
+# TODO: help on commands!
 # TODO: triage good options
 #   -d | --dst | --destination <dir>   Build the bin here.
 #   -f | --force                       Unlink pre-existing collisions in destination.
