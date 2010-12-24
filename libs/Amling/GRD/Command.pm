@@ -29,10 +29,14 @@ sub parse
     return undef;
 }
 
-# TODO: [more] actual commands
 require Amling::GRD::Command::Edit;
 require Amling::GRD::Command::Pick;
 require Amling::GRD::Command::Pop;
 require Amling::GRD::Command::Push;
+# TODO: branch
+# TODO: head
+# TODO: squash
+# TODO: fracture
+# TODO: reword
 
 1;
