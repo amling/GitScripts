@@ -5,9 +5,6 @@ use warnings;
 
 use Amling::GRD::Utils;
 
-# TODO: extract "pick" command formatting, will be needed elsewhere
-# TODO: put branch comments in linear rebases indicating where branches were
-
 sub handler
 {
     my $s = shift;
@@ -48,6 +45,27 @@ sub handler
         $branch = "HEAD";
     }
 
+    my %rshowref;
+    {
+        open(my $fh, '-|', 'git', 'show-ref') || die "Cannot open git show-ref: $!";
+        while(my $line = <$fh>)
+        {
+            if($line =~ /^([0-9a-f]{40}) (.*)$/)
+            {
+                my ($commit, $ref) = ($1, $2);
+                if($ref =~ /^refs\/heads\/(.*)$/)
+                {
+                    $rshowref{$commit}->{$1} = 1;
+                }
+            }
+            else
+            {
+                die "Bad line: $line";
+            }
+        }
+        close($fh) || die "Cannot close git show-ref: $!";
+    }
+
     my @lines;
     {
         open(my $fh, '-|', 'git', 'log', "$base..$branch", '--pretty=format:%H:%s') || die "Cannot open top git log: $!";
@@ -56,7 +74,16 @@ sub handler
             chomp $line;
             if($line =~ /^([0-9a-f]{40}):(.*)$/)
             {
-                unshift @lines, "pick $1 # $2";
+                my ($commit, $msg) = ($1, $2);
+                unshift @lines, "pick $commit # $msg";
+                for my $cbranch (sort(keys(%{$rshowref{$commit} || {}})))
+                {
+                    if(defined($place_branch) && $place_branch eq $cbranch)
+                    {
+                        next;
+                    }
+                    unshift @lines, "# branch $cbranch";
+                }
             }
             else
             {
