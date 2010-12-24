@@ -5,7 +5,7 @@ use warnings;
 
 sub new
 {
-    my ($class) = @_;
+    my $class = shift;
 
     my $self =
     {
@@ -21,42 +21,48 @@ sub new
 
 sub set_branch
 {
-    my ($self, $branch, $commit) = @_;
+    my $self = shift;
+    my $branch = shift;
+    my $commit = shift;
 
     $self->{'set_branches'}->{$branch} = $commit;
 }
 
 sub get_branches
 {
-    my ($self) = @_;
+    my $self = shift;
 
     return $self->{'set_branches'};
 }
 
 sub pushc
 {
-    my ($self, $commit) = @_;
+    my $self = shift;
+    my $commit = shift;
 
     push @{$self->{'stack'}}, $commit;
 }
 
 sub popc
 {
-    my ($self, $commit) = @_;
+    my $self = shift;
+    my $commit = shift;
 
     return ((pop @{$self->{'stack'}}) || die "Empty stack popped?!");
 }
 
 sub set_dhead
 {
-    my ($self, $commit) = @_;
+    my $self = shift;
+    my $commit = shift;
 
     $self->{'head'} = [0, $commit];
 }
 
 sub set_head
 {
-    my ($self, $branch) = @_;
+    my $self = shift;
+    my $branch = shift;
 
     $self->{'head'} = [1, $branch];
 }

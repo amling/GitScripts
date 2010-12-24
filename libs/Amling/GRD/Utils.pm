@@ -5,7 +5,7 @@ use warnings;
 
 sub convert_commitlike
 {
-    my ($commitlike) = @_;
+    my $commitlike = shift;
 
     open(my $fh, '-|', 'git', 'log', '-1', $commitlike, '--pretty=format:%H') || die "Cannot open log $commitlike: $!";
     my $commit = <$fh> || die "Could not read head commit for $commitlike";

@@ -7,14 +7,14 @@ my @handlers;
 
 sub add_command
 {
-    my ($pfn) = @_;
+    my $pfn = shift;
 
     push @handlers, $pfn;
 }
 
 sub parse
 {
-    my ($s) = @_;
+    my $s = shift;
 
     for my $handler (@handlers)
     {
