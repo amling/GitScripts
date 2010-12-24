@@ -30,7 +30,8 @@ sub parse
 }
 
 # TODO: [more] actual commands
-require Amling::GRD::Command::Push;
+require Amling::GRD::Command::Pick;
 require Amling::GRD::Command::Pop;
+require Amling::GRD::Command::Push;
 
 1;
