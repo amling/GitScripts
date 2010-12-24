@@ -1,4 +1,4 @@
-package Amling::GRD::Command::Head1;
+package Amling::GRD::Command::BranchHead;
 
 use strict;
 use warnings;

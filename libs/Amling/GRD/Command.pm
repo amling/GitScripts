@@ -30,10 +30,10 @@ sub parse
 }
 
 require Amling::GRD::Command::Branch;
+require Amling::GRD::Command::BranchHead;
+require Amling::GRD::Command::DetachedHead;
 require Amling::GRD::Command::Edit;
 require Amling::GRD::Command::FSplatter;
-require Amling::GRD::Command::Head0;
-require Amling::GRD::Command::Head1;
 require Amling::GRD::Command::Pick;
 require Amling::GRD::Command::Pop;
 require Amling::GRD::Command::Push;
