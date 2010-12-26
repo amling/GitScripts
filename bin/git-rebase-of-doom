@@ -133,7 +133,9 @@ for my $command (@commands)
     my $branches = $ctx->get('branches', {});
     for my $branch (sort(keys(%$branches)))
     {
-        print "Would commit: $branch => " . $branches->{$branch} . "\n";
+        print "Updating: $branch => " . $branches->{$branch} . "\n";
+        # TODO: better reason
+        Amling::GRD::Utils::run("git", "update-ref", "-m", "GRD", "refs/heads/$branch", $branches->{$branch}) || die "Cannot update $branch";
     }
 }
 
