@@ -133,6 +133,7 @@ for my $command (@commands)
     my $branches = $ctx->get('branches', {});
     for my $branch (sort(keys(%$branches)))
     {
+        # TODO: backup option...
         print "Updating: $branch => " . $branches->{$branch} . "\n";
         # TODO: better reason
         Amling::GRD::Utils::run("git", "update-ref", "-m", "GRD", "refs/heads/$branch", $branches->{$branch}) || die "Cannot update $branch";
