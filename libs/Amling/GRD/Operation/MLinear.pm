@@ -9,9 +9,31 @@ use Amling::GRD::Utils;
 our $PREFIX = "INTERNAL";
 
 # TODO: some way to do multiple together, ala Tree (but probably just take a list of branches and drag them all over together)
+
 # TODO: think hard about whether or not peephole optimization will clean up this mess
+
 # TODO: peephole optimizers need to understand comment branch comments (I think this only blocks load/save pair which is useless anyway)
 # TODO: peephole optimization for load/save pair (alias, ugh, this is only for 1-parent merge, fuck it)
+# Ugh, consider:
+#
+# ...
+# save alias1
+# ...
+# load alias1
+# <implicit merge of single useful branch>
+# # branch xxx
+# save alias2
+# ...
+# load alias1
+# ...
+# load alias2
+# ...
+# load alias2
+# ...
+#
+# The xxx branch comment should probably get moved to above save alias1?  But
+# that looks funny and we probably shouldn't rename alias1 due to use
+# elsewhere...  Thankfully I think this is only screwed up in 1-parent merges.
 
 sub handler
 {
