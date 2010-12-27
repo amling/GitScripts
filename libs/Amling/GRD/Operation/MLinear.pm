@@ -8,6 +8,7 @@ use Amling::GRD::Utils;
 # TODO: configurable or scoped better (in particular multiple mlinears will probably end up sad)
 our $PREFIX = "INTERNAL";
 
+# TODO: some way to do multiple together, ala Tree (but probably just take a list of branches and drag them all over together)
 # TODO: think hard about whether or not peephole optimization will clean up this mess
 # TODO: peephole optimizers need to understand comment branch comments (I think this only blocks load/save pair which is useless anyway)
 # TODO: peephole optimization for load/save pair (alias, ugh, this is only for 1-parent merge, fuck it)
