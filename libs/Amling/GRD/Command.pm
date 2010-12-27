@@ -35,6 +35,7 @@ require Amling::GRD::Command::DetachedHead;
 require Amling::GRD::Command::Edit;
 require Amling::GRD::Command::FSplatter;
 require Amling::GRD::Command::Load;
+require Amling::GRD::Command::Merge;
 require Amling::GRD::Command::Pick;
 require Amling::GRD::Command::Pop;
 require Amling::GRD::Command::Push;
