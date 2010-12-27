@@ -5,6 +5,8 @@ use warnings;
 
 use Amling::GRD::Utils;
 
+# TODO: kill this in favor of MLinear?
+
 sub handler
 {
     my $s = shift;

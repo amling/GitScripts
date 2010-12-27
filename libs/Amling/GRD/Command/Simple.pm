@@ -14,7 +14,12 @@ sub handler
 
     my @s = split(/ /, $s);
 
-    if(@s != 1 + $class->args())
+    if(defined($class->min_args()) && @s < 1 + $class->min_args())
+    {
+        return undef;
+    }
+
+    if(defined($class->max_args()) && @s > 1 + $class->max_args())
     {
         return undef;
     }
@@ -62,6 +67,20 @@ sub str_simple
     my $self = shift;
 
     return join(" ", $self->name(), @_);
+}
+
+sub min_args
+{
+    my $class = shift;
+
+    return $class->args();
+}
+
+sub max_args
+{
+    my $class = shift;
+
+    return $class->args();
 }
 
 1;

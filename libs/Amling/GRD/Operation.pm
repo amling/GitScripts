@@ -30,6 +30,7 @@ sub parse
 }
 
 require Amling::GRD::Operation::Linear;
+require Amling::GRD::Operation::MLinear;
 require Amling::GRD::Operation::Tree;
 
 1;
