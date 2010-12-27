@@ -52,17 +52,18 @@ sub execute_simple
     {
         print "Fast-forward cherry-picking $commit...\n";
         Amling::GRD::Utils::run("git", "reset", "--hard", $commit);
-        return;
     }
-
-    if(!Amling::GRD::Utils::run("git", "cherry-pick", $commit))
+    else
     {
-        print "git cherry-pick of $commit blew chunks, please clean it up (get correct version into index)...\n";
-        Amling::GRD::Utils::run_shell(1, 1, 0);
-        print "Continuing...\n";
+        if(!Amling::GRD::Utils::run("git", "cherry-pick", $commit))
+        {
+            print "git cherry-pick of $commit blew chunks, please clean it up (get correct version into index)...\n";
+            Amling::GRD::Utils::run_shell(1, 1, 0);
+            print "Continuing...\n";
 
-        # TODO: handle empty commits (if we get set up to do an empty commit it probably means the user wants a skip)
-        Amling::GRD::Utils::run("git", "commit", "-c", $commit) || die "Cannot commit?";
+            # TODO: handle empty commits (if we get set up to do an empty commit it probably means the user wants a skip)
+            Amling::GRD::Utils::run("git", "commit", "-c", $commit) || die "Cannot commit?";
+        }
     }
 
     if(defined($msg))
