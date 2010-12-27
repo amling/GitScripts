@@ -26,6 +26,8 @@ sub extended_handler
         return undef;
     }
 
+    # TODO: unescape \n here and escape \n over in the operations that write scripts
+
     return __PACKAGE__->new($commit, $msg);
 }
 
