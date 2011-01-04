@@ -33,7 +33,7 @@ sub execute_simple
 
     my ($commit_msg_fh, $commit_msg_fn) = tempfile('SUFFIX' => '.commit');
     {
-        open(my $fh, '-|', 'git', 'log', "$commit..", "--pretty=raw") || die "Cannot open git log: $!";
+        open(my $fh, '-|', 'git', 'log', "$commit..", "--reverse", "--pretty=raw") || die "Cannot open git log: $!";
         while(my $l = <$fh>)
         {
             if($l =~ /^commit ([0-9a-f]*)$/)
