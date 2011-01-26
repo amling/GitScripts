@@ -27,7 +27,7 @@ use Amling::GRD::Exec::Context;
 use Getopt::Long;
 
 # TODO: no die's!  need to all call common bail() infrastructure so we can reset cleanly, maybe even need to allow expectation to be passed into bail() and bail can give user option to cleanup to meet it and continue...
-# TODO: several failures (e.g.  any convert_commitlike) could probably stand for more graceful handling
+# TODO: several failures (e.g.  any convert_commitlike, any actual commit (think of empty change!)) could probably stand for more graceful handling
 # TODO: correctness in the face of GC?  you'd have to run GRD longer than the cleanup period which is pretty big
 # TODO: audit messages before each shell invocation indicating expected state and obvious options
 # TODO: help on operations
