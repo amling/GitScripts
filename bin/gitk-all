@@ -40,4 +40,4 @@ my @args;
     close($fh) || die "Cannot close 'git-judge-branches gitk-all'";
 }
 
-exec("gitk", @args, @ARGV);
+exec("gitk", @args, "--", @ARGV);
