@@ -72,7 +72,7 @@ for my $path (@paths) {
     }
     close($fh) || die "Cannot close $tmpfn";
     close($rfh) || die "Cannot close git cat-file $sha1";
-    system("vimdiff", $tmpfn, $root . "/" . $path);
+    system(($ENV{"DIFFEDITOR"} || "vimdiff"), $tmpfn, $root . "/" . $path);
 
     open(my $hfh, "-|", "git", "hash-object", "-w", $tmpfn) || die "Cannot open hash new file $tmpfn";
     my $new_sha1 = <$hfh>;
