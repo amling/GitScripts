@@ -1,0 +1,65 @@
+#!/usr/bin/perl
+
+$| = 1;
+
+use strict;
+use warnings;
+
+use Cwd ('abs_path');
+use File::Basename;
+
+my $root = abs_path();
+while(1)
+{
+    if(-d "$root/.git")
+    {
+        last;
+    }
+    if($root eq "/")
+    {
+        bail("Cannot findup .git for repo root");
+    }
+    $root = dirname($root);
+}
+
+open(my $head_fh, "<", "$root/.git/HEAD") || bail("Cannot open HEAD: $!");
+my $head = <$head_fh> || bail("Read nothing from HEAD?");
+chomp $head;
+if($head =~ s/^ref: //)
+{
+    if($head =~ s/^refs\///)
+    {
+        if($head =~ s/^heads\///)
+        {
+            # great
+        }
+        elsif($head =~ s/^remotes\///)
+        {
+            # great
+        }
+        else
+        {
+            # great enough
+        }
+    }
+    print " $head\n";
+}
+elsif($head =~ /^[0-9a-f]{40}$/)
+{
+    # TODO: maybe try to reverse resolve or print SVN rev or something?
+    my $short = substr($head, 0, 10);
+    print " $short\n";
+}
+else
+{
+    bail("Unknown HEAD: $head");
+}
+close($head_fh) || bail("Cannot close HEAD: $!");
+
+sub bail
+{
+    my $msg = shift;
+
+    #die $msg;
+    exit 0;
+}
