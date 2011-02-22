@@ -64,6 +64,7 @@ sub handler
         close($fh); # do not die, if HEAD is detached this fails, stupid fucking no good way to figure that out
     }
 
+    # TODO: don't set place_branch if it's not actually a branch (e.g.  just a commitlike like branch~1 or an abstract ref like svn/trunk)
     my $place_branch = undef;
     if(defined($branch))
     {
