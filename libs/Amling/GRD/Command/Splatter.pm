@@ -10,6 +10,8 @@ use File::Temp ('tempfile');
 
 use base 'Amling::GRD::Command::Simple';
 
+# TODO: splatter like pick that takes a message to amend [or commit] with!
+
 sub name
 {
     return "splatter";
