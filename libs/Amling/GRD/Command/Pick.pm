@@ -66,8 +66,18 @@ sub execute_simple
 
             # TODO: handle empty commits (if we get set up to do an empty commit it probably means the user wants a skip)
             # TODO: audit _all_ git commit shell-outs looking for empty commits!  maybe refactor them to somewhere common?
-            # TODO: on an amend we should put the amended message here instead and not amend again below
-            Amling::GRD::Utils::run("git", "commit", "-c", $commit) || die "Cannot commit?";
+            if(defined($msg))
+            {
+                # allow edit since we would normally
+                Amling::GRD::Utils::run("git", "commit", "-m", $msg, "-e") || die "Cannot commit?";
+
+                # no further amendment required
+                $msg = undef;
+            }
+            else
+            {
+                Amling::GRD::Utils::run("git", "commit", "-c", $commit) || die "Cannot commit?";
+            }
         }
     }
 
