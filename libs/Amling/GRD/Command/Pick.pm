@@ -15,6 +15,7 @@ sub extended_handler
 {
     my $s = shift;
 
+    # TODO: make this a little more canonical (allow commits starting with space?)
     my ($commit, $msg);
     if($s =~ /^pick +([^ ]+) +([^ ].*)$/)
     {

@@ -10,7 +10,25 @@ use File::Temp ('tempfile');
 
 use base 'Amling::GRD::Command::Simple';
 
-# TODO: splatter like pick that takes a message to amend [or commit] with!
+sub extended_handler
+{
+    my $s = shift;
+
+    # TODO: make this a little more canonical (allow commits starting with space?)
+    my $msg;
+    if($s =~ /^splatter +([^ ].*)$/)
+    {
+        $msg = $1;
+    }
+    else
+    {
+        return undef;
+    }
+
+    # TODO: unescape \n here and escape \n over in the operations that write scripts
+
+    return __PACKAGE__->new($msg);
+}
 
 sub name
 {
@@ -26,6 +44,7 @@ sub execute_simple
 {
     my $self = shift;
     my $ctx = shift;
+    my $msg = shift;
 
     my $commit = pop @{$ctx->get('commit-stack', [])};
     if(!defined($commit))
@@ -56,10 +75,27 @@ sub execute_simple
     close($commit_msg_fh) || die "Cannot close temp commit file $commit_msg_fn: $!";
 
     Amling::GRD::Utils::run("git", "reset", "--soft", $commit) || die "Cannot soft reset to $commit";
-    Amling::GRD::Utils::run("git", "commit", "-F", $commit_msg_fn, "-e") || die "Cannot commit?";
+    if(defined($msg))
+    {
+        # TODO: don't bother assembling and deleting commit_msg_fn
+        Amling::GRD::Utils::run("git", "commit", "-m", $msg) || die "Cannot commit?";
+    }
+    else
+    {
+        Amling::GRD::Utils::run("git", "commit", "-F", $commit_msg_fn, "-e") || die "Cannot commit?";
+    }
     unlink($commit_msg_fn) || die "Cannot unlink temp file $commit_msg_fn";
 }
 
+sub str_simple
+{
+    my $self = shift;
+    my $msg = shift;
+
+    return "splatter" . (defined($msg) ? " (amended message)" : "");
+}
+
 Amling::GRD::Command::add_command(sub { return __PACKAGE__->handler(@_) });
+Amling::GRD::Command::add_command(\&extended_handler);
 
 1;
