@@ -107,37 +107,21 @@ sub handler
     my %parents;
     my %subjects;
     my $first;
+    my $cb = sub
     {
-        open(my $fh, '-|', 'git', 'log', "$base..$branch", '--pretty=format:%H:%P:%s') || die "Cannot open top git log: $!";
-        while(my $line = <$fh>)
+        my $h = shift;
+        my $commit = $h->{'hash'};
+
+        if(!defined($first))
         {
-            chomp $line;
-            if($line =~ /^([0-9a-f]{40}):([0-9a-f ]*):(.*)$/)
-            {
-                my ($commit, $parents, $msg) = ($1, $2, $3);
-                if(!defined($first))
-                {
-                    $first = $commit;
-                }
-                my @parents = split(/ /, $parents);
-                for my $parent (@parents)
-                {
-                    if(length($parent) != 40)
-                    {
-                        die "Bad parent: $parent";
-                    }
-                }
-                $commits{$commit} = 1;
-                $parents{$commit} = \@parents;
-                $subjects{$commit} = $msg;
-            }
-            else
-            {
-                die "Bad line: $line";
-            }
+            $first = $commit;
         }
-        close($fh) || die "Cannot close top git log: $!";
-    }
+
+        $commits{$commit} = 1;
+        $parents{$commit} = $h->{'parents'};
+        $subjects{$commit} = $h->{'msg'};
+    };
+    Amling::GRD::Utils::log_commits(["$base..$branch"], $cb);
 
     my @lines;
     if(defined($first))
@@ -227,7 +211,7 @@ sub build
             push @ret, "load $PREFIX-base";
         }
 
-        push @ret, "pick $target # " . $subjects->{$target};
+        push @ret, "pick $target # " . Amling::GRD::Utils::escape_msg($subjects->{$target});
     }
     else
     {

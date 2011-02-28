@@ -15,9 +15,8 @@ sub extended_handler
 {
     my $s = shift;
 
-    # TODO: make this a little more canonical (allow commits starting with space?)
     my ($commit, $msg);
-    if($s =~ /^pick +([^ ]+) +([^ ].*)$/)
+    if($s =~ /^pick ([^ ]+) ([^ ].*)$/)
     {
         $commit = $1;
         $msg = $2;
@@ -27,9 +26,7 @@ sub extended_handler
         return undef;
     }
 
-    # TODO: unescape \n here and escape \n over in the operations that write scripts
-
-    return __PACKAGE__->new($commit, $msg);
+    return __PACKAGE__->new($commit, Amling::GRD::Utils::unescape_msg($msg));
 }
 
 sub name

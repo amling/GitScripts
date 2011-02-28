@@ -122,7 +122,7 @@ sub dump_tree
 
     my @ret;
 
-    push @ret, (("   " x $indent) . "pick " . $root . " # " . $subjects->{$root});
+    push @ret, (("   " x $indent) . "pick " . $root . " # " . Amling::GRD::Utils::escape_msg($subjects->{$root}));
     my @branches = @{$commit_branches->{$root} || []};
     for my $branch (@branches)
     {

@@ -14,9 +14,8 @@ sub extended_handler
 {
     my $s = shift;
 
-    # TODO: make this a little more canonical (allow commits starting with space?)
     my $msg;
-    if($s =~ /^splatter +([^ ].*)$/)
+    if($s =~ /^splatter (.*)$/)
     {
         $msg = $1;
     }
@@ -25,9 +24,7 @@ sub extended_handler
         return undef;
     }
 
-    # TODO: unescape \n here and escape \n over in the operations that write scripts
-
-    return __PACKAGE__->new($msg);
+    return __PACKAGE__->new(Amling::GRD::Utils::unescape_msg($msg));
 }
 
 sub name

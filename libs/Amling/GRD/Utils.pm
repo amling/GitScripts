@@ -3,6 +3,51 @@ package Amling::GRD::Utils;
 use strict;
 use warnings;
 
+sub log_commits
+{
+    my $args = shift;
+    my $cb = shift;
+
+    # argghwtf, why can't I get this shit all unambiguously parsable in one
+    # invocation of git log?
+    open(my $fh, '-|', 'git', 'log', '--format=%H:%P', @$args) || die "Cannot open git log: $!";
+    while(my $line = <$fh>)
+    {
+        chomp $line;
+        if($line =~ /^(.*):(.*)$/)
+        {
+            my ($commit, $parents) = ($1, $2);
+
+            if(length($commit) != 40)
+            {
+                die "Bad commit: $commit";
+            }
+
+            my @parents;
+            for my $parent (split(/ /, $parents))
+            {
+                if(length($parent) != 40)
+                {
+                    die "Bad parent: $parent";
+                }
+                push @parents, $parent;
+            }
+
+            open(my $fh2, '-|', 'git', 'log', '--format=%B', "-1", $commit) || die "Cannot open git log: $!";
+            my $body = "";
+            while(my $line2 = <$fh2>)
+            {
+                chomp $line2;
+                $body .= "$line2\n";
+            }
+            close($fh2) || die "Cannot close git log: $!";
+
+            $cb->({'hash' => $commit, 'parents' => \@parents, 'msg' => $body});
+        }
+    }
+    close($fh) || die "Cannot close git log: $!";
+}
+
 sub convert_commitlike
 {
     my $commitlike = shift;
@@ -104,6 +149,26 @@ sub run
     print "Running: " . join(", ", @cmd) . "...\n";
 
     return (system(@cmd) == 0);
+}
+
+sub escape_msg
+{
+    my $msg = shift;
+
+    $msg =~ s/\\/\\\\/g;
+    $msg =~ s/\n/\\n/g;
+
+    return $msg;
+}
+
+sub unescape_msg
+{
+    my $msg = shift;
+
+    $msg =~ s/\\n/\n/g;
+    $msg =~ s/\\\\/\\/g;
+
+    return $msg;
 }
 
 1;
