@@ -40,6 +40,9 @@ sub log_commits
                 chomp $line2;
                 $body .= "$line2\n";
             }
+            # ugh, fucking dumb -- one is us the other is git spooging an extra for no apparent reason
+            chomp $body;
+            chomp $body;
             close($fh2) || die "Cannot close git log: $!";
 
             $cb->({'hash' => $commit, 'parents' => \@parents, 'msg' => $body});
