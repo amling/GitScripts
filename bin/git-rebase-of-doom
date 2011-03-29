@@ -35,11 +35,11 @@ use Getopt::Long;
 # TODO: verbosity levels(?)
 # TODO: dry run?
 
-my $onto;
+my $onto_option;
 
 my @options =
 (
-    "onto=s" => \$onto,
+    "onto=s" => \$onto_option,
     "help"   => sub { usage(0); },
 );
 
@@ -49,12 +49,13 @@ GetOptions(@options) || usage(1);
 my @specs = @ARGV;
 @ARGV = ();
 
-if(defined($onto))
+if(defined($onto_option))
 {
-    $onto = Amling::GRD::Utils::convert_commitlike($onto);
+    $onto_option = Amling::GRD::Utils::convert_commitlike($onto_option);
 }
 
 my @scripts;
+my $onto_final;
 for my $spec (@specs)
 {
     my ($ok, $base, $lines) = Amling::GRD::Operation::parse($spec);
@@ -62,28 +63,28 @@ for my $spec (@specs)
     {
         die "Could not parse operation $spec";
     }
-    if(!defined($base))
+    if(defined($onto_option))
     {
-        $base = $onto;
+        $base = $onto_option;
     }
     if(!defined($base))
     {
         die "Spec $spec did not produce a target and --onto not specified";
     }
-    if(!defined($onto))
+    if(!defined($onto_final))
     {
-        $onto = $base;
+        $onto_final = $base;
     }
     else
     {
-        if($onto ne $base)
+        if($onto_final ne $base)
         {
-            die "Multiple targets specified: $onto, $base";
+            die "Multiple targets specified: $onto_final, $base";
         }
     }
     push @scripts, [$spec, $lines];
 }
-if(!defined($onto))
+if(!defined($onto_final))
 {
     print "No specs given?\n";
     usage(1);
@@ -117,7 +118,7 @@ unless(@commands)
 
 my $ctx = Amling::GRD::Exec::Context->new();
 
-Amling::GRD::Utils::run("git", "checkout", $onto) || die "Cannot checkout $onto";
+Amling::GRD::Utils::run("git", "checkout", $onto_final) || die "Cannot checkout $onto_final";
 
 my $ct = scalar(@commands);
 my $n = 1;
