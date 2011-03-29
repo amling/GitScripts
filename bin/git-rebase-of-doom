@@ -36,10 +36,12 @@ use Getopt::Long;
 # TODO: dry run?
 
 my $onto_option;
+my $skip_edit;
 
 my @options =
 (
     "onto=s" => \$onto_option,
+    "skip-edit|q" => \$skip_edit,
     "help"   => sub { usage(0); },
 );
 
@@ -109,7 +111,7 @@ else
     }
 }
 
-my @commands = @{Amling::GRD::Parser::edit_loop(@$lines)};
+my @commands = @{Amling::GRD::Parser::edit_loop($lines, $skip_edit)};
 unless(@commands)
 {
     print "Nothing to do.\n";

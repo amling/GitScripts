@@ -8,10 +8,18 @@ use File::Temp ('tempfile');
 
 sub edit_loop
 {
-    my @lines0 = @_;
+    my $lines0r = shift;
+    my $skip_edit = shift;
+
+    my @lines0 = @$lines0r;
 
     my @lines = @lines0;
     my ($commands, $problems) = parse(@lines);
+
+    if($skip_edit && $commands)
+    {
+        return $commands;
+    }
 
     while(1)
     {
