@@ -9,6 +9,11 @@ use Cwd ('abs_path');
 use File::Basename;
 
 my $root = abs_path();
+if(!defined($root))
+{
+    bail("Cannot get current directory!");
+}
+
 while(1)
 {
     if(-d "$root/.git")
