@@ -37,6 +37,7 @@ use Getopt::Long;
 # TODO: help on commands
 # TODO: verbosity levels(?)
 # TODO: dry run?
+# TODO: make empty commits work damn it (skip them or something)
 
 my $onto_option;
 my $skip_edit;
