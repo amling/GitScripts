@@ -5,6 +5,18 @@ $| = 1;
 use strict;
 use warnings;
 
+use Getopt::Long;
+
+my $simple;
+
+my @options =
+(
+    "simple|s!" => \$simple,
+    "help" => sub { usage(0); },
+);
+
+GetOptions(@options) || usage(1);
+
 my %judgement;
 {
     open(my $fh, "-|", "git-judge-branches", "list-branches") || die "Cannot open 'git-judge-branches list-branches'";
@@ -27,10 +39,19 @@ my %judgement;
     {
         chomp $line;
 
+        my $name;
+        my $current;
+
         # note, we never skip the current
-        if($line =~ /^  ([^ ]*)/)
+        if($line =~ /^\* (.*)$/)
         {
-            my $name = $1;
+            $current = 1;
+            $name = $1;
+        }
+        elsif($line =~ /^  (.*)$/)
+        {
+            $current = 0;
+            $name = $1;
             my $judgement = $judgement{$name};
             if($judgement eq "DEFAULT")
             {
@@ -48,8 +69,30 @@ my %judgement;
                 next;
             }
         }
+        else
+        {
+            die "Bad git branch line: $line";
+        }
 
-        print "$line\n";
+        if(!$simple)
+        {
+            print ($current ? "* " : "  ");
+        }
+
+        print "$name\n";
     }
     close($fh) || die "Cannot close 'git branch -a'";
+}
+
+sub usage
+{
+    my $ec = shift;
+
+    print <<EOF;
+Usage: $0 <options>
+   --simple                           Do not mark current branch with star.
+   --help                             Print this help.
+EOF
+
+    exit $ec;
 }
