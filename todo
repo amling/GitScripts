@@ -12,3 +12,27 @@ GBD (git-bisect-of-doom)
     probably two stage -- weight and dump history and do actual bisection stuff (to avoid repeat weight and dump for multiple bisects)
         maybe not necessary since you can copy the state file from after the initialize?
     no checkout by default (allow --checkout)
+    you could even imagine an interactive mode where you'd start one for each test
+        loop would be
+            tell one of them to checkout
+            run all tests
+            report all tests
+        normal operation is just "load, {good|bad} [commit], {checkout|status}, save"
+    proposal
+        git-bisect-of-doom-init <bad> [<good>*] [--weight '<perl>'] > statefile
+        git-bisect-of-doom-run
+            positionless --state statefile (short for prefix --load statefile, --save statefile)
+            operation: load statefile
+            operation: save statefile (skips if unchanged)
+            operation: good [SHA1]
+            operation: bad [SHA1]
+            operation: checkout
+            operation: with-range <command>
+                this one is tricky w.r.t.  option parsing:
+                    git-bisect-of-doom-run --state statefile --with-range git ... --who-gets-this-option?
+            operation: quit
+            operation: status
+    maybe move init into main script
+        operation: init <bad> [<good>*]
+        operation: winit <perl> <bad> [<good>*]
+            would require better argument parsing in interactive mode than I was planning on...
