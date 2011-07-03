@@ -101,6 +101,93 @@ sub simple_handler
     return ($latest_base, $script);
 }
 
+sub multiple_handler
+{
+    my $s = shift;
+
+    my @pieces;
+    if($s =~ /^(?:multiple|M):(.*)$/)
+    {
+        @pieces = split(/,/, $1);
+    }
+    else
+    {
+        return;
+    }
+
+    my $head_branch = undef;
+    {
+        open(my $fh, '-|', 'git', 'symbolic-ref', '-q', 'HEAD') || die "Cannot open git symbolic-ref: $!";
+        while(my $line = <$fh>)
+        {
+            chomp $line;
+            if($line =~ /^refs\/heads\/(.*)$/)
+            {
+                $head_branch = $1;
+            }
+        }
+        close($fh); # do not die, if HEAD is detached this fails, stupid fucking no good way to figure that out
+    }
+
+    my %branch_commands;
+    my %commit_commands;
+    my @targets;
+    my @bases;
+    my $onto;
+
+    for my $piece (@pieces)
+    {
+        if($piece =~ /^-(.*)$/)
+        {
+            push @bases, $1;
+        }
+        elsif($piece =~ /^O:(.*)$/)
+        {
+            push @bases, $1;
+            $onto = $1;
+        }
+        elsif($piece =~ /^\+(.*)$/)
+        {
+            my $branch = $1;
+            my $branch_commit = Amling::GRD::Utils::convert_commitlike($branch);
+            push @{$branch_commands{$branch} ||= []}, "branch $branch";
+            push @targets, $branch_commit;
+        }
+        elsif($piece =~ /^H:(.*)$/)
+        {
+            my $branch = $1;
+            my $branch_commit = Amling::GRD::Utils::convert_commitlike($branch);
+            push @{$branch_commands{$branch} ||= []}, "head $branch";
+            push @targets, $branch_commit;
+        }
+        elsif($piece =~ /^H$/)
+        {
+            if(defined($head_branch))
+            {
+                my $head_commit = Amling::GRD::Utils::convert_commitlike("HEAD");
+                push @{$branch_commands{$head_branch} ||= []}, "head $head_branch";
+                push @targets, $head_commit;
+            }
+            else
+            {
+                my $head_commit = Amling::GRD::Utils::convert_commitlike("HEAD");
+                push @{$commit_commands{$head_commit} ||= []}, "head";
+                push @targets, $head_commit;
+            }
+        }
+        else
+        {
+            die "Unintelligible piece: $piece";
+        }
+    }
+
+    my $script = handle_common(\@bases, \%branch_commands, \%commit_commands, \@targets);
+
+    my $latest_base = defined($onto) ? Amling::GRD::Utils::convert_commitlike($onto) : undef;
+
+    return ($latest_base, $script);
+}
+
 sub handle_common
 {
     my $bases = shift;
@@ -174,6 +261,7 @@ sub handle_common
 }
 
 Amling::GRD::Operation::add_operation(\&simple_handler);
+Amling::GRD::Operation::add_operation(\&multiple_handler);
 
 sub build
 {

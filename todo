@@ -1,7 +1,5 @@
 GRD
     various cleanup (in script as TODO)
-    somehow allow multiple bases
-        existing script writers can probably all do it (although with multiple bases they would not produce an --onto)
     handle empty tree commit, god damn it
     maybe try to figure out "already merged" changes and skip them
         too hard in general case...
