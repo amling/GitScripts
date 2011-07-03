@@ -35,7 +35,7 @@ our $PREFIX = "INTERNAL";
 # that looks funny and we probably shouldn't rename alias1 due to use
 # elsewhere...  Thankfully I think this is only screwed up in 1-parent merges.
 
-sub handler
+sub simple_handler
 {
     my $s = shift;
 
@@ -64,19 +64,51 @@ sub handler
         close($fh); # do not die, if HEAD is detached this fails, stupid fucking no good way to figure that out
     }
 
-    # TODO: don't set place_branch if it's not actually a branch (e.g.  just a commitlike like branch~1 or an abstract ref like svn/trunk)
-    my $place_branch = undef;
+    my %branch_commands;
+    my %commit_commands;
+    my @targets;
+
     if(defined($branch))
     {
-        $place_branch = $branch;
+        # we only place this branch, as head (even if it wasn't head before)
+        my $branch_commit = Amling::GRD::Utils::convert_commitlike($branch);
+        push @{$branch_commands{$branch} ||= []}, "head $branch";
+        push @targets, $branch_commit;
     }
     else
     {
-        $place_branch = $head_branch; # undef or otherwise
-        $branch = "HEAD";
+        # we weren't given a branch, what is HEAD's deal?
+        if(defined($head_branch))
+        {
+            # ah, it's a branch, we place that
+            my $branch_commit = Amling::GRD::Utils::convert_commitlike($branch);
+            push @{$branch_commands{$branch} ||=[]}, "head $head_branch";
+            push @targets, $branch_commit;
+        }
+        else
+        {
+            # it's detached, we place a detached head at the SHA1
+            my $head_commit = Amling::GRD::Utils::convert_commitlike("HEAD");
+            push @{$commit_commands{$head_commit} ||= []}, "head";
+            push @targets, $head_commit;
+        }
     }
 
-    my %comment_branches;
+    my $script = handle_common([$base], \%branch_commands, \%commit_commands, \@targets);
+
+    my $latest_base = Amling::GRD::Utils::convert_commitlike($base);
+
+    return ($latest_base, $script);
+}
+
+sub handle_common
+{
+    my $bases = shift;
+    my $branch_commands = shift;
+    my $commit_commands = shift;
+    my $targets = shift;
+
+    my %commit_branch_1;
     {
         open(my $fh, '-|', 'git', 'show-ref') || die "Cannot open git show-ref: $!";
         while(my $line = <$fh>)
@@ -86,13 +118,7 @@ sub handler
                 my ($commit, $ref) = ($1, $2);
                 if($ref =~ /^refs\/heads\/(.*)$/)
                 {
-                    # don't comment for the branch we're gonna place at the end anyway
-                    my $branch = $1;
-                    if(defined($place_branch) && $place_branch eq $branch)
-                    {
-                        next;
-                    }
-                    $comment_branches{$commit}->{$branch} = 1;
+                    $commit_branch_1{$commit}->{$1} = 1;
                 }
             }
             else
@@ -106,36 +132,26 @@ sub handler
     my %commits;
     my %parents;
     my %subjects;
-    my $first;
     my $cb = sub
     {
         my $h = shift;
         my $commit = $h->{'hash'};
 
-        if(!defined($first))
-        {
-            $first = $commit;
-        }
-
         $commits{$commit} = 1;
         $parents{$commit} = $h->{'parents'};
         $subjects{$commit} = $h->{'msg'};
     };
-    Amling::GRD::Utils::log_commits(["$base..$branch"], $cb);
+    Amling::GRD::Utils::log_commits([(map { "^$_" } @$bases), keys(%$branch_commands), keys(%$commit_commands)], $cb);
 
     my @lines;
-    if(defined($first))
+    push @lines, "save $PREFIX-base";
+    my %built;
+    for my $target (@$targets)
     {
-        push @lines, "save $PREFIX-base";
-        my ($contributes, @script) = build($first, \%commits, {}, \%parents, \%subjects, \%comment_branches);
+        my ($contributes, @script) = build($target, \%commits, \%built, \%parents, \%subjects, $commit_commands, \%commit_branch_1, $branch_commands);
         if($contributes)
         {
             push @lines, @script;
-            push @lines, "load $PREFIX-$first";
-        }
-        else
-        {
-            push @lines, "load $PREFIX-base";
         }
     }
 
@@ -154,21 +170,10 @@ sub handler
         last unless($progress);
     }
 
-    if(defined($place_branch))
-    {
-        push @lines, "head $place_branch";
-    }
-    else
-    {
-        push @lines, "head";
-    }
-
-    my $latest_base = Amling::GRD::Utils::convert_commitlike($base);
-
-    return ($latest_base, \@lines);
+    return \@lines;
 }
 
-Amling::GRD::Operation::add_operation(\&handler);
+Amling::GRD::Operation::add_operation(\&simple_handler);
 
 sub build
 {
@@ -177,7 +182,9 @@ sub build
     my $built = shift;
     my $parents = shift;
     my $subjects = shift;
-    my $comment_branches = shift;
+    my $commit_commands = shift;
+    my $commit_branch_1 = shift;
+    my $branch_commands = shift;
 
     # asked to build something in base
     if(!$commits->{$target})
@@ -197,7 +204,7 @@ sub build
 
     if(@mparents == 1)
     {
-        my ($contributes, @script) = build($mparents[0], $commits, $built, $parents, $subjects, $comment_branches);
+        my ($contributes, @script) = build($mparents[0], $commits, $built, $parents, $subjects, $commit_commands, $commit_branch_1, $branch_commands);
 
         if($contributes)
         {
@@ -219,7 +226,7 @@ sub build
 
         for my $parent (@mparents)
         {
-            my ($contributes, @script) = build($parent, $commits, $built, $parents, $subjects, $comment_branches);
+            my ($contributes, @script) = build($parent, $commits, $built, $parents, $subjects, $commit_commands, $commit_branch_1, $branch_commands);
 
             if($contributes)
             {
@@ -243,9 +250,19 @@ sub build
         }
     }
 
-    for my $comment_branch (sort(keys(%{$comment_branches->{$target} || {}})))
+    push @ret, @{$commit_commands->{$target} || []};
+
+    for my $branch (sort(keys(%{$commit_branch_1->{$target} || {}})))
     {
-        push @ret, "# branch $comment_branch";
+        my $commands = $branch_commands->{$branch};
+        if($commands)
+        {
+            push @ret, @$commands;
+        }
+        else
+        {
+            push @ret, "# branch $branch";
+        }
     }
 
     push @ret, "save $PREFIX-$target";
