@@ -1,0 +1,17 @@
+GRD
+    various cleanup (in script as TODO)
+    somehow allow multiple bases
+        existing script writers can probably all do it (although with multiple bases they would not produce an --onto)
+    handle empty tree commit, god damn it
+    maybe try to figure out "already merged" changes and skip them
+        too hard in general case...
+    incorporate phantom file "fix" from git's 181264ad590ffef9d956fdd023369869c2d0a55f
+        is this already fixed somehow?
+    allow return to editting script at some failure points
+        ideally we'd dump the saved map, stack, etc.  into the script and so just drop state and run the new script from the beginning
+GBD (git-bisect-of-doom)
+    use state file to allow multiple bisects to work together
+    allow eval-able perl to weight commits
+    probably two stage -- weight and dump history and do actual bisection stuff (to avoid repeat weight and dump for multiple bisects)
+        maybe not necessary since you can copy the state file from after the initialize?
+    no checkout by default (allow --checkout)
