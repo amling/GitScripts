@@ -67,6 +67,43 @@ sub convert_commitlike
     return $commit;
 }
 
+sub is_clean
+{
+    my ($dirtyness, $message) = get_dirtyness();
+    return ($dirtyness ? 0 : 1);
+}
+
+sub get_dirtyness
+{
+
+    if(system("git", "diff", "--quiet"))
+    {
+        return (2, "There are differences between the index and the working tree.");
+    }
+
+    {
+        my $fail = 0;
+        open(my $fh, "-|", "git", "ls-files", "-u");
+        while(<$fh>)
+        {
+            $fail = 1;
+        }
+        close($fh);
+        if($fail)
+        {
+            return (2, "There are unmerged files in the index.");
+        }
+    }
+
+    # TODO: doesn't catch untracked files... (?)
+    if(system("git", "diff", "--cached", "--quiet"))
+    {
+        return (1, "There are differences between HEAD and the index.");
+    }
+
+    return 0;
+}
+
 sub run_shell
 {
     my $first_shell = shift;
@@ -93,25 +130,14 @@ sub run_shell
         }
 
         my $fail;
-        # TODO: doesn't catch untracked files...
-        if(!$fail && !$allow_index && system("git", "diff", "--cached", "--quiet"))
+        my ($dirtyness, $message) = get_dirtyness();
+        if(!$allow_index && $dirtyness >= 1)
         {
-            $fail = "There are differences between HEAD and the index.";
+            $fail = $message;
         }
-
-        if(!$fail && !$allow_wtree)
+        if(!$allow_wtree && $dirtyness >= 2)
         {
-            open(my $fh, "-|", "git", "ls-files", "-u");
-            while(<$fh>)
-            {
-                $fail = "There are unmerged files in the index.";
-            }
-            close($fh);
-        }
-
-        if(!$fail && !$allow_wtree && system("git", "diff", "--quiet"))
-        {
-            $fail = "There are differences between the index and the working tree.";
+            $fail = $message;
         }
 
         if(!$fail)
