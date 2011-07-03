@@ -57,12 +57,22 @@ sub execute_simple
     {
         if(!Amling::GRD::Utils::run("git", "cherry-pick", $commit))
         {
+            if(Amling::GRD::Utils::is_clean())
+            {
+                print "git cherry-pick of $commit blew chunks, but we're clean, assuming skip...\n";
+                return;
+            }
+
             print "git cherry-pick of $commit blew chunks, please clean it up (get correct version into index)...\n";
             Amling::GRD::Utils::run_shell(1, 1, 0);
             print "Continuing...\n";
 
-            # TODO: handle empty commits (if we get set up to do an empty commit it probably means the user wants a skip)
-            # TODO: audit _all_ git commit shell-outs looking for empty commits!  maybe refactor them to somewhere common?
+            if(Amling::GRD::Utils::is_clean())
+            {
+                print "Shell left clean, assuming skip...\n";
+                return;
+            }
+
             if(defined($msg))
             {
                 # allow edit since we would normally
