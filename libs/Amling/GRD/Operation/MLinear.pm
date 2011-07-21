@@ -81,8 +81,8 @@ sub simple_handler
         if(defined($head_branch))
         {
             # ah, it's a branch, we place that
-            my $branch_commit = Amling::GRD::Utils::convert_commitlike($branch);
-            push @{$branch_commands{$branch} ||=[]}, "head $head_branch";
+            my $branch_commit = Amling::GRD::Utils::convert_commitlike($head_branch);
+            push @{$branch_commands{$head_branch} ||=[]}, "head $head_branch";
             push @targets, $branch_commit;
         }
         else
