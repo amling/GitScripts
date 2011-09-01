@@ -68,7 +68,7 @@ elsif($head =~ /^[0-9a-f]{40}$/)
     }
     else
     {
-        my $short = substr($head, 0, 10);
+        my $short = substr($head, 0, 12);
         print " $short\n";
     }
 }
