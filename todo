@@ -1,5 +1,3 @@
-misc
-    git-vimdiff should RO the LHS to prevent mistaken editting
 GRD
     various cleanup (in script as TODO)
     maybe try to figure out "already merged" changes and skip them

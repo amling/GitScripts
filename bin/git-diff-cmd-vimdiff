@@ -35,7 +35,7 @@ if($file2 eq "/dev/null")
     $rm = 1;
 }
 
-system("vimdiff", $file1, $file2);
+system("vimdiff", $file1, '+set ro', $file2);
 
 if($rm)
 {
