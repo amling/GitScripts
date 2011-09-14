@@ -3,6 +3,38 @@ package Amling::Git::Utils;
 use strict;
 use warnings;
 
+sub find_root
+{
+    my $optional = shift;
+    my $fh;
+    # !@#$ no silent mode
+    if(!open($fh, 'git rev-parse --show-toplevel 2> /dev/null |'))
+    {
+        if($optional)
+        {
+            return undef;
+        }
+        else
+        {
+            die "Cannot open git rev-parse --show-toplevel: $!";
+        }
+    }
+    my $line = <$fh>;
+    if(!close($fh))
+    {
+        if($optional)
+        {
+            return undef;
+        }
+        else
+        {
+            die "Cannot close git rev-parse --show-toplevel: $!";
+        }
+    }
+    chomp $line;
+    return $line;
+}
+
 sub log_commits
 {
     my $args = shift;

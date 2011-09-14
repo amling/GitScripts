@@ -5,23 +5,13 @@ $| = 1;
 use strict;
 use warnings;
 
-use Cwd ('abs_path');
-use File::Basename;
 use File::Temp ('tempdir');
+
+use Amling::Git::Utils;
 
 # TODO: completely new files (easy enough to add then diff for now)?
 
-# TODO: ugh, couldn't figure out a way to make git give me the repo root
-my $root = abs_path();
-while(1) {
-    if(-d "$root/.git") {
-        last;
-    }
-    if($root eq "/") {
-        die "Cannot findup .git for repo root";
-    }
-    $root = dirname($root);
-}
+my $root = Amling::Git::Utils::find_root();
 
 my %metadata;
 {
