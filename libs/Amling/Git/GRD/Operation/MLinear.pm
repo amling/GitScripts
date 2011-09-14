@@ -185,27 +185,27 @@ sub multiple_handler
         }
     }
 
+    my %maximal_tree_commits;
     for my $tree (@trees)
     {
         # dump out upstream section
         my @tree_commits;
-        my %tree_commit_1;
+        my %tree_commits;
         my $cb = sub
         {
             my $h = shift;
             push @tree_commits, $h;
-            $tree_commit_1{$h->{'hash'}} = 1;
+            $tree_commits{$h->{'hash'}} = 1;
         };
         Amling::Git::Utils::log_commits([(map { "^$_" } @bases), $tree], $cb);
 
         # now find those that have no parents in the upstream section (all i.e.  parents in the base)
-        my @maximal_tree_commits;
         for my $h (@tree_commits)
         {
             my $maximal = 1;
             for my $p (@{$h->{'parents'}})
             {
-                if($tree_commit_1{$p})
+                if($tree_commits{$p})
                 {
                     $maximal = 0;
                     last;
@@ -213,35 +213,35 @@ sub multiple_handler
             }
             if($maximal)
             {
-                push @maximal_tree_commits, $h->{'hash'};
+                $maximal_tree_commits{$h->{'hash'}} = 1;
             }
         }
+    }
 
-        # now iterate over branches that contain each
-        for my $commit (@maximal_tree_commits)
+    # now iterate over branches that contain each maximal tree commit
+    for my $commit (keys(%maximal_tree_commits))
+    {
+        open(my $fh, '-|', 'git', 'branch', '--contains', $commit) || die "Cannot open list branches containing $commit: $!";
+        while(my $line = <$fh>)
         {
-            open(my $fh, '-|', 'git', 'branch', '--contains', $commit) || die "Cannot open list branches containing $commit: $!";
-            while(my $line = <$fh>)
+            chomp $line;
+
+            $line =~ s/^..//;
+
+            # this BS probably won't happen but let's be sure
+            next if($line eq "(no branch)");
+
+            my $branch = $line;
+
+            if(!$branch_commands{$branch})
             {
-                chomp $line;
-
-                $line =~ s/^..//;
-
-                # this BS probably won't happen but let's be sure
-                next if($line eq "(no branch)");
-
-                my $branch = $line;
-
-                if(!$branch_commands{$branch})
-                {
-                    # and we haven't included it yet, do so
-                    my $branch_commit = Amling::Git::Utils::convert_commitlike($branch);
-                    push @{$branch_commands{$branch} = []}, "branch $branch";
-                    push @targets, $branch_commit;
-                }
+                # and we haven't included it yet, do so
+                my $branch_commit = Amling::Git::Utils::convert_commitlike($branch);
+                push @{$branch_commands{$branch} = []}, "branch $branch";
+                push @targets, $branch_commit;
             }
-            close($fh) || die "Cannot close list branches containing $commit: $!";
         }
+        close($fh) || die "Cannot close list branches containing $commit: $!";
     }
 
     my $script = handle_common(\@bases, \%branch_commands, \%commit_commands, \@targets);
