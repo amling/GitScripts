@@ -72,7 +72,7 @@ sub handler
 
             push @tree_branches, $line;
         }
-        close($fh) || die "Cannot close list branches containing $last_base: $!";
+        close($fh) || die "Cannot close list branches containing $first_tree: $!";
     }
 
     my %branch_commits;
