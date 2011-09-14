@@ -1,4 +1,4 @@
-package Amling::GRD::Utils;
+package Amling::Git::GRD::Utils;
 
 use strict;
 use warnings;

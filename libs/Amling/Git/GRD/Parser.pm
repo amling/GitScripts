@@ -1,9 +1,9 @@
-package Amling::GRD::Parser;
+package Amling::Git::GRD::Parser;
 
 use strict;
 use warnings;
 
-use Amling::GRD::Command;
+use Amling::Git::GRD::Command;
 use File::Temp ('tempfile');
 
 sub edit_loop
@@ -87,7 +87,7 @@ sub parse
 
         next if($line eq '');
 
-        my $command = Amling::GRD::Command::parse($line);
+        my $command = Amling::Git::GRD::Command::parse($line);
 
         if(defined($command))
         {

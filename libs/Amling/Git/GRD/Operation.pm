@@ -1,4 +1,4 @@
-package Amling::GRD::Operation;
+package Amling::Git::GRD::Operation;
 
 use strict;
 use warnings;
@@ -29,7 +29,7 @@ sub parse
     return (0);
 }
 
-require Amling::GRD::Operation::MLinear;
-require Amling::GRD::Operation::Tree;
+require Amling::Git::GRD::Operation::MLinear;
+require Amling::Git::GRD::Operation::Tree;
 
 1;

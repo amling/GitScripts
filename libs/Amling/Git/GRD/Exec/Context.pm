@@ -1,4 +1,4 @@
-package Amling::GRD::Exec::Context;
+package Amling::Git::GRD::Exec::Context;
 
 use strict;
 use warnings;

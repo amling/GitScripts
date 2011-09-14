@@ -1,11 +1,11 @@
-package Amling::GRD::Command::Simple;
+package Amling::Git::GRD::Command::Simple;
 
 use strict;
 use warnings;
 
-use Amling::GRD::Command;
-use Amling::GRD::Command::Simple;
-use Amling::GRD::Utils;
+use Amling::Git::GRD::Command;
+use Amling::Git::GRD::Command::Simple;
+use Amling::Git::GRD::Utils;
 
 sub handler
 {

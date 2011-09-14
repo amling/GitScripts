@@ -1,14 +1,14 @@
-package Amling::GRD::Command::Splatter;
+package Amling::Git::GRD::Command::Splatter;
 
 use strict;
 use warnings;
 
-use Amling::GRD::Command;
-use Amling::GRD::Command::Simple;
-use Amling::GRD::Utils;
+use Amling::Git::GRD::Command;
+use Amling::Git::GRD::Command::Simple;
+use Amling::Git::GRD::Utils;
 use File::Temp ('tempfile');
 
-use base 'Amling::GRD::Command::Simple';
+use base 'Amling::Git::GRD::Command::Simple';
 
 sub extended_handler
 {
@@ -24,7 +24,7 @@ sub extended_handler
         return undef;
     }
 
-    return __PACKAGE__->new(Amling::GRD::Utils::unescape_msg($msg));
+    return __PACKAGE__->new(Amling::Git::GRD::Utils::unescape_msg($msg));
 }
 
 sub name
@@ -71,15 +71,15 @@ sub execute_simple
     }
     close($commit_msg_fh) || die "Cannot close temp commit file $commit_msg_fn: $!";
 
-    Amling::GRD::Utils::run("git", "reset", "--soft", $commit) || die "Cannot soft reset to $commit";
+    Amling::Git::GRD::Utils::run("git", "reset", "--soft", $commit) || die "Cannot soft reset to $commit";
     if(defined($msg))
     {
         # TODO: don't bother assembling and deleting commit_msg_fn
-        Amling::GRD::Utils::run("git", "commit", "-m", $msg) || die "Cannot commit?";
+        Amling::Git::GRD::Utils::run("git", "commit", "-m", $msg) || die "Cannot commit?";
     }
     else
     {
-        Amling::GRD::Utils::run("git", "commit", "-F", $commit_msg_fn, "-e") || die "Cannot commit?";
+        Amling::Git::GRD::Utils::run("git", "commit", "-F", $commit_msg_fn, "-e") || die "Cannot commit?";
     }
     unlink($commit_msg_fn) || die "Cannot unlink temp file $commit_msg_fn";
 }
@@ -92,7 +92,7 @@ sub str_simple
     return "splatter" . (defined($msg) ? " (amended message)" : "");
 }
 
-Amling::GRD::Command::add_command(sub { return __PACKAGE__->handler(@_) });
-Amling::GRD::Command::add_command(\&extended_handler);
+Amling::Git::GRD::Command::add_command(sub { return __PACKAGE__->handler(@_) });
+Amling::Git::GRD::Command::add_command(\&extended_handler);
 
 1;

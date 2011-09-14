@@ -1,9 +1,9 @@
-package Amling::GRD::Operation::Tree;
+package Amling::Git::GRD::Operation::Tree;
 
 use strict;
 use warnings;
 
-use Amling::GRD::Utils;
+use Amling::Git::GRD::Utils;
 
 # TODO: OMFG, HEAD
 
@@ -55,7 +55,7 @@ sub handler
         defined($last_base) || die "Could not find last base commit";
     }
 
-    my $latest_base = Amling::GRD::Utils::convert_commitlike($base);
+    my $latest_base = Amling::Git::GRD::Utils::convert_commitlike($base);
 
     my @tree_branches;
     {
@@ -79,7 +79,7 @@ sub handler
     {
         for my $branch (@tree_branches)
         {
-            my $commit = Amling::GRD::Utils::convert_commitlike($branch);
+            my $commit = Amling::Git::GRD::Utils::convert_commitlike($branch);
 
             $branch_commits{$branch} = $commit;
             push @{$commit_branches{$commit} ||= []}, $branch;
@@ -114,7 +114,7 @@ sub handler
     return ($latest_base, [dump_tree(0, $first_tree, \%subject, \%commit_branches, \%children)]);
 }
 
-Amling::GRD::Operation::add_operation(\&handler);
+Amling::Git::GRD::Operation::add_operation(\&handler);
 
 sub dump_tree
 {
@@ -122,7 +122,7 @@ sub dump_tree
 
     my @ret;
 
-    push @ret, (("   " x $indent) . "pick " . $root . " # " . Amling::GRD::Utils::escape_msg($subjects->{$root}));
+    push @ret, (("   " x $indent) . "pick " . $root . " # " . Amling::Git::GRD::Utils::escape_msg($subjects->{$root}));
     my @branches = @{$commit_branches->{$root} || []};
     for my $branch (@branches)
     {

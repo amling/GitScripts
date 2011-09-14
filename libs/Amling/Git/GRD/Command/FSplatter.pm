@@ -1,14 +1,14 @@
-package Amling::GRD::Command::FSplatter;
+package Amling::Git::GRD::Command::FSplatter;
 
 use strict;
 use warnings;
 
-use Amling::GRD::Command;
-use Amling::GRD::Command::Simple;
-use Amling::GRD::Utils;
+use Amling::Git::GRD::Command;
+use Amling::Git::GRD::Command::Simple;
+use Amling::Git::GRD::Utils;
 use File::Temp ('tempfile');
 
-use base 'Amling::GRD::Command::Simple';
+use base 'Amling::Git::GRD::Command::Simple';
 
 sub name
 {
@@ -50,10 +50,10 @@ sub execute_simple
         }
     }
 
-    Amling::GRD::Utils::run("git", "reset", "--soft", $commit) || die "Cannot soft reset to $commit";
-    Amling::GRD::Utils::run("git", "commit", "-C", $ccommit) || die "Cannot commit?";
+    Amling::Git::GRD::Utils::run("git", "reset", "--soft", $commit) || die "Cannot soft reset to $commit";
+    Amling::Git::GRD::Utils::run("git", "commit", "-C", $ccommit) || die "Cannot commit?";
 }
 
-Amling::GRD::Command::add_command(sub { return __PACKAGE__->handler(@_) });
+Amling::Git::GRD::Command::add_command(sub { return __PACKAGE__->handler(@_) });
 
 1;
