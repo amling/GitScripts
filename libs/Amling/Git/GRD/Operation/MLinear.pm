@@ -9,8 +9,6 @@ use Amling::Git::Utils;
 # TODO: configurable or scoped better (in particular multiple mlinears will probably end up sad)
 our $PREFIX = "INTERNAL";
 
-# TODO: some way to do multiple together, ala Tree (but probably just take a list of branches and drag them all over together)
-
 # TODO: think hard about whether or not peephole optimization will clean up this mess
 
 # TODO: peephole optimizers need to understand comment branch comments (I think this only blocks load/save pair which is useless anyway)
@@ -134,6 +132,7 @@ sub multiple_handler
     my %commit_commands;
     my @targets;
     my @bases;
+    my @trees;
     my $onto;
 
     for my $piece (@pieces)
@@ -176,9 +175,72 @@ sub multiple_handler
                 push @targets, $head_commit;
             }
         }
+        elsif($piece =~ /^T:(.*)$/)
+        {
+            push @trees, $1;
+        }
         else
         {
             die "Unintelligible piece: $piece";
+        }
+    }
+
+    for my $tree (@trees)
+    {
+        # dump out upstream section
+        my @tree_commits;
+        my %tree_commit_1;
+        my $cb = sub
+        {
+            my $h = shift;
+            push @tree_commits, $h;
+            $tree_commit_1{$h->{'hash'}} = 1;
+        };
+        Amling::Git::Utils::log_commits([(map { "^$_" } @bases), $tree], $cb);
+
+        # now find those that have no parents in the upstream section (all i.e.  parents in the base)
+        my @maximal_tree_commits;
+        for my $h (@tree_commits)
+        {
+            my $maximal = 1;
+            for my $p (@{$h->{'parents'}})
+            {
+                if($tree_commit_1{$p})
+                {
+                    $maximal = 0;
+                    last;
+                }
+            }
+            if($maximal)
+            {
+                push @maximal_tree_commits, $h->{'hash'};
+            }
+        }
+
+        # now iterate over branches that contain each
+        for my $commit (@maximal_tree_commits)
+        {
+            open(my $fh, '-|', 'git', 'branch', '--contains', $commit) || die "Cannot open list branches containing $commit: $!";
+            while(my $line = <$fh>)
+            {
+                chomp $line;
+
+                $line =~ s/^..//;
+
+                # this BS probably won't happen but let's be sure
+                next if($line eq "(no branch)");
+
+                my $branch = $line;
+
+                if(!$branch_commands{$branch})
+                {
+                    # and we haven't included it yet, do so
+                    my $branch_commit = Amling::Git::Utils::convert_commitlike($branch);
+                    push @{$branch_commands{$branch} = []}, "branch $branch";
+                    push @targets, $branch_commit;
+                }
+            }
+            close($fh) || die "Cannot close list branches containing $commit: $!";
         }
     }
 

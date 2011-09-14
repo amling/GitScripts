@@ -30,6 +30,5 @@ sub parse
 }
 
 require Amling::Git::GRD::Operation::MLinear;
-require Amling::Git::GRD::Operation::Tree;
 
 1;
