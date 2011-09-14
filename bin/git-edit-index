@@ -10,7 +10,6 @@ use File::Basename;
 use File::Temp ('tempdir');
 
 # TODO: completely new files (easy enough to add then diff for now)?
-# TODO: put mode on tmpfile and read back off (so one could change mode during edit)
 
 # TODO: ugh, couldn't figure out a way to make git give me the repo root
 my $root = abs_path();
@@ -61,6 +60,13 @@ for my $path (@paths) {
     if($sha1 !~ /^[0-9a-f]{40}$/) {
         die "Hash for $path bad ($sha1)";
     }
+    my $mode_arg;
+    if($mode =~ /^10(0...)$/) {
+        $mode_arg = $1;
+    }
+    else {
+        die "Mode for $path bad ($mode)";
+    }
     my $tmpfn = $tempdir . "/" . (++$uniq);
     if($path =~ /^.*\/[^.\/]*(\.[^\/]*)$/) {
         $tmpfn .= $1;
@@ -72,7 +78,12 @@ for my $path (@paths) {
     }
     close($fh) || die "Cannot close $tmpfn";
     close($rfh) || die "Cannot close git cat-file $sha1";
+    system("chmod", $mode_arg, $tmpfn) && die "Could not chmod $tmpfn";
     system(($ENV{"DIFFEDITOR"} || "vimdiff"), $tmpfn, $root . "/" . $path);
+
+    my @stat = stat($tmpfn);
+    @stat || die "Cannot stat $tmpfn";
+    my $new_mode = sprintf("%o", $stat[2]);
 
     open(my $hfh, "-|", "git", "hash-object", "-w", $tmpfn) || die "Cannot open hash new file $tmpfn";
     my $new_sha1 = <$hfh>;
@@ -86,11 +97,11 @@ for my $path (@paths) {
         die "New hash for $path bad ($new_sha1)";
     }
 
-    if($new_sha1 eq $sha1) {
+    if($new_sha1 eq $sha1 && $new_mode eq $mode) {
         print "Skipping unchanged $path\n";
         next;
     }
 
     print "Updating changed $path\n";
-    system("git", "update-index", "--add", "--replace", "--cacheinfo", $mode, $new_sha1, $path) && die "Could not update index for $path";
+    system("git", "update-index", "--add", "--replace", "--cacheinfo", $new_mode, $new_sha1, $path) && die "Could not update index for $path";
 }
