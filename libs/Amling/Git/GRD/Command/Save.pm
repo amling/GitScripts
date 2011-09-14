@@ -3,9 +3,9 @@ package Amling::Git::GRD::Command::Save;
 use strict;
 use warnings;
 
-use Amling::Git::GRD::Command;
 use Amling::Git::GRD::Command::Simple;
-use Amling::Git::GRD::Utils;
+use Amling::Git::GRD::Command;
+use Amling::Git::Utils;
 
 use base 'Amling::Git::GRD::Command::Simple';
 
@@ -25,7 +25,7 @@ sub execute_simple
     my $ctx = shift;
     my $tag = shift;
 
-    $ctx->get('tags', {})->{$tag} = Amling::Git::GRD::Utils::convert_commitlike('HEAD');
+    $ctx->get('tags', {})->{$tag} = Amling::Git::Utils::convert_commitlike('HEAD');
 }
 
 Amling::Git::GRD::Command::add_command(sub { return __PACKAGE__->handler(@_) });

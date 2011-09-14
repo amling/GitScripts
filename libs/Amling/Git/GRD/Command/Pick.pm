@@ -3,9 +3,10 @@ package Amling::Git::GRD::Command::Pick;
 use strict;
 use warnings;
 
-use Amling::Git::GRD::Command;
 use Amling::Git::GRD::Command::Simple;
+use Amling::Git::GRD::Command;
 use Amling::Git::GRD::Utils;
+use Amling::Git::Utils;
 
 use base 'Amling::Git::GRD::Command::Simple';
 
@@ -48,7 +49,7 @@ sub execute_simple
 
     # if $commit's parent is us we're "picking" a change one down the line, we
     # can just fast-forward to it
-    if(Amling::Git::GRD::Utils::convert_commitlike("$commit^") eq Amling::Git::GRD::Utils::convert_commitlike("HEAD"))
+    if(Amling::Git::Utils::convert_commitlike("$commit^") eq Amling::Git::Utils::convert_commitlike("HEAD"))
     {
         print "Fast-forward cherry-picking $commit...\n";
         Amling::Git::GRD::Utils::run("git", "reset", "--hard", $commit);
@@ -57,7 +58,7 @@ sub execute_simple
     {
         if(!Amling::Git::GRD::Utils::run("git", "cherry-pick", $commit))
         {
-            if(Amling::Git::GRD::Utils::is_clean())
+            if(Amling::Git::Utils::is_clean())
             {
                 print "git cherry-pick of $commit blew chunks, but we're clean, assuming skip...\n";
                 return;
@@ -67,7 +68,7 @@ sub execute_simple
             Amling::Git::GRD::Utils::run_shell(1, 1, 0);
             print "Continuing...\n";
 
-            if(Amling::Git::GRD::Utils::is_clean())
+            if(Amling::Git::Utils::is_clean())
             {
                 print "Shell left clean, assuming skip...\n";
                 return;

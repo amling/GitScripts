@@ -4,6 +4,7 @@ use strict;
 use warnings;
 
 use Amling::Git::GRD::Utils;
+use Amling::Git::Utils;
 
 # TODO: configurable or scoped better (in particular multiple mlinears will probably end up sad)
 our $PREFIX = "INTERNAL";
@@ -71,7 +72,7 @@ sub simple_handler
     if(defined($branch))
     {
         # we only place this branch, as head (even if it wasn't head before)
-        my $branch_commit = Amling::Git::GRD::Utils::convert_commitlike($branch);
+        my $branch_commit = Amling::Git::Utils::convert_commitlike($branch);
         push @{$branch_commands{$branch} ||= []}, "head $branch";
         push @targets, $branch_commit;
     }
@@ -81,14 +82,14 @@ sub simple_handler
         if(defined($head_branch))
         {
             # ah, it's a branch, we place that
-            my $branch_commit = Amling::Git::GRD::Utils::convert_commitlike($head_branch);
+            my $branch_commit = Amling::Git::Utils::convert_commitlike($head_branch);
             push @{$branch_commands{$head_branch} ||=[]}, "head $head_branch";
             push @targets, $branch_commit;
         }
         else
         {
             # it's detached, we place a detached head at the SHA1
-            my $head_commit = Amling::Git::GRD::Utils::convert_commitlike("HEAD");
+            my $head_commit = Amling::Git::Utils::convert_commitlike("HEAD");
             push @{$commit_commands{$head_commit} ||= []}, "head";
             push @targets, $head_commit;
         }
@@ -96,7 +97,7 @@ sub simple_handler
 
     my $script = handle_common([$base], \%branch_commands, \%commit_commands, \@targets);
 
-    my $latest_base = Amling::Git::GRD::Utils::convert_commitlike($base);
+    my $latest_base = Amling::Git::Utils::convert_commitlike($base);
 
     return ($latest_base, $script);
 }
@@ -149,14 +150,14 @@ sub multiple_handler
         elsif($piece =~ /^\+(.*)$/)
         {
             my $branch = $1;
-            my $branch_commit = Amling::Git::GRD::Utils::convert_commitlike($branch);
+            my $branch_commit = Amling::Git::Utils::convert_commitlike($branch);
             push @{$branch_commands{$branch} ||= []}, "branch $branch";
             push @targets, $branch_commit;
         }
         elsif($piece =~ /^H:(.*)$/)
         {
             my $branch = $1;
-            my $branch_commit = Amling::Git::GRD::Utils::convert_commitlike($branch);
+            my $branch_commit = Amling::Git::Utils::convert_commitlike($branch);
             push @{$branch_commands{$branch} ||= []}, "head $branch";
             push @targets, $branch_commit;
         }
@@ -164,13 +165,13 @@ sub multiple_handler
         {
             if(defined($head_branch))
             {
-                my $head_commit = Amling::Git::GRD::Utils::convert_commitlike("HEAD");
+                my $head_commit = Amling::Git::Utils::convert_commitlike("HEAD");
                 push @{$branch_commands{$head_branch} ||= []}, "head $head_branch";
                 push @targets, $head_commit;
             }
             else
             {
-                my $head_commit = Amling::Git::GRD::Utils::convert_commitlike("HEAD");
+                my $head_commit = Amling::Git::Utils::convert_commitlike("HEAD");
                 push @{$commit_commands{$head_commit} ||= []}, "head";
                 push @targets, $head_commit;
             }
@@ -183,7 +184,7 @@ sub multiple_handler
 
     my $script = handle_common(\@bases, \%branch_commands, \%commit_commands, \@targets);
 
-    my $latest_base = defined($onto) ? Amling::Git::GRD::Utils::convert_commitlike($onto) : undef;
+    my $latest_base = defined($onto) ? Amling::Git::Utils::convert_commitlike($onto) : undef;
 
     return ($latest_base, $script);
 }
@@ -228,7 +229,7 @@ sub handle_common
         $parents{$commit} = $h->{'parents'};
         $subjects{$commit} = $h->{'msg'};
     };
-    Amling::Git::GRD::Utils::log_commits([(map { "^$_" } @$bases), keys(%$branch_commands), keys(%$commit_commands)], $cb);
+    Amling::Git::Utils::log_commits([(map { "^$_" } @$bases), keys(%$branch_commands), keys(%$commit_commands)], $cb);
 
     my @lines;
     push @lines, "save $PREFIX-base";

@@ -23,10 +23,11 @@ use warnings;
 use FindBin;
 use lib "$FindBin::RealBin/../libs";
 
+use Amling::Git::GRD::Exec::Context;
 use Amling::Git::GRD::Operation;
 use Amling::Git::GRD::Parser;
 use Amling::Git::GRD::Utils;
-use Amling::Git::GRD::Exec::Context;
+use Amling::Git::Utils;
 use Getopt::Long;
 
 # TODO: no die's!  need to all call common bail() infrastructure so we can reset cleanly, maybe even need to allow expectation to be passed into bail() and bail can give user option to cleanup to meet it and continue...
@@ -57,7 +58,7 @@ my @specs = @ARGV;
 
 if(defined($onto_option))
 {
-    $onto_option = Amling::Git::GRD::Utils::convert_commitlike($onto_option);
+    $onto_option = Amling::Git::Utils::convert_commitlike($onto_option);
 }
 
 my @scripts;

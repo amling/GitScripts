@@ -8,6 +8,7 @@ use Amling::Git::GRD::Command::Pick;
 use Amling::Git::GRD::Command::Simple;
 use Amling::Git::GRD::Command;
 use Amling::Git::GRD::Utils;
+use Amling::Git::Utils;
 
 use base 'Amling::Git::GRD::Command::Simple';
 
@@ -47,7 +48,7 @@ sub execute_simple
     my $msg = shift;
 
     # push HEAD^
-    push @{$ctx->get('commit-stack', [])}, Amling::Git::GRD::Utils::convert_commitlike('HEAD^');
+    push @{$ctx->get('commit-stack', [])}, Amling::Git::Utils::convert_commitlike('HEAD^');
 
     # pick *
     my $pick_delegate;

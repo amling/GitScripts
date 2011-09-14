@@ -4,6 +4,7 @@ use strict;
 use warnings;
 
 use Amling::Git::GRD::Utils;
+use Amling::Git::Utils;
 
 # TODO: OMFG, HEAD
 
@@ -55,7 +56,7 @@ sub handler
         defined($last_base) || die "Could not find last base commit";
     }
 
-    my $latest_base = Amling::Git::GRD::Utils::convert_commitlike($base);
+    my $latest_base = Amling::Git::Utils::convert_commitlike($base);
 
     my @tree_branches;
     {
@@ -79,7 +80,7 @@ sub handler
     {
         for my $branch (@tree_branches)
         {
-            my $commit = Amling::Git::GRD::Utils::convert_commitlike($branch);
+            my $commit = Amling::Git::Utils::convert_commitlike($branch);
 
             $branch_commits{$branch} = $commit;
             push @{$commit_branches{$commit} ||= []}, $branch;
