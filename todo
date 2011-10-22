@@ -21,15 +21,19 @@ GBD (git-bisect-of-doom)
     proposal
         git-bisect-of-doom-init <bad> [<good>*] [--weight '<perl>'] > statefile
         git-bisect-of-doom-run
-            positionless --state statefile (short for prefix --load statefile, --save statefile)
+            positionless --state statefile (short for prefix --load statefile, --auto-save statefile)
+            positionless --auto-XXX (e.g.  --auto-save statefile, --auto-status, --auto-checkout)
             operation: load statefile
             operation: save statefile (skips if unchanged)
             operation: good [SHA1]
             operation: bad [SHA1]
             operation: checkout
-            operation: with-range <command>
+                cache target SHA1 in memory state to avoid --auto-checkout being bad
+            operation: with-range <single arg>
                 this one is tricky w.r.t.  option parsing:
                     git-bisect-of-doom-run --state statefile --with-range git ... --who-gets-this-option?
+                figure this out later (if ever)
+            operation: dump-range
             operation: quit
             operation: status
     maybe move init into main script
