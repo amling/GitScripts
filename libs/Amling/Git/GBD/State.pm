@@ -8,8 +8,6 @@ sub new
     my $class = shift;
     my $commits_external = shift;
 
-    my $parents = {};
-    my $children = {};
     my $commits = {};
 
     for my $commit (keys(%$commits_external))
@@ -39,8 +37,6 @@ sub new
     my $self =
     {
         'commits' => $commits,
-        'parents' => $parents,
-        'children' => $children,
     };
 
     bless $self, $class;
@@ -169,6 +165,67 @@ sub set_common
         }
     };
     $this->_traverse($root_commit, $cb, $field);
+}
+
+sub find_bad_minima
+{
+    my $this = shift;
+
+    my @minima;
+
+    COMMIT:
+    for my $root_commit ($this->get_commits())
+    {
+        my $root_known = $this->get_known($root_commit);
+        if(!defined($root_known) || $root_known ne 'BAD')
+        {
+            # we're not BAD
+            next;
+        }
+
+        for my $parent (@{$this->{'commits'}->{$root_commit}->{'parents'}})
+        {
+            my $parent_known = $this->get_known($parent);
+            if(defined($parent_known) && $parent_known eq 'BAD')
+            {
+                # we're not minimal BAD
+                next COMMIT;
+            }
+        }
+        my $ct = 0;
+        my $cb = sub
+        {
+            my $commit = shift;
+            if($commit eq $root_commit)
+            {
+                return 1;
+            }
+            my $known = $this->get_known($commit);
+            if(defined($known))
+            {
+                if($known eq 'BAD')
+                {
+                    die "BAD upstream $commit of minimal BAD $root_commit?!";
+                }
+                elsif($known eq 'GOOD')
+                {
+                    return 0;
+                }
+            }
+            else
+            {
+                ++$ct;
+                return 1;
+            }
+        };
+        $this->_traverse($root_commit, $cb, 'parents');
+
+        push @minima, [$root_commit, $ct];
+    }
+
+    @minima = sort { $a->[1] <=> $b->[1] } @minima;
+
+    return @minima;
 }
 
 sub _traverse

@@ -8,6 +8,7 @@ use Amling::Git::GBD::Action::Clear;
 use Amling::Git::GBD::Action::ClearAll;
 use Amling::Git::GBD::Action::ClearBad;
 use Amling::Git::GBD::Action::ClearGood;
+use Amling::Git::GBD::Action::Debug;
 use Amling::Git::GBD::Action::Good;
 use Amling::Git::GBD::Action::Load;
 use Amling::Git::GBD::Action::Save;
@@ -20,6 +21,7 @@ my @handlers =
     'Amling::Git::GBD::Action::ClearAll',
     'Amling::Git::GBD::Action::ClearBad',
     'Amling::Git::GBD::Action::ClearGood',
+    'Amling::Git::GBD::Action::Debug',
     'Amling::Git::GBD::Action::Good',
     'Amling::Git::GBD::Action::Load',
     'Amling::Git::GBD::Action::Save',
