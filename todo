@@ -30,8 +30,6 @@ GBD (git-bisect-of-doom)
                     git-bisect-of-doom-run --state statefile --with-range git ... --who-gets-this-option?
                 figure this out later (if ever)
             operation: dump-range
-            operation: quit
-            operation: status
     maybe move init into main script
         operation: init <bad> [<good>*]
         operation: winit <perl> <bad> [<good>*]

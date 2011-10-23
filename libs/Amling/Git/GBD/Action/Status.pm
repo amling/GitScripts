@@ -39,7 +39,23 @@ sub execute_state
         }
         else
         {
-            print "Incomplete: best BAD minimum is $bad with $bad_ct unknown commits above it.\n";
+            my @good_upstreams;
+            my $cb =
+            sub
+            {
+                my $commit = shift;
+                my $known = $state->get_known($commit);
+                if(defined($known) && $known eq 'GOOD')
+                {
+                    push @good_upstreams, $commit;
+                    return 0;
+                }
+                return 1;
+            };
+            $state->traverse_up($bad, $cb);
+            print "Incomplete:\n";
+            print "Best BAD minimum is $bad with $bad_ct unknown commits above it.\n";
+            print "Good minima above that are: " . join(" ", @good_upstreams) . "\n";
         }
     }
 }
