@@ -13,4 +13,23 @@ sub new_state
     };
 }
 
+sub get_commits
+{
+    my $state = shift;
+
+    return keys(%{$state->{'commits'}});
+}
+
+sub clear_commit
+{
+    my $state = shift;
+    my $commit = shift;
+
+    my $commit_state = $state->{'commits'}->{$commit};
+    if(defined($commit_state))
+    {
+        delete $commit_state->{'known'};
+    }
+}
+
 1;
