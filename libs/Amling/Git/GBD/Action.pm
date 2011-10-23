@@ -4,6 +4,7 @@ use strict;
 use warnings;
 
 use Amling::Git::GBD::Action::Bad;
+use Amling::Git::GBD::Action::Checkout;
 use Amling::Git::GBD::Action::Clear;
 use Amling::Git::GBD::Action::ClearAll;
 use Amling::Git::GBD::Action::ClearBad;
@@ -11,6 +12,7 @@ use Amling::Git::GBD::Action::ClearGood;
 use Amling::Git::GBD::Action::Debug;
 use Amling::Git::GBD::Action::Good;
 use Amling::Git::GBD::Action::Load;
+use Amling::Git::GBD::Action::PrintCheckout;
 use Amling::Git::GBD::Action::Save;
 use Amling::Git::GBD::Action::Shell;
 use Amling::Git::GBD::Action::Status;
@@ -18,6 +20,7 @@ use Amling::Git::GBD::Action::Status;
 my @handlers =
 (
     'Amling::Git::GBD::Action::Bad',
+    'Amling::Git::GBD::Action::Checkout',
     'Amling::Git::GBD::Action::Clear',
     'Amling::Git::GBD::Action::ClearAll',
     'Amling::Git::GBD::Action::ClearBad',
@@ -25,6 +28,7 @@ my @handlers =
     'Amling::Git::GBD::Action::Debug',
     'Amling::Git::GBD::Action::Good',
     'Amling::Git::GBD::Action::Load',
+    'Amling::Git::GBD::Action::PrintCheckout',
     'Amling::Git::GBD::Action::Save',
     'Amling::Git::GBD::Action::Shell',
     'Amling::Git::GBD::Action::Status',
