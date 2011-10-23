@@ -33,7 +33,7 @@ my @actions;
 
 # TODO: auto actions (--auto-save file, --auto-status, --auto-checkout)
 # who on Earth is responsible for these?  Do they get extended into a shell (they must) or are they only know to this outer script?
-# TODO: cache target SHA1 in state?  this helps e.g.  --auto-checkout be less of a disaster
+# we might need to cache target SHA1 in state?  this helps e.g.  --auto-checkout be less of a disaster when computing it takes a while, also we need to make a matched checkout NOP
 
 my $state_file = undef;
 

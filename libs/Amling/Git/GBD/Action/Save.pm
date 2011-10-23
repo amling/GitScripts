@@ -18,7 +18,6 @@ sub execute
     my $this = shift;
     my $ctx = shift;
 
-    # TODO: skip if unchanged(?!)
     Amling::Git::GBD::Utils::save_object($this->get_arg(), $ctx->require_state());
 }
 
