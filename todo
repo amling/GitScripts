@@ -23,7 +23,6 @@ GBD (git-bisect-of-doom)
         git-bisect-of-doom-run
             positionless --state statefile (short for prefix --load statefile, --auto-save statefile)
             positionless --auto-XXX (e.g.  --auto-save statefile, --auto-status, --auto-checkout)
-            operation: clear-all
             operation: clear-bad
             operation: clear-good
             operation: good [SHA1]

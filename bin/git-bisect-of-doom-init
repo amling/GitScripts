@@ -83,7 +83,7 @@ my $commit_cb = sub
 };
 Amling::Git::Utils::log_commits(\@log_args, $commit_cb);
 
-Amling::Git::GBD::Utils::save_object($file, Amling::Git::GBD::State::new_state($commits));
+Amling::Git::GBD::Utils::save_object($file, Amling::Git::GBD::State->new($commits));
 
 sub usage
 {

@@ -3,29 +3,34 @@ package Amling::Git::GBD::State;
 use strict;
 use warnings;
 
-sub new_state
+sub new
 {
+    my $class = shift;
     my $commits = shift;
 
-    return
+    my $self =
     {
         'commits' => $commits,
     };
+
+    bless $self, $class;
+
+    return $self;
 }
 
 sub get_commits
 {
-    my $state = shift;
+    my $this = shift;
 
-    return keys(%{$state->{'commits'}});
+    return keys(%{$this->{'commits'}});
 }
 
 sub clear_commit
 {
-    my $state = shift;
+    my $this = shift;
     my $commit = shift;
 
-    my $commit_state = $state->{'commits'}->{$commit};
+    my $commit_state = $this->{'commits'}->{$commit};
     if(defined($commit_state))
     {
         delete $commit_state->{'known'};

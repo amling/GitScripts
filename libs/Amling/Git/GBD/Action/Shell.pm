@@ -44,7 +44,7 @@ sub execute
             };
             if($@)
             {
-                print "Action caught fire:";
+                print "Action caught fire:\n";
                 warn $@;
             }
         }
