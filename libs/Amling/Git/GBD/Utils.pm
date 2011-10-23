@@ -80,12 +80,12 @@ sub choose_cutpoint
         my $cut = $upstreams->[int(rand() * @$upstreams)];
 
         # find all the upstreams between cut and GOOD (not block!) to see how cut does
-        my $cut_upstreams = _find_upstreams($state, {}, $bad);
+        my $cut_upstreams = _find_upstreams($state, {}, $cut);
         # TODO: do this with sum of weight instead (both @$cut_upstreams and $gap_width are wrong)
         if(@$cut_upstreams > $gap_width / 2)
         {
             # too far, take it as new $bad
-            $bad = $cut_upstreams;
+            $bad = $cut;
         }
         else
         {

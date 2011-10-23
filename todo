@@ -23,8 +23,7 @@ GBD (git-bisect-of-doom)
         git-bisect-of-doom-run
             positionless --state statefile (short for prefix --load statefile, --auto-save statefile)
             positionless --auto-XXX (e.g.  --auto-save statefile, --auto-status, --auto-checkout)
-            operation: checkout
-                cache target SHA1 in memory state to avoid --auto-checkout being bad
+                cache target SHA1 in memory state to avoid --auto-checkout being bad?
             operation: with-range <single arg>
                 this one is tricky w.r.t.  option parsing:
                     git-bisect-of-doom-run --state statefile --with-range git ... --who-gets-this-option?

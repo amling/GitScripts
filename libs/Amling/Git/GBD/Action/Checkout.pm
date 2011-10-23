@@ -24,8 +24,7 @@ sub execute_state
     my $ctx = shift;
     my $state = shift;
 
-    #print "git checkout " . Amling::Git::GBD::Utils::choose_cutpoint($state) . "\n";
-    # TODO
+    Amling::Git::Utils::run_system("echo", "git", "checkout", Amling::Git::GBD::Utils::choose_cutpoint($state));
 }
 
 1;
