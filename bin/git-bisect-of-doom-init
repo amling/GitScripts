@@ -1,0 +1,101 @@
+#!/usr/bin/perl
+
+# Copyright (C) 2010   Keith Amling, keith.amling@gmail.com
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+$| = 1;
+
+use strict;
+use warnings;
+
+use FindBin;
+use lib "$FindBin::RealBin/../libs";
+
+use Amling::Git::GBD::Utils;
+use Amling::Git::Utils;
+use Getopt::Long;
+
+my $bad = undef;
+my @good;
+my $weight_str = "1";
+my $file = "-";
+
+my @options =
+(
+    "bad=s" => \$bad,
+    "good=s" => \@good,
+    "weight=s" => \$weight_str,
+    "file=s" => \$file,
+
+    "help" => sub { usage(0); },
+);
+
+GetOptions(@options) || usage(1);
+
+if(@ARGV)
+{
+    print "Extra arguments given?\n";
+    usage(1);
+}
+
+if(!defined($bad))
+{
+    print "No bad given?\n";
+    usage(1);
+}
+
+# TODO: make $c a real object for sweet stuff like $c->count_files(/.../)
+my $weight_sub = eval "sub { my \$c = shift; $weight_str }";
+if($@)
+{
+    print "Could not compile weight sub?\n";
+    warn $@;
+    usage(1);
+}
+
+my @log_args;
+push @log_args, (map { "^" . Amling::Git::Utils::convert_commitlike($_) } @good);
+push @log_args, Amling::Git::Utils::convert_commitlike($bad);
+
+my $state = {};
+my $commit_cb = sub
+{
+    my $hr = shift;
+    my $weight = $weight_sub->($hr);
+
+    $state->{$hr->{'hash'}} =
+    {
+        'weight' => $weight,
+    };
+};
+Amling::Git::Utils::log_commits(\@log_args, $commit_cb);
+
+Amling::Git::GBD::Utils::save_object($file, $state);
+
+sub usage
+{
+    my $ec = shift;
+
+    print <<EOF;
+Usage: $0 <options>
+   --bad <commitlike>                                 Mark a bad commit[like].
+   --good <commitlike>                                Mark a good commit[like].
+   --weight <perl>                                    You know what you doing!
+   --file <file>                                      Where to save the created state.
+   --help                                             Print this help.
+EOF
+
+    exit $ec;
+}

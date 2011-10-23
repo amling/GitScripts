@@ -77,6 +77,7 @@ sub log_commits
             chomp $body;
             close($fh2) || die "Cannot close git log: $!";
 
+            # TODO: more commit data
             $cb->({'hash' => $commit, 'parents' => \@parents, 'msg' => $body});
         }
     }
