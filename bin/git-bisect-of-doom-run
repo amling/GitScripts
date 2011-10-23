@@ -24,6 +24,8 @@ use FindBin;
 use lib "$FindBin::RealBin/../libs";
 
 use Amling::Git::GBD::Action;
+use Amling::Git::GBD::Action::Load;
+use Amling::Git::GBD::Action::Save;
 use Amling::Git::GBD::Context;
 use Amling::Git::GBD::Utils;
 use Amling::Git::Utils;
@@ -31,14 +33,15 @@ use Getopt::Long;
 
 my @actions;
 
-# TODO: --state for prefix load, postfix save
-
 # TODO: auto actions (--auto-save file, --auto-status, --auto-checkout)
 # who on Earth is responsible for these?  Do they get extended into a shell (they must) or are they only know to this outer script?
 # TODO: cache target SHA1 in state?  this helps e.g.  --auto-checkout be less of a disaster
 
+my $state_file = undef;
+
 my @options =
 (
+    '--state=s' => \$state_file,
     Amling::Git::GBD::Action::make_options(\@actions),
 );
 
@@ -46,6 +49,10 @@ GetOptions(@options) || usage(1);
 
 my $ctx = Amling::Git::GBD::Context->new();
 
+if(defined($state_file))
+{
+    Amling::Git::GBD::Action::Load->new($state_file)->execute($ctx);
+}
 my $ct = scalar(@actions);
 my $n = 1;
 for my $action (@actions)
@@ -54,4 +61,8 @@ for my $action (@actions)
     ++$n;
 
     $action->execute($ctx);
+}
+if(defined($state_file))
+{
+    Amling::Git::GBD::Action::Save->new($state_file)->execute($ctx);
 }
