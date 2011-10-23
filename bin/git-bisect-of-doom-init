@@ -23,6 +23,7 @@ use warnings;
 use FindBin;
 use lib "$FindBin::RealBin/../libs";
 
+use Amling::Git::GBD::State;
 use Amling::Git::GBD::Utils;
 use Amling::Git::Utils;
 use Getopt::Long;
@@ -69,20 +70,20 @@ my @log_args;
 push @log_args, (map { "^" . Amling::Git::Utils::convert_commitlike($_) } @good);
 push @log_args, Amling::Git::Utils::convert_commitlike($bad);
 
-my $state = {};
+my $commits = {};
 my $commit_cb = sub
 {
     my $hr = shift;
     my $weight = $weight_sub->($hr);
 
-    $state->{$hr->{'hash'}} =
+    $commits->{$hr->{'hash'}} =
     {
         'weight' => $weight,
     };
 };
 Amling::Git::Utils::log_commits(\@log_args, $commit_cb);
 
-Amling::Git::GBD::Utils::save_object($file, $state);
+Amling::Git::GBD::Utils::save_object($file, Amling::Git::GBD::State::new_state($commits));
 
 sub usage
 {
