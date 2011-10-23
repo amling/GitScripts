@@ -251,7 +251,7 @@ sub find_bad_minima
         push @minima, [$root_commit, $ct];
     }
 
-    @minima = sort { $a->[1] <=> $b->[1] } @minima;
+    @minima = sort { ($a->[1] <=> $b->[1]) || ($a->[0] cmp $b->[0]) } @minima;
 
     return @minima;
 }
