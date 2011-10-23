@@ -31,7 +31,16 @@ sub execute_state
     }
     else
     {
-        print "Best BAD minimum is " . $minima[0]->[0] . " with " . $minima[0]->[1] . " unknown commits above it.\n";
+        my $bad = $minima[0]->[0];
+        my $bad_ct = $minima[0]->[1];
+        if($bad_ct == 0)
+        {
+            print "Complete: BAD $bad has no unknown commits above it.\n";
+        }
+        else
+        {
+            print "Incomplete: best BAD minimum is $bad with $bad_ct unknown commits above it.\n";
+        }
     }
 }
 
