@@ -125,7 +125,7 @@ unless(@commands)
 
 my $ctx = Amling::Git::GRD::Exec::Context->new();
 
-Amling::Git::GRD::Utils::run("git", "checkout", $onto_final) || die "Cannot checkout $onto_final";
+Amling::Git::Utils::run_system("git", "checkout", $onto_final) || die "Cannot checkout $onto_final";
 
 my $ct = scalar(@commands);
 my $n = 1;
@@ -144,7 +144,7 @@ for my $command (@commands)
         # TODO: backup option...
         print "Updating: $branch => " . $branches->{$branch} . "\n";
         # TODO: better reason
-        Amling::Git::GRD::Utils::run("git", "update-ref", "-m", "GRD", "refs/heads/$branch", $branches->{$branch}) || die "Cannot update $branch";
+        Amling::Git::Utils::run_system("git", "update-ref", "-m", "GRD", "refs/heads/$branch", $branches->{$branch}) || die "Cannot update $branch";
     }
 }
 
@@ -157,12 +157,12 @@ for my $command (@commands)
         if($type == 0)
         {
             print "Leaving detached head at $v1.\n";
-            Amling::Git::GRD::Utils::run("git", "checkout", $v1) || die "Cannot checkout $v1";
+            Amling::Git::Utils::run_system("git", "checkout", $v1) || die "Cannot checkout $v1";
         }
         elsif($type == 1)
         {
             print "Leaving head at branch $v1.\n";
-            Amling::Git::GRD::Utils::run("git", "checkout", $v1) || die "Cannot checkout $v1";
+            Amling::Git::Utils::run_system("git", "checkout", $v1) || die "Cannot checkout $v1";
         }
         else
         {

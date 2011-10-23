@@ -3,8 +3,8 @@ package Amling::Git::GRD::Command::Edit;
 use strict;
 use warnings;
 
-use Amling::Git::GRD::Command;
 use Amling::Git::GRD::Command::Simple;
+use Amling::Git::GRD::Command;
 use Amling::Git::GRD::Utils;
 
 use base 'Amling::Git::GRD::Command::Simple';

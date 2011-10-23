@@ -137,4 +137,13 @@ sub get_dirtyness
     return 0;
 }
 
+sub run_system
+{
+    my @cmd = @_;
+
+    print "Running: " . join(", ", @cmd) . "...\n";
+
+    return (system(@cmd) == 0);
+}
+
 1;

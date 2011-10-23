@@ -3,9 +3,10 @@ package Amling::Git::GRD::Command::Splatter;
 use strict;
 use warnings;
 
-use Amling::Git::GRD::Command;
 use Amling::Git::GRD::Command::Simple;
+use Amling::Git::GRD::Command;
 use Amling::Git::GRD::Utils;
+use Amling::Git::Utils;
 use File::Temp ('tempfile');
 
 use base 'Amling::Git::GRD::Command::Simple';
@@ -71,15 +72,15 @@ sub execute_simple
     }
     close($commit_msg_fh) || die "Cannot close temp commit file $commit_msg_fn: $!";
 
-    Amling::Git::GRD::Utils::run("git", "reset", "--soft", $commit) || die "Cannot soft reset to $commit";
+    Amling::Git::Utils::run_system("git", "reset", "--soft", $commit) || die "Cannot soft reset to $commit";
     if(defined($msg))
     {
         # TODO: don't bother assembling and deleting commit_msg_fn
-        Amling::Git::GRD::Utils::run("git", "commit", "-m", $msg) || die "Cannot commit?";
+        Amling::Git::Utils::run_system("git", "commit", "-m", $msg) || die "Cannot commit?";
     }
     else
     {
-        Amling::Git::GRD::Utils::run("git", "commit", "-F", $commit_msg_fn, "-e") || die "Cannot commit?";
+        Amling::Git::Utils::run_system("git", "commit", "-F", $commit_msg_fn, "-e") || die "Cannot commit?";
     }
     unlink($commit_msg_fn) || die "Cannot unlink temp file $commit_msg_fn";
 }

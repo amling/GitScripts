@@ -72,15 +72,6 @@ sub run_shell
     }
 }
 
-sub run
-{
-    my @cmd = @_;
-
-    print "Running: " . join(", ", @cmd) . "...\n";
-
-    return (system(@cmd) == 0);
-}
-
 sub escape_msg
 {
     my $msg = shift;

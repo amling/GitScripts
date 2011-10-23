@@ -52,11 +52,11 @@ sub execute_simple
     if(Amling::Git::Utils::convert_commitlike("$commit^") eq Amling::Git::Utils::convert_commitlike("HEAD"))
     {
         print "Fast-forward cherry-picking $commit...\n";
-        Amling::Git::GRD::Utils::run("git", "reset", "--hard", $commit);
+        Amling::Git::Utils::run_system("git", "reset", "--hard", $commit);
     }
     else
     {
-        if(!Amling::Git::GRD::Utils::run("git", "cherry-pick", $commit))
+        if(!Amling::Git::Utils::run_system("git", "cherry-pick", $commit))
         {
             if(Amling::Git::Utils::is_clean())
             {
@@ -77,21 +77,21 @@ sub execute_simple
             if(defined($msg))
             {
                 # allow edit since we would normally
-                Amling::Git::GRD::Utils::run("git", "commit", "-m", $msg, "-e") || die "Cannot commit?";
+                Amling::Git::Utils::run_system("git", "commit", "-m", $msg, "-e") || die "Cannot commit?";
 
                 # no further amendment required
                 $msg = undef;
             }
             else
             {
-                Amling::Git::GRD::Utils::run("git", "commit", "-c", $commit) || die "Cannot commit?";
+                Amling::Git::Utils::run_system("git", "commit", "-c", $commit) || die "Cannot commit?";
             }
         }
     }
 
     if(defined($msg))
     {
-        Amling::Git::GRD::Utils::run("git", "commit", "--amend", "-m", $msg) || die "Cannot amend?";
+        Amling::Git::Utils::run_system("git", "commit", "--amend", "-m", $msg) || die "Cannot amend?";
     }
 }
 

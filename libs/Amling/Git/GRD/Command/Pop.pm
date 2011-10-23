@@ -5,7 +5,7 @@ use warnings;
 
 use Amling::Git::GRD::Command;
 use Amling::Git::GRD::Command::Simple;
-use Amling::Git::GRD::Utils;
+use Amling::Git::Utils;
 
 use base 'Amling::Git::GRD::Command::Simple';
 
@@ -30,7 +30,7 @@ sub execute_simple
         die "Empty commit stack popped";
     }
 
-    Amling::Git::GRD::Utils::run("git", "checkout", $commit) || die "Cannot checkout $commit";
+    Amling::Git::Utils::run_system("git", "checkout", $commit) || die "Cannot checkout $commit";
 }
 
 Amling::Git::GRD::Command::add_command(sub { return __PACKAGE__->handler(@_) });
