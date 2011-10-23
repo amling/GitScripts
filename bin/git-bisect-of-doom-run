@@ -30,8 +30,19 @@ use Amling::Git::Utils;
 use Getopt::Long;
 
 my @actions;
+
 # TODO: --state for prefix load, postfix save
-# TODO: auto actions
+
+# TODO: auto actions (--auto-save file, --auto-status, --auto-checkout)
+# who on Earth is responsible for these?  Do they get extended into a shell (they must) or are they only know to this outer script?
+# TODO: cache target SHA1 in state?  this helps e.g.  --auto-checkout be less of a disaster
+
+# TODO: operation: dump-range to dump a range suitable for direct use with revparse
+
+# TODO: operation: with-range?
+# this one is tricky w.r.t.  option parsing:
+#     git-bisect-of-doom-run --state statefile --with-range git ... --who-gets-this-option?
+# mostly covered by status having good output, would really be covered by dump-range
 
 my @options =
 (
