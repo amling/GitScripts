@@ -37,11 +37,6 @@ my @actions;
 # who on Earth is responsible for these?  Do they get extended into a shell (they must) or are they only know to this outer script?
 # TODO: cache target SHA1 in state?  this helps e.g.  --auto-checkout be less of a disaster
 
-# TODO: operation: with-range?
-# this one is tricky w.r.t.  option parsing:
-#     git-bisect-of-doom-run --state statefile --with-range git ... --who-gets-this-option?
-# mostly covered by status having good output, basically directly covered by dump-range
-
 my @options =
 (
     Amling::Git::GBD::Action::make_options(\@actions),
