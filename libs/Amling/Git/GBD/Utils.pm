@@ -64,7 +64,16 @@ sub choose_cutpoint
     {
         die "No BAD?";
     }
-    my ($bad, $gap_width) = @{$minima[0]};
+    my $root_bad = $minima[0]->[0];
+    my $gap_weight = 0;
+    for my $upstream (@{_find_upstreams($state, {}, $root_bad)})
+    {
+        if($upstream ne $root_bad)
+        {
+            $gap_weight += $state->get_weight($upstream);
+        }
+    }
+    my $bad = $root_bad;
     my %block;
     while(1)
     {
@@ -75,14 +84,27 @@ sub choose_cutpoint
         if(!@$upstreams)
         {
             # hmm, bad is as good as it gets (all its upstreams are blocked)
-            return $bad;
+            if($bad ne $root_bad)
+            {
+                # it's in the middle of the tree, good
+                return $bad;
+            }
+            else
+            {
+                # ballz, none of our parents meet it, we should take whichever has the most above them
+                return _choose_best_parent($state, $bad);
+            }
         }
         my $cut = $upstreams->[int(rand() * @$upstreams)];
 
         # find all the upstreams between cut and GOOD (not block!) to see how cut does
         my $cut_upstreams = _find_upstreams($state, {}, $cut);
-        # TODO: do this with sum of weight instead (both @$cut_upstreams and $gap_width are wrong)
-        if(@$cut_upstreams > $gap_width / 2)
+        my $cut_upstream_weight = 0;
+        for my $upstream (@$cut_upstreams)
+        {
+            $cut_upstream_weight += $state->get_weight($upstream);
+        }
+        if($cut_upstream_weight >= $gap_weight / 2)
         {
             # too far, take it as new $bad
             $bad = $cut;
@@ -95,6 +117,40 @@ sub choose_cutpoint
                 $block{$upstream} = 1;
             }
         }
+    }
+}
+
+sub _choose_best_parent
+{
+    my $state = shift;
+    my $bad = shift;
+
+    my $best = undef;
+    my $best_weight = undef;
+    for my $parent ($state->get_parents($bad))
+    {
+        my $parent_upstreams = _find_upstreams($state, {}, $parent);
+        my $parent_upstream_weight = 0;
+        for my $upstream (@$parent_upstreams)
+        {
+            $parent_upstream_weight += $state->get_weight($upstream);
+        }
+        if(!defined($best) || $parent_upstream_weight > $best_weight)
+        {
+            $best = $parent;
+            $best_weight = $parent_upstream_weight;
+        }
+    }
+
+    if(defined($best))
+    {
+        return $best;
+    }
+    else
+    {
+        # OK, parents are actually all good, we're solved but we "checkout"
+        # $bad anyway
+        return $bad;
     }
 }
 

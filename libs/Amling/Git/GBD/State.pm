@@ -99,10 +99,38 @@ sub get_known
     my $commit_state = $this->{'commits'}->{$commit};
     if(!defined($commit_state))
     {
-        return undef;
+        die "Unknown commit $commit";
     }
 
     return $commit_state->{'known'};
+}
+
+sub get_weight
+{
+    my $this = shift;
+    my $commit = shift;
+
+    my $commit_state = $this->{'commits'}->{$commit};
+    if(!defined($commit_state))
+    {
+        die "Unknown commit $commit";
+    }
+
+    return $commit_state->{'weight'};
+}
+
+sub get_parents
+{
+    my $this = shift;
+    my $commit = shift;
+
+    my $commit_state = $this->{'commits'}->{$commit};
+    if(!defined($commit_state))
+    {
+        die "Unknown commit $commit";
+    }
+
+    return @{$commit_state->{'parents'}};
 }
 
 sub _set_known
