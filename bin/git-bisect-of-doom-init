@@ -77,7 +77,21 @@ my $commit_cb = sub
 };
 Amling::Git::Utils::log_commits([(map { "^$_" } @good), @bad], $commit_cb);
 
+for my $good (@good)
+{
+    $commits->{$good} =
+    {
+        'weight' => 0,
+        'parents' => [],
+    }
+}
+
 my $state = Amling::Git::GBD::State->new($commits);
+
+for my $good (@good)
+{
+    $state->set_good($good);
+}
 for my $bad (@bad)
 {
     $state->set_bad($bad);
