@@ -23,25 +23,31 @@ use warnings;
 use FindBin;
 use lib "$FindBin::RealBin/../libs";
 
-use Amling::Git::GRD::Utils;
+use Amling::Git::GBD::Action;
+use Amling::Git::GBD::Context;
+use Amling::Git::GBD::Utils;
 use Amling::Git::Utils;
 use Getopt::Long;
 
+my @actions;
+# TODO: --state for prefix load, postfix save
+# TODO: auto actions
+
 my @options =
 (
-    "help" => sub { usage(0); },
+    Amling::Git::GBD::Action::make_options(\@actions),
 );
 
 GetOptions(@options) || usage(1);
 
-sub usage
+my $ctx = Amling::Git::GBD::Context->new();
+
+my $ct = scalar(@actions);
+my $n = 1;
+for my $action (@actions)
 {
-    my $ec = shift;
+    print "Interpretting ($n/$ct): " . $action->str() . "\n";
+    ++$n;
 
-    print <<EOF;
-Usage: $0 <options>
-   --help                                             Print this help.
-EOF
-
-    exit $ec;
+    $action->execute($ctx);
 }

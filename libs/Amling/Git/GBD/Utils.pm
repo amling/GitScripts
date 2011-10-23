@@ -29,6 +29,9 @@ sub save_object
 sub load_object
 {
     my $file = shift;
+
+    # TODO
+    die;
 }
 
 1;
