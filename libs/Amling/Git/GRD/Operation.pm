@@ -29,6 +29,6 @@ sub parse
     return (0);
 }
 
-require Amling::Git::GRD::Operation::MLinear;
+use Amling::Git::GRD::Operation::MLinear;
 
 1;

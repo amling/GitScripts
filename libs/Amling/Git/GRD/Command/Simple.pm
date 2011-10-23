@@ -3,10 +3,6 @@ package Amling::Git::GRD::Command::Simple;
 use strict;
 use warnings;
 
-use Amling::Git::GRD::Command;
-use Amling::Git::GRD::Command::Simple;
-use Amling::Git::GRD::Utils;
-
 sub handler
 {
     my $class = shift;

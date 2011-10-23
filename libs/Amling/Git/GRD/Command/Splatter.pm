@@ -55,6 +55,7 @@ sub execute_simple
         open(my $fh, '-|', 'git', 'log', "$commit..", "--reverse", "--pretty=raw") || die "Cannot open git log: $!";
         while(my $l = <$fh>)
         {
+            chomp $l;
             if($l =~ /^commit ([0-9a-f]*)$/)
             {
                 print $commit_msg_fh "# $l\n";

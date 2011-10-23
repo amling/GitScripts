@@ -29,20 +29,20 @@ sub parse
     return undef;
 }
 
-require Amling::Git::GRD::Command::Branch;
-require Amling::Git::GRD::Command::BranchHead;
-require Amling::Git::GRD::Command::DetachedHead;
-require Amling::Git::GRD::Command::Edit;
-require Amling::Git::GRD::Command::FSplatter;
-require Amling::Git::GRD::Command::Fixup;
-require Amling::Git::GRD::Command::Load;
-require Amling::Git::GRD::Command::Merge;
-require Amling::Git::GRD::Command::Pick;
-require Amling::Git::GRD::Command::Pop;
-require Amling::Git::GRD::Command::Push;
-require Amling::Git::GRD::Command::Save;
-require Amling::Git::GRD::Command::Splatter;
-require Amling::Git::GRD::Command::Squash;
+use Amling::Git::GRD::Command::Branch;
+use Amling::Git::GRD::Command::BranchHead;
+use Amling::Git::GRD::Command::DetachedHead;
+use Amling::Git::GRD::Command::Edit;
+use Amling::Git::GRD::Command::FSplatter;
+use Amling::Git::GRD::Command::Fixup;
+use Amling::Git::GRD::Command::Load;
+use Amling::Git::GRD::Command::Merge;
+use Amling::Git::GRD::Command::Pick;
+use Amling::Git::GRD::Command::Pop;
+use Amling::Git::GRD::Command::Push;
+use Amling::Git::GRD::Command::Save;
+use Amling::Git::GRD::Command::Splatter;
+use Amling::Git::GRD::Command::Squash;
 # TODO: fracture, split commit by path
 
 1;

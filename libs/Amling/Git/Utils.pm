@@ -40,15 +40,17 @@ sub log_commits
     my $args = shift;
     my $cb = shift;
 
-    # argghwtf, why can't I get this shit all unambiguously parsable in one
-    # invocation of git log?
-    open(my $fh, '-|', 'git', 'log', '--format=%H:%P', @$args) || die "Cannot open git log: $!";
+    my $SENTINEL = "WHY_GIT_WHY_DID_YOU_FUCK_US_WHY_DOES_DASH_Z_NOT_WORK_WITH_FORMAT";
+    open(my $fh, '-|', 'git', 'log', "--format=%H:%P:%B$SENTINEL", @$args) || die "Cannot open git log: $!";
+    # first newline is git being dumb(?), $SENTINEL is our fault, second newline is separating records
+    local $/ = "\n$SENTINEL\n";
     while(my $line = <$fh>)
     {
+        # N.B.:  chomps all of $SENTINEL!
         chomp $line;
-        if($line =~ /^(.*):(.*)$/)
+        if($line =~ /^([^:]*):([^:]*):(.*)$/s)
         {
-            my ($commit, $parents) = ($1, $2);
+            my ($commit, $parents, $body) = ($1, $2, $3);
 
             if(length($commit) != 40)
             {
@@ -64,18 +66,6 @@ sub log_commits
                 }
                 push @parents, $parent;
             }
-
-            open(my $fh2, '-|', 'git', 'log', '--format=%B', "-1", $commit) || die "Cannot open git log: $!";
-            my $body = "";
-            while(my $line2 = <$fh2>)
-            {
-                chomp $line2;
-                $body .= "$line2\n";
-            }
-            # ugh, fucking dumb -- one is us the other is git spooging an extra for no apparent reason
-            chomp $body;
-            chomp $body;
-            close($fh2) || die "Cannot close git log: $!";
 
             # TODO: more commit data
             $cb->({'hash' => $commit, 'parents' => \@parents, 'msg' => $body});

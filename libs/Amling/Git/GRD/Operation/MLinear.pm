@@ -3,6 +3,7 @@ package Amling::Git::GRD::Operation::MLinear;
 use strict;
 use warnings;
 
+use Amling::Git::GRD::Operation;
 use Amling::Git::GRD::Utils;
 use Amling::Git::Utils;
 
