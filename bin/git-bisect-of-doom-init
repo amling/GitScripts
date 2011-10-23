@@ -28,14 +28,14 @@ use Amling::Git::GBD::Utils;
 use Amling::Git::Utils;
 use Getopt::Long;
 
-my $bad = undef;
+my @bad;
 my @good;
 my $weight_str = "1";
 my $file = "-";
 
 my @options =
 (
-    "bad=s" => \$bad,
+    "bad=s" => \@bad,
     "good=s" => \@good,
     "weight=s" => \$weight_str,
     "file=s" => \$file,
@@ -51,12 +51,6 @@ if(@ARGV)
     usage(1);
 }
 
-if(!defined($bad))
-{
-    print "No bad given?\n";
-    usage(1);
-}
-
 # TODO: make $c a real object for sweet stuff like $c->count_files(/.../)
 my $weight_sub = eval "sub { my \$c = shift; $weight_str }";
 if($@)
@@ -66,9 +60,8 @@ if($@)
     usage(1);
 }
 
-my @log_args;
-push @log_args, (map { "^" . Amling::Git::Utils::convert_commitlike($_) } @good);
-push @log_args, Amling::Git::Utils::convert_commitlike($bad);
+@good = map { Amling::Git::Utils::convert_commitlike($_) } @good;
+@bad = map { Amling::Git::Utils::convert_commitlike($_) } @bad;
 
 my $commits = {};
 my $commit_cb = sub
@@ -82,9 +75,14 @@ my $commit_cb = sub
         'parents' => $hr->{'parents'},
     };
 };
-Amling::Git::Utils::log_commits(\@log_args, $commit_cb);
+Amling::Git::Utils::log_commits([(map { "^$_" } @good), @bad], $commit_cb);
 
-Amling::Git::GBD::Utils::save_object($file, Amling::Git::GBD::State->new($commits));
+my $state = Amling::Git::GBD::State->new($commits);
+for my $bad (@bad)
+{
+    $state->set_bad($bad);
+}
+Amling::Git::GBD::Utils::save_object($file, $state);
 
 sub usage
 {
