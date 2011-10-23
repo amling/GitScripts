@@ -4,10 +4,12 @@ use strict;
 use warnings;
 
 use Amling::Git::GBD::Action::Load;
+use Amling::Git::GBD::Action::Save;
 
 my @handlers =
 (
     'Amling::Git::GBD::Action::Load',
+    'Amling::Git::GBD::Action::Save',
 );
 
 sub make_options

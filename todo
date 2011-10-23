@@ -25,7 +25,7 @@ GBD (git-bisect-of-doom)
             positionless --auto-XXX (e.g.  --auto-save statefile, --auto-status, --auto-checkout)
             operation: shell
             operation: load statefile
-            operation: save statefile (skips if unchanged)
+            operation: save statefile (skips if unchanged?)
             operation: good [SHA1]
             operation: bad [SHA1]
             operation: checkout
