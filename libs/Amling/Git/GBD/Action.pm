@@ -4,6 +4,8 @@ use strict;
 use warnings;
 
 use Amling::Git::GBD::Action::ClearAll;
+use Amling::Git::GBD::Action::ClearBad;
+use Amling::Git::GBD::Action::ClearGood;
 use Amling::Git::GBD::Action::Load;
 use Amling::Git::GBD::Action::Save;
 use Amling::Git::GBD::Action::Shell;
@@ -11,6 +13,8 @@ use Amling::Git::GBD::Action::Shell;
 my @handlers =
 (
     'Amling::Git::GBD::Action::ClearAll',
+    'Amling::Git::GBD::Action::ClearBad',
+    'Amling::Git::GBD::Action::ClearGood',
     'Amling::Git::GBD::Action::Load',
     'Amling::Git::GBD::Action::Save',
     'Amling::Git::GBD::Action::Shell',
