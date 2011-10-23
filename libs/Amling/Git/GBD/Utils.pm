@@ -130,6 +130,10 @@ sub _choose_best_parent
     for my $parent ($state->get_parents($bad))
     {
         my $parent_upstreams = _find_upstreams($state, {}, $parent);
+        if(!@$parent_upstreams)
+        {
+            next;
+        }
         my $parent_upstream_weight = 0;
         for my $upstream (@$parent_upstreams)
         {
