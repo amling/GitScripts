@@ -7,7 +7,6 @@ use Amling::Git::GBD::Action::BaseZeroArg;
 use Amling::Git::GBD::Action::Checkout;
 use Amling::Git::GBD::Action::Good;
 use Amling::Git::GBD::Action::Status;
-use Amling::Git::GBD::Utils;
 
 use base ('Amling::Git::GBD::Action::BaseZeroArg');
 

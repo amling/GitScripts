@@ -4,7 +4,7 @@ use strict;
 use warnings;
 
 use Amling::Git::GBD::Action::BaseOneArg;
-use Amling::Git::GBD::State; # as we're demarshalling I feel we're responsible
+use Amling::Git::GBD::State;
 use Amling::Git::GBD::Utils;
 
 use base ('Amling::Git::GBD::Action::BaseOneArg');

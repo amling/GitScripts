@@ -27,8 +27,6 @@ use Amling::Git::GBD::Action;
 use Amling::Git::GBD::Action::Load;
 use Amling::Git::GBD::Action::Save;
 use Amling::Git::GBD::Context;
-use Amling::Git::GBD::Utils;
-use Amling::Git::Utils;
 use Getopt::Long;
 
 my @actions;

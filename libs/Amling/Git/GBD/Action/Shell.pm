@@ -4,7 +4,7 @@ use strict;
 use warnings;
 
 use Amling::Git::GBD::Action::BaseZeroArg;
-use Amling::Git::GBD::Utils;
+use Amling::Git::GBD::Action;
 
 use base ('Amling::Git::GBD::Action::BaseZeroArg');
 

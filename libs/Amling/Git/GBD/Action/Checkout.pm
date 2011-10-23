@@ -3,14 +3,15 @@ package Amling::Git::GBD::Action::Checkout;
 use strict;
 use warnings;
 
+use Amling::Git::GBD::Action::BaseStateExecutor;
 use Amling::Git::GBD::Action::BaseZeroArg;
 use Amling::Git::GBD::Utils;
 use Amling::Git::Utils;
 
 use base
 (
-    'Amling::Git::GBD::Action::BaseZeroArg',
     'Amling::Git::GBD::Action::BaseStateExecutor',
+    'Amling::Git::GBD::Action::BaseZeroArg',
 );
 
 sub get_action_name
