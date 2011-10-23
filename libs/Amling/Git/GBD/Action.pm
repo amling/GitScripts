@@ -5,11 +5,13 @@ use warnings;
 
 use Amling::Git::GBD::Action::Load;
 use Amling::Git::GBD::Action::Save;
+use Amling::Git::GBD::Action::Shell;
 
 my @handlers =
 (
     'Amling::Git::GBD::Action::Load',
     'Amling::Git::GBD::Action::Save',
+    'Amling::Git::GBD::Action::Shell',
 );
 
 sub make_options
