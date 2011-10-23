@@ -13,6 +13,7 @@ use Amling::Git::GBD::Action::Good;
 use Amling::Git::GBD::Action::Load;
 use Amling::Git::GBD::Action::Save;
 use Amling::Git::GBD::Action::Shell;
+use Amling::Git::GBD::Action::Status;
 
 my @handlers =
 (
@@ -26,6 +27,7 @@ my @handlers =
     'Amling::Git::GBD::Action::Load',
     'Amling::Git::GBD::Action::Save',
     'Amling::Git::GBD::Action::Shell',
+    'Amling::Git::GBD::Action::Status',
 );
 
 sub make_options

@@ -228,6 +228,15 @@ sub find_bad_minima
     return @minima;
 }
 
+sub traverse_up
+{
+    my $this = shift;
+    my $root_commit = shift;
+    my $cb = shift;
+
+    $this->_traverse($root_commit, $cb, 'parents');
+}
+
 sub _traverse
 {
     my $this = shift;
