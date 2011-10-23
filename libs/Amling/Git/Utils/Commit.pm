@@ -106,4 +106,12 @@ sub add_file
     push @{$this->{'files'}}, $file;
 }
 
+sub count_files
+{
+    my $this = shift;
+    my $re = shift;
+
+    return scalar(grep { $_ =~ $re } @{$this->{'files'}});
+}
+
 1;

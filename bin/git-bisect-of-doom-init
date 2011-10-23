@@ -51,7 +51,6 @@ if(@ARGV)
     usage(1);
 }
 
-# TODO: make $c a real object for sweet stuff like $c->count_files(/.../)
 my $weight_sub = eval "sub { my \$c = shift; $weight_str }";
 if($@)
 {
