@@ -19,7 +19,12 @@ sub execute
     my $this = shift;
     my $ctx = shift;
 
-    $ctx->set_state(Amling::Git::GBD::Utils::load_object($this->get_arg()));
+    my $state = Amling::Git::GBD::Utils::load_object($this->get_arg());
+    if(!$state->isa('Amling::Git::GBD::State'))
+    {
+        die "State is not a Amling::Git::GBD::State?";
+    }
+    $ctx->set_state($state);
 }
 
 1;
