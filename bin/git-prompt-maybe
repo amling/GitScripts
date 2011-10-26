@@ -40,26 +40,8 @@ if($head =~ s/^ref: //)
 }
 elsif($head =~ /^[0-9a-f]{40}$/)
 {
-    # I'm not positive I like this, it's somewhat expensive (up to around .1s in HH)
-    open(my $log_fh, "-|", "git", "log", "-1", "--pretty=raw") || bail("Cannot open git log -1: $!");
-    my $rev = undef;
-    while(my $l = <$log_fh>)
-    {
-        chomp $l;
-        if($l =~ /^    git-svn-id: .*\/([^ \/]*) [^ ]*$/)
-        {
-            $rev = $1;
-        }
-    }
-    if(defined($rev))
-    {
-        print " $rev\n";
-    }
-    else
-    {
-        my $short = substr($head, 0, 12);
-        print " $short\n";
-    }
+    my $short = substr($head, 0, 12);
+    print " $short\n";
 }
 else
 {
