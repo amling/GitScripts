@@ -1,0 +1,43 @@
+#!/usr/bin/perl
+
+$| = 1;
+
+use strict;
+use warnings;
+
+use Getopt::Long;
+
+my $dryrun = 0;
+
+my @options =
+(
+    "dryrun|n!" => \$dryrun,
+);
+
+GetOptions(@options) || die;
+
+my $remote_branch_1 = {};
+
+for my $branch (@ARGV)
+{
+    $branch =~ s@^remotes/@@;
+    if($branch =~ m@^([^/]*)/(.*)$@)
+    {
+        $remote_branch_1->{$1}->{$2} = 1;
+    }
+}
+
+for my $remote (sort(keys(%$remote_branch_1)))
+{
+    my @branches = sort(keys(%{$remote_branch_1->{$remote}}));
+    my @cmd = ('git', 'push', $remote, (map { ":$_" } @branches));
+    if($dryrun)
+    {
+        print "Would run: (" . join(" ", @cmd) . ")\n";
+    }
+    else
+    {
+        print "Running: (" . join(" ", @cmd) . ")\n";
+        system(@cmd) && die "Failed!";
+    }
+}
