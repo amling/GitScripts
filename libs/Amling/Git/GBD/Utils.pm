@@ -68,10 +68,7 @@ sub choose_cutpoint
     my $gap_weight = 0;
     for my $upstream (@{_find_upstreams($state, {}, $root_bad)})
     {
-        if($upstream ne $root_bad)
-        {
-            $gap_weight += $state->get_weight($upstream);
-        }
+        $gap_weight += $state->get_weight($upstream);
     }
     my $bad = $root_bad;
     my %block;
