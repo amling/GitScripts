@@ -78,6 +78,7 @@ sub escape_msg
 
     $msg =~ s/\\/\\\\/g;
     $msg =~ s/\n/\\n/g;
+    $msg =~ s/#/\\H/g;
 
     return $msg;
 }
@@ -86,6 +87,7 @@ sub unescape_msg
 {
     my $msg = shift;
 
+    $msg =~ s/\\H/#/g;
     $msg =~ s/\\n/\n/g;
     $msg =~ s/\\\\/\\/g;
 
