@@ -47,11 +47,13 @@ my %judgement;
         {
             $current = 1;
             $name = $1;
+            $name =~ s/ -> .*//;
         }
         elsif($line =~ /^  (.*)$/)
         {
             $current = 0;
             $name = $1;
+            $name =~ s/ -> .*//;
             my $judgement = $judgement{$name};
             if($judgement eq "DEFAULT")
             {
