@@ -7,6 +7,13 @@ use Amling::Git::GRD::Operation;
 use Amling::Git::GRD::Utils;
 use Amling::Git::Utils;
 
+# TODO: eliminate strictly redundant parents in a merge...
+# e.g.  if M is from A, B, and C and A <= C then drop A.
+# This is actually fairly complicated because even if A is a merge of things in C we want to drop it.
+# The rule should probably be drop A if there is a B present s.t.  all closest, non-merge ancestors of A are contained in B.
+# Unfortunately there could be an A and a B that would eliminate each other with this definition, i.e.  it lacks anti-symmetry.
+# TODO: well, maybe do something about stupid merges...
+
 # TODO: configurable or scoped better (in particular multiple mlinears will probably end up sad)
 our $PREFIX = "INTERNAL";
 
