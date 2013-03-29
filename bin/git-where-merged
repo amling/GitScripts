@@ -1,0 +1,97 @@
+#!/usr/bin/perl
+
+$| = 1;
+
+use strict;
+use warnings;
+
+if(@ARGV < 1)
+{
+    die "Usage: $0 <main branch> <query commit>...";
+}
+
+my $master = shift;
+
+my $master_commit;
+my %parents;
+{
+    open(my $fh, '-|', 'git', 'log', '--format=%H:%P', $master) || die "Cannot open git log $master: $!";
+    while(my $l = <$fh>)
+    {
+        chomp $l;
+        my ($commit, $parents_string) = split(/:/, $l);
+        $master_commit = $commit unless(defined($master_commit));
+        $parents{$commit} = [split(/ /, $parents_string)];
+    }
+    close($fh) || die "Cannot close git log $master: $!";
+}
+
+my @principal_ancestors;
+for(my $commit = $master_commit; defined($commit); $commit = $parents{$commit}->[0])
+{
+    push @principal_ancestors, $commit;
+}
+
+print "...\n";
+
+my %principal_ancestors = map { $_ => 1 } @principal_ancestors;
+
+my @query_commits;
+{
+    open(my $fh, '-|', 'git', 'rev-parse', @ARGV) || die "Cannot open git rev-parse " . join(" ", @ARGV) . ": $!";
+    while(my $l = <$fh>)
+    {
+        chomp $l;
+        push @query_commits, $l;
+    }
+    close($fh) || die "Cannot close git rev-parse " . join(" ", @ARGV) . ": $!";
+}
+
+for my $query_commit (@query_commits)
+{
+    my $found = 0;
+    for my $principal_commit (reverse(@principal_ancestors))
+    {
+        if(find($principal_commit, $query_commit, {}))
+        {
+            print "$query_commit first in $principal_commit\n";
+            $found = 1;
+            last;
+        }
+    }
+    print "$query_commit not found?\n" unless($found);
+}
+
+sub find
+{
+    my $commit = shift;
+    my $query_commit = shift;
+    my $already_checked = shift;
+
+    if($query_commit eq $commit)
+    {
+        return 1;
+    }
+
+    if($already_checked->{$commit})
+    {
+        return 0;
+    }
+
+    if($principal_ancestors{$commit})
+    {
+        return 0;
+    }
+
+    $already_checked->{$commit} = 1;
+
+    for my $parent_commit (@{$parents{$commit}})
+    {
+        if(find($parent_commit, $query_commit, $already_checked))
+        {
+            return 1;
+        }
+    }
+
+    return 0;
+}
