@@ -6,7 +6,10 @@ use strict;
 use warnings;
 
 my $remote = shift || die "No remote?";
-my $prefix = shift || die "No prefix?";
+my $local_prefix = shift;
+defined($local_prefix) || die "No local prefix?";
+my $remote_prefix = shift;
+defined($remote_prefix) || die "No remote prefix?";
 
 my %remote_branches;
 {
@@ -17,7 +20,7 @@ my %remote_branches;
         if($l =~ /^([0-9a-f]{40})\t(.*)$/)
         {
             my ($hash, $ref) = ($1, $2);
-            if($ref =~ /^refs\/heads\/\Q$prefix\E\/(.*)$/)
+            if($ref =~ /^refs\/heads\/\Q$remote_prefix\E(.*)$/)
             {
                 my $name = $1;
                 $remote_branches{$name} = $hash;
@@ -42,11 +45,14 @@ my %local_branches;
         if($l =~ /^([^ ]*) *([0-9a-f]{40}) .*$/)
         {
             my ($name, $hash) = ($1, $2);
-            $local_branches{$name} = $hash;
+            if($name =~ s/^\Q$local_prefix\E//)
+            {
+                $local_branches{$name} = $hash;
+            }
         }
         else
         {
-            die "Bad line in branche: $l";
+            die "Bad line in branches: $l";
         }
     }
     close($fh) || die "Cannot close branch";
@@ -71,14 +77,14 @@ my @specs;
             #print "Matching version of $name at $local_hash, will do nothing.\n";
             next;
         }
-        push @specs, "refs/heads/$name:refs/heads/$prefix/$name";
+        push @specs, "refs/heads/$local_prefix$name:refs/heads/$remote_prefix$name";
     }
 
     for my $name (keys(%remote_branches))
     {
         my $remote_hash = $remote_branches{$name};
         print "Stale branch $name at $remote_hash, will delete.\n";
-        push @specs, ":refs/heads/$prefix/$name";
+        push @specs, ":refs/heads/$remote_prefix$name";
     }
 }
 
