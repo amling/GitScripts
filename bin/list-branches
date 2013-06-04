@@ -81,6 +81,8 @@ my %judgement;
             print ($current ? "* " : "  ");
         }
 
+        $name =~ s/^remotes\///;
+
         print "$name\n";
     }
     close($fh) || die "Cannot close 'git branch -a'";
