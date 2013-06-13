@@ -11,6 +11,37 @@ defined($local_prefix) || die "No local prefix?";
 my $remote_prefix = shift;
 defined($remote_prefix) || die "No remote prefix?";
 
+my $combined_prefix;
+{
+    my $pre = "";
+    my $post = "";
+
+    my $v1 = $local_prefix;
+    my $v2 = $remote_prefix;
+    while(length($v1) && length($v2) && substr($v1, -1) eq substr($v2, -1))
+    {
+        $post = substr($v1, -1) . $post;
+        $v1 = substr($v1, 0, -1);
+        $v2 = substr($v2, 0, -1);
+    }
+    while(length($v1) && length($v2) && substr($v1, 0, 1) eq substr($v2, 0, 1))
+    {
+        $pre .= substr($v1, 0, 1);
+        $v1 = substr($v1, 1);
+        $v2 = substr($v2, 1);
+    }
+    my $mid;
+    if(length($v1) == 0 && length($v2) == 0)
+    {
+        $mid = '';
+    }
+    else
+    {
+        $mid = '[' . $v1 . '->' . $v2 . ']';
+    }
+    $combined_prefix = "$pre$mid$post";
+}
+
 my %remote_branches;
 {
     open(my $fh, "-|", "git", "ls-remote", "--heads", $remote) || die "Cannot open ls-remote";
@@ -66,11 +97,11 @@ my @specs;
         my $local_hash = $local_branches{$name};
         if(!defined($remote_hash))
         {
-            print "New branch $name at $local_hash\n";
+            print "New branch $combined_prefix$name at $local_hash\n";
         }
         elsif($remote_hash ne $local_hash)
         {
-            print "Old version of $name is $remote_hash, will update to $local_hash.\n";
+            print "Old version of $combined_prefix$name is $remote_hash, will update to $local_hash.\n";
         }
         else
         {
@@ -83,7 +114,7 @@ my @specs;
     for my $name (keys(%remote_branches))
     {
         my $remote_hash = $remote_branches{$name};
-        print "Stale branch $name at $remote_hash, will delete.\n";
+        print "Stale branch $combined_prefix$name at $remote_hash, will delete.\n";
         push @specs, ":refs/heads/$remote_prefix$name";
     }
 }
