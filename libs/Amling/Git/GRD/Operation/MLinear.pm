@@ -3,7 +3,6 @@ package Amling::Git::GRD::Operation::MLinear;
 use strict;
 use warnings;
 
-use Amling::Git::GRD::Operation;
 use Amling::Git::GRD::Utils;
 use Amling::Git::Utils;
 
@@ -42,231 +41,86 @@ our $PREFIX = "INTERNAL";
 # that looks funny and we probably shouldn't rename alias1 due to use
 # elsewhere...  Thankfully I think this is only screwed up in 1-parent merges.
 
-sub simple_handler
+sub generate
 {
-    my $s = shift;
+    my $head_options = shift;
+    my $plus_options = shift;
+    my $minus_options = shift;
+    my $tree_options = shift;
 
-    my ($base, $branch);
-    if($s =~ /^(?:simple|S):([^,]*)(?:,([^,]*))?$/)
-    {
-        $base = $1;
-        $branch = $2;
-    }
-    else
-    {
-        return;
-    }
+    $head_options = process_HEAD($head_options);
+    $plus_options = process_HEAD($plus_options);
+    $minus_options = {%$minus_options};
+    $tree_options = {%$tree_options};
 
-    my $head_branch = undef;
+    # convert trees to plusses
     {
-        open(my $fh, '-|', 'git', 'symbolic-ref', '-q', 'HEAD') || die "Cannot open git symbolic-ref: $!";
-        while(my $line = <$fh>)
+        # First find all "maximal" commits in the tree (i.e.  where the tree branches off)
+        my %maximal_tree_commits;
+        for my $tree (keys(%$tree_options))
         {
-            chomp $line;
-            if($line =~ /^refs\/heads\/(.*)$/)
+            # dump out upstream section
+            my @tree_commits;
+            my %tree_commits;
+            my $cb = sub
             {
-                $head_branch = $1;
-            }
-        }
-        close($fh); # do not die, if HEAD is detached this fails, stupid fucking no good way to figure that out
-    }
+                my $h = shift;
+                push @tree_commits, $h;
+                $tree_commits{$h->{'hash'}} = 1;
+            };
+            Amling::Git::Utils::log_commits([(map { "^$_" } keys(%$minus_options)), $tree], $cb);
 
-    my %branch_commands;
-    my %commit_commands;
-    my @targets;
-
-    if(defined($branch))
-    {
-        # we only place this branch, as head (even if it wasn't head before)
-        my $branch_commit = Amling::Git::Utils::convert_commitlike($branch);
-        push @{$branch_commands{$branch} ||= []}, "head $branch";
-        push @targets, $branch_commit;
-    }
-    else
-    {
-        # we weren't given a branch, what is HEAD's deal?
-        if(defined($head_branch))
-        {
-            # ah, it's a branch, we place that
-            my $branch_commit = Amling::Git::Utils::convert_commitlike($head_branch);
-            push @{$branch_commands{$head_branch} ||=[]}, "head $head_branch";
-            push @targets, $branch_commit;
-        }
-        else
-        {
-            # it's detached, we place a detached head at the SHA1
-            my $head_commit = Amling::Git::Utils::convert_commitlike("HEAD");
-            push @{$commit_commands{$head_commit} ||= []}, "head";
-            push @targets, $head_commit;
-        }
-    }
-
-    my $script = handle_common([$base], \%branch_commands, \%commit_commands, \@targets);
-
-    my $latest_base = Amling::Git::Utils::convert_commitlike($base);
-
-    return ($latest_base, $script);
-}
-
-sub multiple_handler
-{
-    my $s = shift;
-
-    my @pieces;
-    if($s =~ /^(?:multiple|M):(.*)$/)
-    {
-        @pieces = split(/,/, $1);
-    }
-    else
-    {
-        return;
-    }
-
-    my $head_branch = undef;
-    {
-        open(my $fh, '-|', 'git', 'symbolic-ref', '-q', 'HEAD') || die "Cannot open git symbolic-ref: $!";
-        while(my $line = <$fh>)
-        {
-            chomp $line;
-            if($line =~ /^refs\/heads\/(.*)$/)
+            # now find those that have no parents in the upstream section (all i.e.  parents in the base)
+            for my $h (@tree_commits)
             {
-                $head_branch = $1;
-            }
-        }
-        close($fh); # do not die, if HEAD is detached this fails, stupid fucking no good way to figure that out
-    }
-
-    my %branch_commands;
-    my %commit_commands;
-    my @targets;
-    my @bases;
-    my @trees;
-    my $onto;
-
-    for my $piece (@pieces)
-    {
-        if($piece =~ /^-(.*)$/)
-        {
-            push @bases, $1;
-        }
-        elsif($piece =~ /^O:(.*)$/)
-        {
-            push @bases, $1;
-            $onto = $1;
-        }
-        elsif($piece =~ /^\+(.*)$/)
-        {
-            my $branch = $1;
-            my $branch_commit = Amling::Git::Utils::convert_commitlike($branch);
-            push @{$branch_commands{$branch} ||= []}, "branch $branch";
-            push @targets, $branch_commit;
-        }
-        elsif($piece =~ /^H:(.*)$/)
-        {
-            my $branch = $1;
-            my $branch_commit = Amling::Git::Utils::convert_commitlike($branch);
-            push @{$branch_commands{$branch} ||= []}, "head $branch";
-            push @targets, $branch_commit;
-        }
-        elsif($piece =~ /^H$/)
-        {
-            if(defined($head_branch))
-            {
-                my $head_commit = Amling::Git::Utils::convert_commitlike("HEAD");
-                push @{$branch_commands{$head_branch} ||= []}, "head $head_branch";
-                push @targets, $head_commit;
-            }
-            else
-            {
-                my $head_commit = Amling::Git::Utils::convert_commitlike("HEAD");
-                push @{$commit_commands{$head_commit} ||= []}, "head";
-                push @targets, $head_commit;
-            }
-        }
-        elsif($piece =~ /^T:(.*)$/)
-        {
-            push @trees, $1;
-        }
-        else
-        {
-            die "Unintelligible piece: $piece";
-        }
-    }
-
-    my %maximal_tree_commits;
-    for my $tree (@trees)
-    {
-        # dump out upstream section
-        my @tree_commits;
-        my %tree_commits;
-        my $cb = sub
-        {
-            my $h = shift;
-            push @tree_commits, $h;
-            $tree_commits{$h->{'hash'}} = 1;
-        };
-        Amling::Git::Utils::log_commits([(map { "^$_" } @bases), $tree], $cb);
-
-        # now find those that have no parents in the upstream section (all i.e.  parents in the base)
-        for my $h (@tree_commits)
-        {
-            my $maximal = 1;
-            for my $p (@{$h->{'parents'}})
-            {
-                if($tree_commits{$p})
+                my $maximal = 1;
+                for my $p (@{$h->{'parents'}})
                 {
-                    $maximal = 0;
-                    last;
+                    if($tree_commits{$p})
+                    {
+                        $maximal = 0;
+                        last;
+                    }
+                }
+                if($maximal)
+                {
+                    $maximal_tree_commits{$h->{'hash'}} = 1;
                 }
             }
-            if($maximal)
-            {
-                $maximal_tree_commits{$h->{'hash'}} = 1;
-            }
         }
-    }
 
-    # now iterate over branches that contain each maximal tree commit
-    for my $commit (keys(%maximal_tree_commits))
-    {
-        open(my $fh, '-|', 'git', 'branch', '--contains', $commit) || die "Cannot open list branches containing $commit: $!";
-        while(my $line = <$fh>)
+        # now iterate over branches that contain each maximal tree commit
+        for my $commit (keys(%maximal_tree_commits))
         {
-            chomp $line;
-
-            $line =~ s/^..//;
-
-            # this BS probably won't happen but let's be sure
-            next if($line eq "(no branch)");
-
-            my $branch = $line;
-
-            if(!$branch_commands{$branch})
+            open(my $fh, '-|', 'git', 'branch', '--contains', $commit) || die "Cannot open list branches containing $commit: $!";
+            while(my $line = <$fh>)
             {
-                # and we haven't included it yet, do so
-                my $branch_commit = Amling::Git::Utils::convert_commitlike($branch);
-                push @{$branch_commands{$branch} = []}, "branch $branch";
-                push @targets, $branch_commit;
+                chomp $line;
+
+                $line =~ s/^..//;
+
+                # this BS probably won't happen but let's be sure
+                next if($line eq "(no branch)");
+
+                my $branch = $line;
+
+                if($head_options->{$branch})
+                {
+                    # already included as head
+                }
+                else
+                {
+                    $plus_options->{$branch} = 1;
+                }
             }
+            close($fh) || die "Cannot close list branches containing $commit: $!";
         }
-        close($fh) || die "Cannot close list branches containing $commit: $!";
     }
 
-    my $script = handle_common(\@bases, \%branch_commands, \%commit_commands, \@targets);
+    my $bases = [keys(%$minus_options)];
+    my $targets = [sort(keys(%{{map { Amling::Git::Utils::convert_commitlike($_) => 1 } keys(%$head_options), keys(%$plus_options)}}))];
 
-    my $latest_base = defined($onto) ? Amling::Git::Utils::convert_commitlike($onto) : undef;
-
-    return ($latest_base, $script);
-}
-
-sub handle_common
-{
-    my $bases = shift;
-    my $branch_commands = shift;
-    my $commit_commands = shift;
-    my $targets = shift;
-
-    my %commit_branch_1;
+    my $commit_commands = {};
     {
         open(my $fh, '-|', 'git', 'show-ref') || die "Cannot open git show-ref: $!";
         while(my $line = <$fh>)
@@ -276,7 +130,19 @@ sub handle_common
                 my ($commit, $ref) = ($1, $2);
                 if($ref =~ /^refs\/heads\/(.*)$/)
                 {
-                    $commit_branch_1{$commit}->{$1} = 1;
+                    my $name = $1;
+                    if(delete($head_options->{$name}))
+                    {
+                        push @{$commit_commands->{$commit} ||= []}, [$name, "head $name"];
+                    }
+                    elsif(delete($plus_options->{$name}))
+                    {
+                        push @{$commit_commands->{$commit} ||= []}, [$name, "branch $name"];
+                    }
+                    else
+                    {
+                        push @{$commit_commands->{$commit} ||= []}, [$name, "# branch $name"];
+                    }
                 }
             }
             else
@@ -286,6 +152,44 @@ sub handle_common
         }
         close($fh) || die "Cannot close git show-ref: $!";
     }
+
+    # we assume things that we couldn't name as branches are to become detached heads
+    for my $head_option (keys(%$head_options))
+    {
+        my $commit = Amling::Git::Utils::convert_commitlike($head_option);
+        my $command = [$head_option, "head # (?) from $head_option"];
+        if($head_option eq 'HEAD')
+        {
+            $command = ["!", "head"];
+        }
+        push @{$commit_commands->{$commit} ||= []}, $command;
+    }
+
+    # we assume things that we couldn't name as branches are ... something
+    for my $plus_option (keys(%$plus_options))
+    {
+        my $commit = Amling::Git::Utils::convert_commitlike($plus_option);
+        my $command = [$plus_option, "# (?) branch $plus_option"];
+        if($plus_option eq 'HEAD')
+        {
+            next;
+        }
+        push @{$commit_commands->{$commit} ||= []}, $command;
+    }
+
+    for my $commands (values(%$commit_commands))
+    {
+        @$commands = map { $_->[1] } sort { ($a->[0] cmp $b->[0]) || ($a->[1] cmp $b->[1]) } @$commands;
+    }
+
+    return handle_common($bases, $commit_commands, $targets);
+}
+
+sub handle_common
+{
+    my $bases = shift;
+    my $commit_commands = shift;
+    my $targets = shift;
 
     my %commits;
     my %parents;
@@ -299,14 +203,14 @@ sub handle_common
         $parents{$commit} = $h->{'parents'};
         $subjects{$commit} = $h->{'msg'};
     };
-    Amling::Git::Utils::log_commits([(map { "^$_" } @$bases), keys(%$branch_commands), keys(%$commit_commands)], $cb);
+    Amling::Git::Utils::log_commits([(map { "^$_" } @$bases), keys(%$commit_commands)], $cb);
 
     my @lines;
     push @lines, "save $PREFIX-base";
     my %built;
     for my $target (@$targets)
     {
-        my ($contributes, @script) = build($target, \%commits, \%built, \%parents, \%subjects, $commit_commands, \%commit_branch_1, $branch_commands);
+        my ($contributes, @script) = build($target, \%commits, \%built, \%parents, \%subjects, $commit_commands);
         if($contributes)
         {
             push @lines, @script;
@@ -331,9 +235,6 @@ sub handle_common
     return \@lines;
 }
 
-Amling::Git::GRD::Operation::add_operation(\&simple_handler);
-Amling::Git::GRD::Operation::add_operation(\&multiple_handler);
-
 sub build
 {
     my $target = shift;
@@ -342,8 +243,6 @@ sub build
     my $parents = shift;
     my $subjects = shift;
     my $commit_commands = shift;
-    my $commit_branch_1 = shift;
-    my $branch_commands = shift;
 
     # asked to build something in base
     if(!$commits->{$target})
@@ -363,7 +262,7 @@ sub build
 
     if(@mparents == 1)
     {
-        my ($contributes, @script) = build($mparents[0], $commits, $built, $parents, $subjects, $commit_commands, $commit_branch_1, $branch_commands);
+        my ($contributes, @script) = build($mparents[0], $commits, $built, $parents, $subjects, $commit_commands);
 
         if($contributes)
         {
@@ -385,7 +284,7 @@ sub build
 
         for my $parent (@mparents)
         {
-            my ($contributes, @script) = build($parent, $commits, $built, $parents, $subjects, $commit_commands, $commit_branch_1, $branch_commands);
+            my ($contributes, @script) = build($parent, $commits, $built, $parents, $subjects, $commit_commands);
 
             if($contributes)
             {
@@ -410,19 +309,6 @@ sub build
     }
 
     push @ret, @{$commit_commands->{$target} || []};
-
-    for my $branch (sort(keys(%{$commit_branch_1->{$target} || {}})))
-    {
-        my $commands = $branch_commands->{$branch};
-        if($commands)
-        {
-            push @ret, @$commands;
-        }
-        else
-        {
-            push @ret, "# branch $branch";
-        }
-    }
 
     push @ret, "save $PREFIX-$target";
     $built->{$target} = 1;
@@ -491,6 +377,14 @@ sub peephole_useless_sl_pair
         {
             $at = $1;
         }
+        elsif($line =~ /^(head|branch)( |$)/)
+        {
+            # doesn't change where we're at
+        }
+        elsif($line =~ /^#/)
+        {
+            # doesn't change where we're at
+        }
         else
         {
             $at = undef;
@@ -499,6 +393,45 @@ sub peephole_useless_sl_pair
     }
 
     return ($progress, @lines2);
+}
+
+sub process_HEAD
+{
+    my $r = shift;
+
+    my $head_branch = undef;
+    {
+        open(my $fh, '-|', 'git', 'symbolic-ref', '-q', 'HEAD') || die "Cannot open git symbolic-ref: $!";
+        while(my $line = <$fh>)
+        {
+            chomp $line;
+            if($line =~ /^refs\/heads\/(.*)$/)
+            {
+                $head_branch = $1;
+            }
+        }
+        close($fh); # do not die, if HEAD is detached this fails, stupid fucking no good way to figure that out
+    }
+
+    my $r2 = {};
+    for my $k (keys(%$r))
+    {
+        my $k2 = $k;
+        if($k eq 'HEAD')
+        {
+            if(defined($head_branch))
+            {
+                $k2 = $head_branch;
+            }
+            else
+            {
+                $k2 = 'HEAD';
+            }
+        }
+        $r2->{$k2} = 1;
+    }
+
+    return $r2;
 }
 
 1;

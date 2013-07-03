@@ -33,7 +33,7 @@ sub find_root
             die "Cannot close git rev-parse --show-toplevel: $!";
         }
     }
-    chomp $line;
+    chomp $line if defined($line);
     return $line;
 }
 

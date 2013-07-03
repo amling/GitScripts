@@ -24,7 +24,7 @@ use FindBin;
 use lib "$FindBin::RealBin/../libs";
 
 use Amling::Git::GRD::Exec::Context;
-use Amling::Git::GRD::Operation;
+use Amling::Git::GRD::Operation::MLinear;
 use Amling::Git::GRD::Parser;
 use Amling::Git::GRD::Utils;
 use Amling::Git::Utils;
@@ -40,81 +40,71 @@ use Getopt::Long;
 # TODO: dry run?
 # TODO: make empty commits work damn it (skip them or something)
 
-my $onto_option;
+my %onto_options;
+my %head_options;
+my %plus_options;
+my %minus_options;
+my %tree_options;
 my $skip_edit;
 
 my @options =
 (
-    "onto=s" => \$onto_option,
+    "onto=s" =>  sub { $onto_options{$_[1]} = 1; },
+    "head=s" =>  sub { $head_options{$_[1]} = 1; },
+
+    "plus=s" =>  sub { $plus_options{$_[1]} = 1; },
+    "minus=s" => sub { $minus_options{$_[1]} = 1; },
+
+    "tree=s" =>  sub { $tree_options{$_[1]} = 1; },
+
     "skip-edit|q" => \$skip_edit,
     "help"   => sub { usage(0); },
+
 );
 
 GetOptions(@options) || usage(1);
 
-# needed since we use "<>" for STDIN very soon
-my @specs = @ARGV;
+# we use "<>" for STDIN very soon
+my @args = @ARGV;
 @ARGV = ();
 
-if(defined($onto_option))
+if(@args == 0)
 {
-    $onto_option = Amling::Git::Utils::convert_commitlike($onto_option);
+    # arguments only
 }
-
-my @scripts;
-my $onto_final;
-for my $spec (@specs)
+elsif(@args == 1)
 {
-    my ($ok, $base, $lines) = Amling::Git::GRD::Operation::parse($spec);
-    if(!$ok)
+    if(!%onto_options)
     {
-        die "Could not parse operation $spec";
+        $onto_options{$args[0]} = 1;
     }
-    if(defined($onto_option))
-    {
-        $base = $onto_option;
-    }
-    if(!defined($base))
-    {
-        die "Spec $spec did not produce a target and --onto not specified";
-    }
-    if(!defined($onto_final))
-    {
-        $onto_final = $base;
-    }
-    else
-    {
-        if($onto_final ne $base)
-        {
-            die "Multiple targets specified: $onto_final, $base";
-        }
-    }
-    push @scripts, [$spec, $lines];
+    $minus_options{$args[0]} = 1;
+    $head_options{'HEAD'} = 1;
 }
-if(!defined($onto_final))
+elsif(@args == 2)
 {
-    print "No specs given?\n";
-    usage(1);
-}
-
-Amling::Git::GRD::Utils::run_shell(0, 0, 0);
-
-my $lines = [];
-if(@scripts == 1)
-{
-    push @$lines, @{$scripts[0]->[1]};
+    if(!%onto_options)
+    {
+        $onto_options{$args[0]} = 1;
+    }
+    $minus_options{$args[0]} = 1;
+    $head_options{$args[1]} = 1;
 }
 else
 {
-    for my $script (@scripts)
-    {
-        push @$lines, "" if(@$lines);
-        push @$lines, "# " . $script->[0];
-        push @$lines, "push";
-        push @$lines, map { "   $_" } @{$script->[1]};
-        push @$lines, "pop";
-    }
+    die "Invalid number of extra arguments (" . scalar(@args) . ")";
 }
+
+if(scalar(keys(%onto_options)) != 1)
+{
+    die "Invalid number of onto options (" . scalar(keys(%onto_options)) . ")";
+}
+
+my $onto_final = Amling::Git::Utils::convert_commitlike(keys(%onto_options));
+
+my $lines = Amling::Git::GRD::Operation::MLinear::generate(\%head_options, \%plus_options, \%minus_options, \%tree_options);
+
+Amling::Git::GRD::Utils::run_shell(0, 0, 0);
 
 my @commands = @{Amling::Git::GRD::Parser::edit_loop($lines, $skip_edit)};
 unless(@commands)
@@ -189,9 +179,27 @@ sub usage
     my $ec = shift;
 
     print <<EOF;
-Usage: $0 <options> <operations>
+Usage: $0 <options> [<extra arguments>]
    --onto <commitlike>                Use this as the destination to rebase onto.
+   --head <commitlike>                Use this as a source of commits and leave HEAD at their tip.
+
+   --plus <commitlike>                Use this as a source of commits.
+   --minus <commitlike>               Use this as a source of commits to exclude.
+
+   --tree <commitlike>                ...
+
+   --skip-edit | -q                   Skip editting by default.
    --help                             Print this help.
+
+If no extra arguments are provided only the options themselves are used to
+construct the rebase.
+
+If one extra argument it is used like normal git-rebase, i.e.  it is used as a
+--minus and as an --onto if none is provided and HEAD is used as a --head.
+
+If two extra arguments are provided they're used like normal git-rebase, i.e.
+the first is used as a --minus and as an --onto if none is provided and the
+second is used as a --head.
 EOF
 
     exit $ec;

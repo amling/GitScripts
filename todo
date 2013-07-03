@@ -6,6 +6,8 @@ GRD
         is this already fixed somehow?
     allow return to editting script at some failure points
         ideally we'd dump the saved map, stack, etc.  into the script and so just drop state and run the new script from the beginning
+GBD
+    track good/bad sets and be able to view the history (similar to "git bisect log")
 github pull requester
     worked: curl -n -d '{"title":"Please pull upstream/20110915-typo-fix","base":"8e90ecf3b8edae14b1b34663a7e0298040bf6435","head":"5a9814923942b2099862aa6503c8af8bd7b3e7d9"}' 'https://api.github.com/repos/benbernard/RecordStream/pulls'
     also worked: curl -n -d '{"title":"Please pull upstream/20110915-other-doc","base":"benbernard:master","head":"amling:upstream/20110915-other-doc"}' 'https://api.github.com/repos/benbernard/RecordStream/pulls'
