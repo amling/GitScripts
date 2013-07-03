@@ -488,6 +488,10 @@ sub peephole_useless_sl_pair
         {
             # doesn't change where we're at
         }
+        elsif($line =~ /^#/)
+        {
+            # doesn't change where we're at
+        }
         else
         {
             $at = undef;
