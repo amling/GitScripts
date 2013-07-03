@@ -203,7 +203,7 @@ sub handle_common
         $parents{$commit} = $h->{'parents'};
         $subjects{$commit} = $h->{'msg'};
     };
-    Amling::Git::Utils::log_commits([(map { "^$_" } @$bases), keys(%$commit_commands)], $cb);
+    Amling::Git::Utils::log_commits([(map { "^$_" } @$bases), @$targets], $cb);
 
     my @lines;
     push @lines, "save $PREFIX-base";
