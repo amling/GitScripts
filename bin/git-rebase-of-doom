@@ -49,7 +49,7 @@ my $skip_edit;
 
 my @options =
 (
-    "onto=s" =>  sub { $onto_options{$_[1]} = 1; },
+    "onto=s" =>  sub { $onto_options{$_[1]} = 1; $minus_options{$_[1]} = 1; },
     "head=s" =>  sub { $head_options{$_[1]} = 1; },
 
     "plus=s" =>  sub { $plus_options{$_[1]} = 1; },
