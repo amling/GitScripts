@@ -484,6 +484,10 @@ sub peephole_useless_sl_pair
         {
             $at = $1;
         }
+        elsif($line =~ /^(head|branch)( |$)/)
+        {
+            # doesn't change where we're at
+        }
         else
         {
             $at = undef;
