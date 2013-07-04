@@ -1,0 +1,167 @@
+#!/usr/bin/perl
+
+$| = 1;
+
+use strict;
+use warnings;
+
+# this is a stupid warning most of the time anyways
+no warnings ('recursion');
+
+use FindBin;
+use lib "$FindBin::RealBin/../libs";
+
+use Data::Dumper;
+use File::Basename;
+use File::Path;
+use File::Temp ('tempfile');
+use POSIX ('strftime');
+
+my $SIDE = undef;
+if($0 =~ /(?:\/|^)git-diff-cmd-([^\/]*)$/)
+{
+    $SIDE = {'gained' => 'RIGHT', 'lost' => 'LEFT'}->{$1};
+}
+
+if(!defined($SIDE))
+{
+    die "Unknown git-diff-cmd-delta alias: $0";
+}
+
+my ($path, $old_file, $hash1, $mode1, $new_file, $hash2, $mode2) = @ARGV;
+
+my $old_lines = slurp($old_file);
+my $new_lines = slurp($new_file);
+my $cache = {};
+#for(my $ad = @$old_lines - 1; $ad >= 0; --$ad)
+#{
+#    for(my $bd = @$new_lines - 1; $bd >= 0; --$bd)
+#    {
+#        srch($cache, $old_lines, $new_lines, $ad, $bd, 0);
+#    }
+#}
+my $result = srch($cache, $old_lines, $new_lines, 0, 0, 1);
+my $line_no = 1;
+for my $e (@$result)
+{
+    my $t = $e->[0];
+    if($t eq $SIDE)
+    {
+        my $line = $e->[1];
+        print "$path:$line_no:$line";
+    }
+    if($t eq "MATCH" || $t eq $SIDE)
+    {
+        ++$line_no;
+    }
+}
+
+# We make two passes
+#
+# $verbose = 0 is just deciding the direction of each which is cached.  The
+# caching lets us do all these in N*M.
+#
+# $verbose = 1 is building the full change structure from the cached
+# directions.  This is hella expensive in memory so we only build the one path
+# that matters.
+sub srch
+{
+    my ($cache, $al, $bl, $ad, $bd, $verbose) = @_;
+
+    if($ad == @$al && $bd == @$bl)
+    {
+        if($verbose)
+        {
+            return [];
+        }
+        else
+        {
+            return [0, undef];
+        }
+    }
+
+    if($verbose)
+    {
+        my $r_simple = srch($cache, $al, $bl, $ad, $bd, 0);
+        my ($weight, $dir) = @$r_simple;
+        my $r2;
+        if($dir eq "MATCH")
+        {
+            $r2 = srch($cache, $al, $bl, $ad + 1, $bd + 1, 1);
+            unshift @$r2, ["MATCH", $al->[$ad], $bl->[$bd]];
+        }
+        elsif($dir eq "LEFT")
+        {
+            $r2 = srch($cache, $al, $bl, $ad + 1, $bd, 1);
+            unshift @$r2, ["LEFT", $al->[$ad]];
+        }
+        else #if($dir eq "RIGHT")
+        {
+            $r2 = srch($cache, $al, $bl, $ad, $bd + 1, 1);
+            unshift @$r2, ["RIGHT", $bl->[$bd]];
+        }
+        return $r2;
+    }
+
+    my $k = $ad . "|" . $bd;
+    my $r = $cache->{$k};
+    if($r)
+    {
+        return $r;
+    }
+
+    my @r;
+    if($ad < @$al && $bd < @$bl && $al->[$ad] eq $bl->[$bd])
+    {
+        my $r2 = srch($cache, $al, $bl, $ad + 1, $bd + 1, 0);
+        my ($weight, $dir) = @$r2;
+        return $cache->{$k} = [$weight, "MATCH"];
+        push @r, [$weight, "MATCH"];
+        #push @r, [["MATCH", $al->[$ad], $bl->[$bd]], @$r2];
+    }
+    if($ad < @$al)
+    {
+        my $r2 = srch($cache, $al, $bl, $ad + 1, $bd, 0);
+        my ($weight, $dir) = @$r2;
+        push @r, [$weight + 1, "LEFT"];
+        #push @r, [["LEFT", $al->[$ad]], @$r2];
+    }
+    if($bd < @$bl)
+    {
+        my $r2 = srch($cache, $al, $bl, $ad, $bd + 1, 0);
+        my ($weight, $dir) = @$r2;
+        push @r, [$weight + 1, "RIGHT"];
+        #push @r, [["RIGHT", $bl->[$bd]], @$r2];
+    }
+    my $mr2;
+    for my $r2 (@r)
+    {
+        if(!defined($mr2) || $r2->[0] < $mr2->[0])
+        {
+            $mr2 = $r2;
+        }
+    }
+
+    return $cache->{$k} = $mr2;
+}
+
+sub slurp
+{
+    my ($file) = @_;
+    open(my $fh, "<", $file) || die "Cannot open $file: $!";
+    my @r;
+    while(my $l = <$fh>)
+    {
+        push @r, $l;
+    }
+    close($fh);
+    return \@r;
+}
+
+sub trim
+{
+    my ($s) = @_;
+    #$s =~ s/^[ \t]*//;
+    $s =~ s/[ \t]*$//;
+    return $s;
+}
