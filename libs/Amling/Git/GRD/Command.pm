@@ -43,6 +43,5 @@ use Amling::Git::GRD::Command::Push;
 use Amling::Git::GRD::Command::Save;
 use Amling::Git::GRD::Command::Splatter;
 use Amling::Git::GRD::Command::Squash;
-# TODO: fracture, split commit by path
 
 1;

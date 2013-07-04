@@ -42,8 +42,6 @@ sub execute_simple
 
         Amling::Git::Utils::run_system("git", "commit") || die "Could not commit merge";
     }
-
-    # TODO: amend merge? (would need original commit and I think the above is fairly prompty about merge commit message)
 }
 
 Amling::Git::GRD::Command::add_command(sub { return __PACKAGE__->handler(@_) });

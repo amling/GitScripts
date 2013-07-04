@@ -76,7 +76,6 @@ sub execute_simple
     Amling::Git::Utils::run_system("git", "reset", "--soft", $commit) || die "Cannot soft reset to $commit";
     if(defined($msg))
     {
-        # TODO: don't bother assembling and deleting commit_msg_fn
         Amling::Git::Utils::run_system("git", "commit", "-m", $msg) || die "Cannot commit?";
     }
     else
