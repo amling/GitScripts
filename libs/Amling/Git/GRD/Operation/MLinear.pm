@@ -275,12 +275,12 @@ sub build
         {
             # non-merge built on a real commit
             push @ret, @script;
-            push @ret, "load new-" . $mparents[0];
+            push @ret, "load tag:new-" . $mparents[0];
         }
         else
         {
             # non-merge built on a dead commit, just build off base
-            push @ret, "load base";
+            push @ret, "load tag:base";
         }
 
         push @ret, "pick $target # " . Amling::Git::GRD::Utils::escape_msg($subjects->{$target});
@@ -307,11 +307,11 @@ sub build
 
         if(@targets == 1)
         {
-            push @ret, "load new-" . $targets[0];
+            push @ret, "load tag:new-" . $targets[0];
         }
         else
         {
-            push @ret, "merge " . join(" ", map { "new-$_" } @targets);
+            push @ret, "merge " . join(" ", map { "tag:new-$_" } @targets);
         }
     }
 
@@ -331,7 +331,7 @@ sub peephole_useless_save
 
     for my $line (@lines)
     {
-        if($line =~ /^load (.*)$/)
+        if($line =~ /^load tag:(.*)$/)
         {
             $loaded{$1} = 1;
         }
@@ -339,7 +339,10 @@ sub peephole_useless_save
         {
             for my $name (split(/ /, $1))
             {
-                $loaded{$name} = 1;
+                if($name =~ /^tag:(.*)$/)
+                {
+                    $loaded{$1} = 1;
+                }
             }
         }
     }
@@ -372,7 +375,7 @@ sub peephole_useless_sl_pair
     my $at = undef;
     for my $line (@lines)
     {
-        if($line =~ /^load (.*)$/)
+        if($line =~ /^load tag:(.*)$/)
         {
             if(defined($at) && $at eq $1)
             {

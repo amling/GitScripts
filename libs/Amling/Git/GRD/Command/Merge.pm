@@ -3,6 +3,7 @@ package Amling::Git::GRD::Command::Merge;
 use strict;
 use warnings;
 
+use Amling::Git::GRD::Command::Load;
 use Amling::Git::GRD::Command::Simple;
 use Amling::Git::GRD::Command;
 use Amling::Git::GRD::Utils;
@@ -29,8 +30,8 @@ sub execute_simple
 {
     my $self = shift;
     my $ctx = shift;
-    my $parent0 = convert($ctx, shift);
-    my @parents1 = map { convert($ctx, $_) } @_;
+    my $parent0 = Amling::Git::GRD::Command::Load::convert_arg("Merge", $ctx, shift);
+    my @parents1 = map { Amling::Git::GRD::Command::Load::convert_arg("Merge", $ctx, $_) } @_;
 
     Amling::Git::Utils::run_system("git", "checkout", $parent0) || die "Cannot checkout $parent0";
     if(!Amling::Git::Utils::run_system("git", "merge", "--commit", "--no-ff", @parents1))
@@ -43,21 +44,6 @@ sub execute_simple
     }
 
     # TODO: amend merge? (would need original commit and I think the above is fairly prompty about merge commit message)
-}
-
-sub convert
-{
-    my $ctx = shift;
-    my $tag = shift;
-
-    my $commit = $ctx->get('tags', {})->{$tag};
-    if(defined($commit))
-    {
-        return $commit;
-    }
-
-    # not a tag?  hopefully it's a commitlike
-    return $tag;
 }
 
 Amling::Git::GRD::Command::add_command(sub { return __PACKAGE__->handler(@_) });
