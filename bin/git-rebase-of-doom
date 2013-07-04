@@ -179,7 +179,7 @@ sub usage
     my $ec = shift;
 
     print <<EOF;
-Usage: $0 <options> [<extra arguments>]
+Usage: git-rebase-of-doom <options> [<extra arguments>]
    --onto <commitlike>                Use this as the destination to rebase onto.
    --head <commitlike>                Use this as a source of commits and leave HEAD at their tip.
 
