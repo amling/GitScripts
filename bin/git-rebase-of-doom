@@ -125,7 +125,6 @@ for my $command (@commands)
     my $branches = $ctx->get('branches', {});
     for my $branch (sort(keys(%$branches)))
     {
-        # TODO: backup option...
         print "Updating: $branch => " . $branches->{$branch} . "\n";
         # TODO: better reason
         Amling::Git::Utils::run_system("git", "update-ref", "-m", "GRD", "refs/heads/$branch", $branches->{$branch}) || die "Cannot update $branch";
@@ -155,7 +154,6 @@ for my $command (@commands)
     }
     else
     {
-        # TODO: maybe reset to starting point?
         print "No head set?  Leaving wherever.\n";
     }
 }
