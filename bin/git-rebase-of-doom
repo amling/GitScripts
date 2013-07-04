@@ -24,7 +24,7 @@ use FindBin;
 use lib "$FindBin::RealBin/../libs";
 
 use Amling::Git::GRD::Exec::Context;
-use Amling::Git::GRD::Operation::MLinear;
+use Amling::Git::GRD::CodeGeneration;
 use Amling::Git::GRD::Parser;
 use Amling::Git::GRD::Utils;
 use Amling::Git::Utils;
@@ -102,7 +102,7 @@ if(scalar(keys(%onto_options)) != 1)
 
 my $onto_final = Amling::Git::Utils::convert_commitlike(keys(%onto_options));
 
-my $lines = Amling::Git::GRD::Operation::MLinear::generate(\%head_options, \%plus_options, \%minus_options, \%tree_options);
+my $lines = Amling::Git::GRD::CodeGeneration::generate(\%head_options, \%plus_options, \%minus_options, \%tree_options);
 
 Amling::Git::GRD::Utils::run_shell(0, 0, 0);
 

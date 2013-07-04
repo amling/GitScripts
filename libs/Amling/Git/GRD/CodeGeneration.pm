@@ -1,4 +1,4 @@
-package Amling::Git::GRD::Operation::MLinear;
+package Amling::Git::GRD::CodeGeneration;
 
 use strict;
 use warnings;
