@@ -2,6 +2,7 @@ GRD
     various cleanup (in script as TODO)
     maybe try to figure out "already merged" changes and skip them
         too hard in general case...
+        git machinery is an absolute mess (rev-list --cherry-pick)
     allow return to editting script at some failure points
         ideally we'd dump the saved map, stack, etc.  into the script and so just drop state and run the new script from the beginning
 GBD
