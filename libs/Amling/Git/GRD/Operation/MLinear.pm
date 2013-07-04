@@ -13,9 +13,6 @@ use Amling::Git::Utils;
 # Unfortunately there could be an A and a B that would eliminate each other with this definition, i.e.  it lacks anti-symmetry.
 # TODO: well, maybe do something about stupid merges...
 
-# TODO: configurable or scoped better (in particular multiple mlinears will probably end up sad)
-our $PREFIX = "INTERNAL";
-
 # TODO: think hard about whether or not peephole optimization will clean up this mess
 
 # TODO: peephole optimizers need to understand comment branch comments (I think this only blocks load/save pair which is useless anyway)
@@ -216,7 +213,7 @@ sub handle_common
     Amling::Git::Utils::log_commits([(map { "^$_" } @$bases), @$targets], $cb);
 
     my @lines;
-    push @lines, "save $PREFIX-base";
+    push @lines, "save base";
     my %built;
     for my $target (@$targets)
     {
@@ -278,12 +275,12 @@ sub build
         {
             # non-merge built on a real commit
             push @ret, @script;
-            push @ret, "load $PREFIX-" . $mparents[0];
+            push @ret, "load new-" . $mparents[0];
         }
         else
         {
             # non-merge built on a dead commit, just build off base
-            push @ret, "load $PREFIX-base";
+            push @ret, "load base";
         }
 
         push @ret, "pick $target # " . Amling::Git::GRD::Utils::escape_msg($subjects->{$target});
@@ -310,17 +307,17 @@ sub build
 
         if(@targets == 1)
         {
-            push @ret, "load $PREFIX-" . $targets[0];
+            push @ret, "load new-" . $targets[0];
         }
         else
         {
-            push @ret, "merge " . join(" ", map { "$PREFIX-$_" } @targets);
+            push @ret, "merge " . join(" ", map { "new-$_" } @targets);
         }
     }
 
     push @ret, @{$commit_commands->{$target} || []};
 
-    push @ret, "save $PREFIX-$target";
+    push @ret, "save new-$target";
     $built->{$target} = 1;
 
     return (1, @ret);
