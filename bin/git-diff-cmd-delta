@@ -157,11 +157,3 @@ sub slurp
     close($fh);
     return \@r;
 }
-
-sub trim
-{
-    my ($s) = @_;
-    #$s =~ s/^[ \t]*//;
-    $s =~ s/[ \t]*$//;
-    return $s;
-}
