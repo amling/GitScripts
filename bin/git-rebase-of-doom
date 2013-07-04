@@ -186,7 +186,7 @@ Usage: $0 <options> [<extra arguments>]
    --plus <commitlike>                Use this as a source of commits.
    --minus <commitlike>               Use this as a source of commits to exclude.
 
-   --tree <commitlike>                ...
+   --tree <commitlike>                Firklewitz this commit[like].
 
    --skip-edit | -q                   Skip editting by default.
    --help                             Print this help.
@@ -200,6 +200,22 @@ If one extra argument it is used like normal git-rebase, i.e.  it is used as a
 If two extra arguments are provided they're used like normal git-rebase, i.e.
 the first is used as a --minus and as an --onto if none is provided and the
 second is used as a --head.
+
+Both the one and two extra argument forms act roughly as they do in plain
+git-rebase as does the --onto switch so simple examples generally are the same.
+For example:
+
+# Rebase the HEAD branch up to the tip of master
+git-rebase-of-doom master
+git-rebase-of-doom --onto master --head HEAD
+
+# Rebase feature up to the tip of master
+git-rebase-of-doom master feature
+git-rebase-of-doom --onto master --head feature
+
+# Rebase feature up to the tip of master but exclude commits from dev.
+git-rebase-of-doom master feature --minus dev
+git-rebase-of-doom --onto master --head feature --minus dev
 EOF
 
     exit $ec;
