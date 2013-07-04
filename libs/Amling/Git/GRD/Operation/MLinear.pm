@@ -41,6 +41,16 @@ our $PREFIX = "INTERNAL";
 # that looks funny and we probably shouldn't rename alias1 due to use
 # elsewhere...  Thankfully I think this is only screwed up in 1-parent merges.
 
+# better "algorithm"?
+#     given a DAG (has-parent)
+#     produce total order to minimize {(i, j) | j != i + 1 && (x_i, x_j) \in edges}
+#     will necessarily put root first
+#     each multiple-children point contributes the same amount of half edges no matter the layout
+#     each multiple-parent point contriubtes the same amount of half edges no matter the layout
+#     and we needn't take any more
+#     notably each single link is always rendered adjacent (parent can only be included via child and is thus immediate)
+#     so we're actually optimal?
+
 sub generate
 {
     my $head_options = shift;
