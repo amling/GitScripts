@@ -59,6 +59,7 @@ my @options =
 GetOptions(@options) || usage(1);
 
 # we use "<>" for STDIN very soon
+my $reason = join(" ", "GRD", @ARGV);
 my @args = @ARGV;
 @ARGV = ();
 
@@ -126,8 +127,7 @@ for my $command (@commands)
     for my $branch (sort(keys(%$branches)))
     {
         print "Updating: $branch => " . $branches->{$branch} . "\n";
-        # TODO: better reason
-        Amling::Git::Utils::run_system("git", "update-ref", "-m", "GRD", "refs/heads/$branch", $branches->{$branch}) || die "Cannot update $branch";
+        Amling::Git::Utils::run_system("git", "update-ref", "-m", $reason, "refs/heads/$branch", $branches->{$branch}) || die "Cannot update $branch";
     }
 }
 
