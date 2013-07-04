@@ -19,7 +19,7 @@ our $PREFIX = "INTERNAL";
 # TODO: think hard about whether or not peephole optimization will clean up this mess
 
 # TODO: peephole optimizers need to understand comment branch comments (I think this only blocks load/save pair which is useless anyway)
-# TODO: peephole optimization for load/save pair (alias, ugh, this is only for 1-parent merge, fuck it)
+# TODO: peephole optimization for load/save pair (alias, ugh, this is only for 1-parent-left merge, fuck it)
 # Ugh, consider:
 #
 # ...
