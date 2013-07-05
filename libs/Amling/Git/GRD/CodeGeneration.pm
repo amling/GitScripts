@@ -227,6 +227,8 @@ sub generate
 
             $node->{'build'}->(sub { return $self->($self, @_) }, \@ret);
 
+            push @ret, @{$node->{'commands'}};
+
             if($node->{'loads'} > 1)
             {
                 push @ret, "save " . ($target eq "base" ? "base" : "new-$target");
