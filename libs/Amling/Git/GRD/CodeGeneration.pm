@@ -160,19 +160,17 @@ sub generate
     };
     Amling::Git::Utils::log_commits([(map { "^$_" } keys(%$minus_options)), @targets], $log_cb);
 
-    my %nodes =
-    (
-        'base' =>
+    my %nodes;
+    $nodes{'base'} =
+    {
+        'loads' => 0,
+        'commands' => [],
+        'build' => sub
         {
-            'loads' => 0,
-            'commands' => [],
-            'build' => sub
-            {
-                # This one is sort of magic.  It will always get hit at the top
-                # and needn't do anything.
-            },
-        }
-    );
+            # This one is sort of magic.  It will always get hit at the top
+            # and needn't do anything.
+        },
+    };
     my %old_new;
 
     for my $target (@targets)
