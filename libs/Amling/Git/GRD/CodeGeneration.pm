@@ -188,7 +188,7 @@ sub generate
 
     my %parents;
     my %subjects;
-    my $cb = sub
+    my $log_cb = sub
     {
         my $h = shift;
         my $commit = $h->{'hash'};
@@ -196,7 +196,7 @@ sub generate
         $parents{$commit} = $h->{'parents'};
         $subjects{$commit} = $h->{'msg'};
     };
-    Amling::Git::Utils::log_commits([(map { "^$_" } keys(%$minus_options)), @targets], $cb);
+    Amling::Git::Utils::log_commits([(map { "^$_" } keys(%$minus_options)), @targets], $log_cb);
 
     my %nodes =
     (
@@ -243,57 +243,39 @@ sub generate
         push @new_targets, 'base';
     }
 
+    my @ret;
     for my $new_target (@new_targets)
     {
-        my $generate_ = sub
+        my $build_cb = sub
         {
+            my $self = shift;
             my $target = shift;
-            my $generate_ = shift;
-            my $load_ = shift;
-            my $generate = sub { return $generate_->(@_, $generate_, $load_); };
-            my $load = sub { return $load_->(@_, $generate_, $load_); };
+            my $load = shift;
 
             my $node = $nodes{$target};
 
             if($node->{'generated'})
             {
+                if($load)
+                {
+                    push @ret, "load tag:" . ($target eq "base" ? "base" : "new-$target");
+                }
                 return;
             }
 
-            $node->{'build'}->($generate, $load);
+            $node->{'build'}->(sub { return $self->($self, @_) }, \@ret);
 
             if($node->{'loads'} > 1)
             {
-                print "save new-$target\n";
+                push @ret, "save " . ($target eq "base" ? "base" : "new-$target");
             }
+
+            $node->{'generated'} = 1;
         };
-        my $load_ = sub
-        {
-            my $target = shift;
-            my $generate_ = shift;
-            my $load_ = shift;
-            my $generate = sub { return $generate_->(@_, $generate_, $load_); };
-            my $load = sub { return $load_->(@_, $generate_, $load_); };
-
-            my $node = $nodes{$target};
-
-            if($node->{'generated'})
-            {
-                print "load tag:new-$target\n";
-                return;
-            }
-
-            $node->{'build'}->($generate, $load);
-
-            if($node->{'loads'} > 1)
-            {
-                print "save new-$target\n";
-            }
-        };
+        $build_cb->($build_cb, $new_target, 0);
     }
 
-exit 0;
-    # return arrayref of lines
+    return \@ret;
 }
 
 sub build_nodes
@@ -329,12 +311,12 @@ sub build_nodes
             'commands' => [],
             'build' => sub
             {
-                my $generate = shift;
-                my $load = shift;
+                my $cb = shift;
+                my $script = shift;
 
-                $load->($parent);
+                $cb->($parent, 1);
 
-                print "pick $target # " . Amling::Git::GRD::Utils::escape_msg($subjects->{$target}) . "\n";
+                push @$script, "pick $target # " . Amling::Git::GRD::Utils::escape_msg($subjects->{$target});
             },
         };
         return $old_new->{$target} = $target;
@@ -379,15 +361,15 @@ sub build_nodes
             'commands' => [],
             'build' => sub
             {
-                my $generate = shift;
-                my $load = shift;
+                my $cb = shift;
+                my $script = shift;
 
                 for my $new_parent (@new_parents)
                 {
-                    $generate->($new_parent);
+                    $cb->($new_parent, 0);
                 }
 
-                print "merge " . join(" ", map { "tag:new-$_" } @new_parents) . "\n";
+                push @$script, "merge " . join(" ", map { "tag:new-$_" } @new_parents);
             },
         };
         return $old_new->{$target} = $target;
