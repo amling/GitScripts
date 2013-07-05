@@ -184,11 +184,6 @@ sub generate
         push @{$commit_commands->{$commit} ||= []}, $command;
     }
 
-    for my $commands (values(%$commit_commands))
-    {
-        @$commands = map { $_->[1] } sort { ($a->[0] cmp $b->[0]) || ($a->[1] cmp $b->[1]) } @$commands;
-    }
-
     my @targets = sort(keys(%{{map { Amling::Git::Utils::convert_commitlike($_) => 1 } keys(%$head_options), keys(%$plus_options)}}));
 
     my %parents;
@@ -208,6 +203,7 @@ sub generate
         'base' =>
         {
             'loads' => 0,
+            'commands' => [],
             ...
         }
     );
@@ -216,6 +212,23 @@ sub generate
     for my $target (@targets)
     {
         build_nodes($target, \%nodes, \%old_new, \%parents, \%subjects);
+    }
+
+    for my $commit (keys($commit_commands))
+    {
+        push @{$nodes{$old_new{$commit}}->{'commands'}}, @{$commit_commands->{$commit}};
+    }
+
+    for my $node (values(%nodes))
+    {
+        @{$node->{'commands'}} = map { $_->[1] } sort { ($a->[0] cmp $b->[0]) || ($a->[1] cmp $b->[1]) } @{$node->{'commands'}};
+    }
+
+    my @new_targets = sort(keys(%{{map { $old_new{$_} => 1 } @targets}}));
+
+    for my $new_target (@new_targets)
+    {
+        # generate $node->{$new_target}
     }
 
     # return arrayref of lines
@@ -251,6 +264,7 @@ sub build_nodes
         $nodes->{$target} =
         {
             'loads' => 0,
+            'commands' => [],
             ... # pick of $target over $parent
         };
         return $old_new->{$target} = $target;
@@ -286,11 +300,13 @@ sub build_nodes
 
         for my $new_parent (@new_parents)
         {
-            ++$nodes->{$new_parent}->{'loads'};
+            # force a save
+            $nodes->{$new_parent}->{'loads'} += 2;
         }
         $nodes->{$target} =
         {
             'loads' => 0,
+            'commands' => [],
             ... # merge...
         };
         return $old_new->{$target} = $target;
