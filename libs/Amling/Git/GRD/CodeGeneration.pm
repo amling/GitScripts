@@ -175,7 +175,7 @@ sub generate
 
     for my $target (@targets)
     {
-        build_nodes($target, \%nodes, \%old_new, \%parents, \%subjects);
+        build_nodes($target, \%nodes, \%old_new, \%parents, \%subjects, 1);
     }
 
     for my $commit (keys(%$commit_commands))
@@ -248,6 +248,7 @@ sub build_nodes
     my $old_new = shift;
     my $parents = shift;
     my $subjects = shift;
+    my $force_include = shift;
 
     my $new = $old_new->{$target};
     if(defined($new))
@@ -257,15 +258,18 @@ sub build_nodes
 
     if(!$parents->{$target})
     {
-        # hit base
-        return $old_new->{$target} = "base";
+        if($force_include)
+        {
+            $old_new->{$target} = "base";
+        }
+        return "base";
     }
 
     my $build;
     my @mparents = @{$parents->{$target}};
     if(@mparents == 1)
     {
-        my $parent = build_nodes($mparents[0], $nodes, $old_new, $parents, $subjects);
+        my $parent = build_nodes($mparents[0], $nodes, $old_new, $parents, $subjects, 0);
 
         # no matter what we load result (base or otherwise) and map to ourselves
         ++$nodes->{$parent}->{'loads'};
@@ -286,7 +290,7 @@ sub build_nodes
 
         for my $parent (@mparents)
         {
-            my $new_parent = build_nodes($parent, $nodes, $old_new, $parents, $subjects);
+            my $new_parent = build_nodes($parent, $nodes, $old_new, $parents, $subjects, 0);
 
             if($new_parent ne 'base')
             {
