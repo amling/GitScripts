@@ -191,7 +191,6 @@ sub generate
 
     my @targets = sort(keys(%{{map { Amling::Git::Utils::convert_commitlike($_) => 1 } keys(%$head_options), keys(%$plus_options)}}));
 
-    my %commits;
     my %parents;
     my %subjects;
     my $cb = sub
@@ -199,41 +198,41 @@ sub generate
         my $h = shift;
         my $commit = $h->{'hash'};
 
-        $commits{$commit} = 1;
         $parents{$commit} = $h->{'parents'};
         $subjects{$commit} = $h->{'msg'};
     };
     Amling::Git::Utils::log_commits([(map { "^$_" } keys(%$minus_options)), @targets], $cb);
 
-    my %loads;
+    my %nodes =
+    (
+        'base' =>
+        {
+            'loads' => 0,
+            ...
+        }
+    );
     my %old_new;
 
     for my $target (@targets)
     {
-        count_loads($target, \%loads, \%parents, \%old_new);
-    }
-
-    my @ret;
-
-    for my $target (@targets)
-    {
-        push @ret, build($target, \%loads, \%parents, \%old_new);
+        build_nodes($target, \%nodes, \%old_new, \%parents, \%subjects);
     }
 
     # return arrayref of lines
 }
 
-sub count_loads
+sub build_nodes
 {
     my $target = shift;
-    my $loads = shift;
-    my $parents = shift;
+    my $nodes = shift;
     my $old_new = shift;
+    my $parents = shift;
+    my $subjects = shift;
 
     if(!$parents->{$target})
     {
         # hit base
-        return "base";
+        return 'base';
     }
 
     my $new = $old_new->{$target};
@@ -245,10 +244,15 @@ sub count_loads
     my @mparents = @{$parents->{$target}};
     if(@mparents == 1)
     {
-        my $result = count_loads($mparents[0], $loads, $parents, $old_new);
+        my $parent = build_nodes($mparents[0], $nodes, $old_new, $parents, $subjects);
 
         # no matter what we load result (base or otherwise) and map to ourselves
-        ++$loads{$result};
+        ++$nodes->{$parent}->{'loads'};
+        $nodes->{$target} =
+        {
+            'loads' => 0,
+            ... # pick of $target over $parent
+        };
         return $old_new->{$target} = $target;
     }
     else
@@ -258,9 +262,9 @@ sub count_loads
 
         for my $parent (@mparents)
         {
-            my $new_parent = count_loads($parent, $loads, $parents, $old_new);
+            my $new_parent = build_nodes($parent, $loads, $parents, $old_new);
 
-            if($new_parent ne "base")
+            if($new_parent ne 'base')
             {
                 if(!$new_parents{$new_parent})
                 {
@@ -282,15 +286,15 @@ sub count_loads
 
         for my $new_parent (@new_parents)
         {
-            ++$loads{$new_parent};
+            ++$nodes->{$new_parent}->{'loads'};
         }
+        $nodes->{$target} =
+        {
+            'loads' => 0,
+            ... # merge...
+        };
         return $old_new->{$target} = $target;
     }
-}
-
-sub build
-{
-    ...
 }
 
 sub process_HEAD
