@@ -262,6 +262,7 @@ sub build_nodes
         return $new;
     }
 
+    my $build;
     my @mparents = @{$parents->{$target}};
     if(@mparents == 1)
     {
@@ -269,21 +270,15 @@ sub build_nodes
 
         # no matter what we load result (base or otherwise) and map to ourselves
         ++$nodes->{$parent}->{'loads'};
-        $nodes->{$target} =
+        $build = sub
         {
-            'loads' => 0,
-            'commands' => [],
-            'build' => sub
-            {
-                my $cb = shift;
-                my $script = shift;
+            my $cb = shift;
+            my $script = shift;
 
-                $cb->($parent, 1);
+            $cb->($parent, 1);
 
-                push @$script, "pick $target # " . Amling::Git::GRD::Utils::escape_msg($subjects->{$target});
-            },
+            push @$script, "pick $target # " . Amling::Git::GRD::Utils::escape_msg($subjects->{$target});
         };
-        return $old_new->{$target} = $target;
     }
     else
     {
@@ -319,25 +314,27 @@ sub build_nodes
             # force a save
             $nodes->{$new_parent}->{'loads'} += 2;
         }
-        $nodes->{$target} =
+        $build = sub
         {
-            'loads' => 0,
-            'commands' => [],
-            'build' => sub
+            my $cb = shift;
+            my $script = shift;
+
+            for my $new_parent (@new_parents)
             {
-                my $cb = shift;
-                my $script = shift;
+                $cb->($new_parent, 0);
+            }
 
-                for my $new_parent (@new_parents)
-                {
-                    $cb->($new_parent, 0);
-                }
-
-                push @$script, "merge " . join(" ", map { "tag:new-$_" } @new_parents);
-            },
+            push @$script, "merge " . join(" ", map { "tag:new-$_" } @new_parents);
         };
-        return $old_new->{$target} = $target;
     }
+
+    $nodes->{$target} =
+    {
+        'loads' => 0,
+        'commands' => [],
+        'build' => $build,
+    };
+    return $old_new->{$target} = $target;
 }
 
 sub process_HEAD
