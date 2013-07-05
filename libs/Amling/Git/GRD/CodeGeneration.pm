@@ -47,6 +47,9 @@ use Amling::Git::Utils;
 #     and we needn't take any more
 #     notably each single link is always rendered adjacent (parent can only be included via child and is thus immediate)
 #     so we're actually optimal?
+#
+# yeah, we can maybe do better (simpler?) by building the DAG of
+# actual picks themselves first and then laying that out?
 
 sub generate
 {
