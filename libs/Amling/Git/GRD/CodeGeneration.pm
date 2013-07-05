@@ -127,9 +127,6 @@ sub generate
         }
     }
 
-    my $bases = [keys(%$minus_options)];
-    my $targets = [sort(keys(%{{map { Amling::Git::Utils::convert_commitlike($_) => 1 } keys(%$head_options), keys(%$plus_options)}}))];
-
     my $commit_commands = {};
     {
         open(my $fh, '-|', 'git', 'show-ref') || die "Cannot open git show-ref: $!";
@@ -192,14 +189,7 @@ sub generate
         @$commands = map { $_->[1] } sort { ($a->[0] cmp $b->[0]) || ($a->[1] cmp $b->[1]) } @$commands;
     }
 
-    return handle_common($bases, $commit_commands, $targets);
-}
-
-sub handle_common
-{
-    my $bases = shift;
-    my $commit_commands = shift;
-    my $targets = shift;
+    my @targets = sort(keys(%{{map { Amling::Git::Utils::convert_commitlike($_) => 1 } keys(%$head_options), keys(%$plus_options)}}));
 
     my %commits;
     my %parents;
@@ -213,199 +203,94 @@ sub handle_common
         $parents{$commit} = $h->{'parents'};
         $subjects{$commit} = $h->{'msg'};
     };
-    Amling::Git::Utils::log_commits([(map { "^$_" } @$bases), @$targets], $cb);
+    Amling::Git::Utils::log_commits([(map { "^$_" } keys(%$minus_options)), @targets], $cb);
 
-    my @lines;
-    push @lines, "save base";
-    my %built;
-    for my $target (@$targets)
+    my %loads;
+    my %old_new;
+
+    for my $target (@targets)
     {
-        my ($contributes, @script) = build($target, \%commits, \%built, \%parents, \%subjects, $commit_commands);
-        if($contributes)
-        {
-            push @lines, @script;
-        }
+        count_loads($target, \%loads, \%parents, \%old_new);
     }
 
-    while(1)
+    my @ret;
+
+    for my $target (@targets)
     {
-        my $progress = 0;
-        for my $opt (\&peephole_useless_save, \&peephole_useless_sl_pair)
+        push @ret, build($target, \%loads, \%parents, \%old_new);
+    }
+
+    # return arrayref of lines
+}
+
+sub count_loads
+{
+    my $target = shift;
+    my $loads = shift;
+    my $parents = shift;
+    my $old_new = shift;
+
+    if(!$parents->{$target})
+    {
+        # hit base
+        return "base";
+    }
+
+    my $new = $old_new->{$target};
+    if(defined($new))
+    {
+        return $new;
+    }
+
+    my @mparents = @{$parents->{$target}};
+    if(@mparents == 1)
+    {
+        my $result = count_loads($mparents[0], $loads, $parents, $old_new);
+
+        # no matter what we load result (base or otherwise) and map to ourselves
+        ++$loads{$result};
+        return $old_new->{$target} = $target;
+    }
+    else
+    {
+        my @new_parents;
+        my %new_parents;
+
+        for my $parent (@mparents)
         {
-            my $progress1;
-            ($progress1, @lines) = $opt->(@lines);
-            if($progress1)
+            my $new_parent = count_loads($parent, $loads, $parents, $old_new);
+
+            if($new_parent ne "base")
             {
-                $progress = 1;
+                if(!$new_parents{$new_parent})
+                {
+                    push @new_parents, $new_parent;
+                    $new_parents{$new_parent} = 1;
+                }
             }
         }
-        last unless($progress);
-    }
 
-    return \@lines;
+        if(@new_parents == 0)
+        {
+            return $old_new->{$target} = "base";
+        }
+
+        if(@new_parents == 1)
+        {
+            return $old_new->{$target} = $new_parents[0];
+        }
+
+        for my $new_parent (@new_parents)
+        {
+            ++$loads{$new_parent};
+        }
+        return $old_new->{$target} = $target;
+    }
 }
 
 sub build
 {
-    my $target = shift;
-    my $commits = shift;
-    my $built = shift;
-    my $parents = shift;
-    my $subjects = shift;
-    my $commit_commands = shift;
-
-    # asked to build something in base
-    if(!$commits->{$target})
-    {
-        return 0;
-    }
-
-    # already built, and it was relevant (but no additional script)
-    if($built->{$target})
-    {
-        return 1;
-    }
-
-    my @mparents = @{$parents->{$target}};
-
-    my @ret;
-
-    if(@mparents == 1)
-    {
-        my ($contributes, @script) = build($mparents[0], $commits, $built, $parents, $subjects, $commit_commands);
-
-        if($contributes)
-        {
-            # non-merge built on a real commit
-            push @ret, @script;
-            push @ret, "load tag:new-" . $mparents[0];
-        }
-        else
-        {
-            # non-merge built on a dead commit, just build off base
-            push @ret, "load tag:base";
-        }
-
-        push @ret, "pick $target # " . Amling::Git::GRD::Utils::escape_msg($subjects->{$target});
-    }
-    else
-    {
-        my @targets;
-
-        for my $parent (@mparents)
-        {
-            my ($contributes, @script) = build($parent, $commits, $built, $parents, $subjects, $commit_commands);
-
-            if($contributes)
-            {
-                push @ret, @script;
-                push @targets, $parent;
-            }
-        }
-
-        if(@targets == 0)
-        {
-            return 0;
-        }
-
-        if(@targets == 1)
-        {
-            push @ret, "load tag:new-" . $targets[0];
-        }
-        else
-        {
-            push @ret, "merge " . join(" ", map { "tag:new-$_" } @targets);
-        }
-    }
-
-    push @ret, @{$commit_commands->{$target} || []};
-
-    push @ret, "save new-$target";
-    $built->{$target} = 1;
-
-    return (1, @ret);
-}
-
-sub peephole_useless_save
-{
-    my @lines = @_;
-
-    my %loaded;
-
-    for my $line (@lines)
-    {
-        if($line =~ /^load tag:(.*)$/)
-        {
-            $loaded{$1} = 1;
-        }
-        elsif($line =~ /^merge (.*)$/)
-        {
-            for my $name (split(/ /, $1))
-            {
-                if($name =~ /^tag:(.*)$/)
-                {
-                    $loaded{$1} = 1;
-                }
-            }
-        }
-    }
-
-    my @lines2;
-    my $progress = 0;
-    for my $line (@lines)
-    {
-        if($line =~ /^save (.*)$/)
-        {
-            my $name = $1;
-            if(!$loaded{$name})
-            {
-                $progress = 1;
-                next;
-            }
-        }
-        push @lines2, $line;
-    }
-
-    return ($progress, @lines2);
-}
-
-sub peephole_useless_sl_pair
-{
-    my @lines = @_;
-
-    my @lines2;
-    my $progress = 0;
-    my $at = undef;
-    for my $line (@lines)
-    {
-        if($line =~ /^load tag:(.*)$/)
-        {
-            if(defined($at) && $at eq $1)
-            {
-                $progress = 1;
-                next;
-            }
-        }
-        if($line =~ /^save (.*)$/)
-        {
-            $at = $1;
-        }
-        elsif($line =~ /^(head|branch)( |$)/)
-        {
-            # doesn't change where we're at
-        }
-        elsif($line =~ /^#/)
-        {
-            # doesn't change where we're at
-        }
-        else
-        {
-            $at = undef;
-        }
-        push @lines2, $line;
-    }
-
-    return ($progress, @lines2);
+    ...
 }
 
 sub process_HEAD
