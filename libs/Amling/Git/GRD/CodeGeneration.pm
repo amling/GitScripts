@@ -13,44 +13,6 @@ use Amling::Git::Utils;
 # Unfortunately there could be an A and a B that would eliminate each other with this definition, i.e.  it lacks anti-symmetry.
 # TODO: well, maybe do something about stupid merges...
 
-# TODO: think hard about whether or not peephole optimization will clean up this mess
-
-# TODO: peephole optimizers need to understand comment branch comments (I think this only blocks load/save pair which is useless anyway)
-# TODO: peephole optimization for load/save pair (alias, ugh, this is only for 1-parent-left merge, fuck it)
-# Ugh, consider:
-#
-# ...
-# save alias1
-# ...
-# load alias1
-# <implicit merge of single useful branch>
-# # branch xxx
-# save alias2
-# ...
-# load alias1
-# ...
-# load alias2
-# ...
-# load alias2
-# ...
-#
-# The xxx branch comment should probably get moved to above save alias1?  But
-# that looks funny and we probably shouldn't rename alias1 due to use
-# elsewhere...  Thankfully I think this is only screwed up in 1-parent merges.
-
-# better "algorithm"?
-#     given a DAG (has-parent)
-#     produce total order to minimize {(i, j) | j != i + 1 && (x_i, x_j) \in edges}
-#     will necessarily put root first
-#     each multiple-children point contributes the same amount of half edges no matter the layout
-#     each multiple-parent point contriubtes the same amount of half edges no matter the layout
-#     and we needn't take any more
-#     notably each single link is always rendered adjacent (parent can only be included via child and is thus immediate)
-#     so we're actually optimal?
-#
-# yeah, we can maybe do better (simpler?) by building the DAG of
-# actual picks themselves first and then laying that out?
-
 sub generate
 {
     my $head_options = shift;
