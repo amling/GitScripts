@@ -127,6 +127,8 @@ sub generate
         }
     }
 
+    my @targets = sort(keys(%{{map { Amling::Git::Utils::convert_commitlike($_) => 1 } keys(%$head_options), keys(%$plus_options)}}));
+
     my $commit_commands = {};
     {
         open(my $fh, '-|', 'git', 'show-ref') || die "Cannot open git show-ref: $!";
@@ -184,8 +186,6 @@ sub generate
         push @{$commit_commands->{$commit} ||= []}, $command;
     }
 
-    my @targets = sort(keys(%{{map { Amling::Git::Utils::convert_commitlike($_) => 1 } keys(%$head_options), keys(%$plus_options)}}));
-
     my %parents;
     my %subjects;
     my $cb = sub
@@ -204,7 +204,11 @@ sub generate
         {
             'loads' => 0,
             'commands' => [],
-            ...
+            'build' => sub
+            {
+                # This one is sort of magic.  It will always get hit at the top
+                # and needn't do anything.
+            },
         }
     );
     my %old_new;
@@ -214,8 +218,12 @@ sub generate
         build_nodes($target, \%nodes, \%old_new, \%parents, \%subjects);
     }
 
-    for my $commit (keys($commit_commands))
+    for my $commit (keys(%$commit_commands))
     {
+        if(!$parents{$commit})
+        {
+            next;
+        }
         push @{$nodes{$old_new{$commit}}->{'commands'}}, @{$commit_commands->{$commit}};
     }
 
@@ -226,11 +234,65 @@ sub generate
 
     my @new_targets = sort(keys(%{{map { $old_new{$_} => 1 } @targets}}));
 
-    for my $new_target (@new_targets)
+    # if it will get loaded further down the line don't generate it directly to
+    # avoid interleaving stuff stupidly
+    @new_targets = grep { $nodes{$_}->{'loads'} == 0 } @new_targets;
+
+    if(@new_targets == 0)
     {
-        # generate $node->{$new_target}
+        push @new_targets, 'base';
     }
 
+    for my $new_target (@new_targets)
+    {
+        my $generate_ = sub
+        {
+            my $target = shift;
+            my $generate_ = shift;
+            my $load_ = shift;
+            my $generate = sub { return $generate_->(@_, $generate_, $load_); };
+            my $load = sub { return $load_->(@_, $generate_, $load_); };
+
+            my $node = $nodes{$target};
+
+            if($node->{'generated'})
+            {
+                return;
+            }
+
+            $node->{'build'}->($generate, $load);
+
+            if($node->{'loads'} > 1)
+            {
+                print "save new-$target\n";
+            }
+        };
+        my $load_ = sub
+        {
+            my $target = shift;
+            my $generate_ = shift;
+            my $load_ = shift;
+            my $generate = sub { return $generate_->(@_, $generate_, $load_); };
+            my $load = sub { return $load_->(@_, $generate_, $load_); };
+
+            my $node = $nodes{$target};
+
+            if($node->{'generated'})
+            {
+                print "load tag:new-$target\n";
+                return;
+            }
+
+            $node->{'build'}->($generate, $load);
+
+            if($node->{'loads'} > 1)
+            {
+                print "save new-$target\n";
+            }
+        };
+    }
+
+exit 0;
     # return arrayref of lines
 }
 
@@ -265,7 +327,15 @@ sub build_nodes
         {
             'loads' => 0,
             'commands' => [],
-            ... # pick of $target over $parent
+            'build' => sub
+            {
+                my $generate = shift;
+                my $load = shift;
+
+                $load->($parent);
+
+                print "pick $target # " . Amling::Git::GRD::Utils::escape_msg($subjects->{$target}) . "\n";
+            },
         };
         return $old_new->{$target} = $target;
     }
@@ -276,7 +346,7 @@ sub build_nodes
 
         for my $parent (@mparents)
         {
-            my $new_parent = build_nodes($parent, $loads, $parents, $old_new);
+            my $new_parent = build_nodes($parent, $nodes, $old_new, $parents, $subjects);
 
             if($new_parent ne 'base')
             {
@@ -307,7 +377,18 @@ sub build_nodes
         {
             'loads' => 0,
             'commands' => [],
-            ... # merge...
+            'build' => sub
+            {
+                my $generate = shift;
+                my $load = shift;
+
+                for my $new_parent (@new_parents)
+                {
+                    $generate->($new_parent);
+                }
+
+                print "merge " . join(" ", map { "tag:new-$_" } @new_parents) . "\n";
+            },
         };
         return $old_new->{$target} = $target;
     }
