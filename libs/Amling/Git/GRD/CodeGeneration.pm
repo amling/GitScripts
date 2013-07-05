@@ -180,8 +180,9 @@ sub generate
 
     for my $commit (keys(%$commit_commands))
     {
-        if(!$parents{$commit})
+        if(!defined($old_new{$commit}))
         {
+            # wasn't part of our remapping, skip it
             next;
         }
         push @{$nodes{$old_new{$commit}}->{'commands'}}, @{$commit_commands->{$commit}};
@@ -248,16 +249,16 @@ sub build_nodes
     my $parents = shift;
     my $subjects = shift;
 
-    if(!$parents->{$target})
-    {
-        # hit base
-        return 'base';
-    }
-
     my $new = $old_new->{$target};
     if(defined($new))
     {
         return $new;
+    }
+
+    if(!$parents->{$target})
+    {
+        # hit base
+        return $old_new->{$target} = "base";
     }
 
     my $build;
