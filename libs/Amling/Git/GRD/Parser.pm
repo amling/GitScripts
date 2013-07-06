@@ -9,18 +9,18 @@ use File::Temp ('tempfile');
 sub edit_loop
 {
     my $lines = shift;
-    my $skip_edit = shift;
-
     $lines = [@$lines];
-    my ($commands, $problems) = parse($lines);
-
-    if($skip_edit && $commands)
-    {
-        return $commands;
-    }
+    my $skip_edit = shift;
 
     while(1)
     {
+        my ($commands, $problems) = parse($lines);
+        if($skip_edit && $commands)
+        {
+            return $commands;
+        }
+        $skip_edit = 0;
+
         my ($fh, $fn) = tempfile('SUFFIX' => '.grd');
 
         if(@$problems)
@@ -61,12 +61,6 @@ sub edit_loop
         }
         close($fh) || die "Cannot close temp file $fn: $!";
         unlink($fn) || die "Cannot unlink temp file $fn: $!";
-
-        ($commands, $problems) = parse($lines);
-        if($commands)
-        {
-            return $commands;
-        }
     }
 }
 
