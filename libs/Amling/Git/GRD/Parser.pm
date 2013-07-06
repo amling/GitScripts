@@ -8,13 +8,11 @@ use File::Temp ('tempfile');
 
 sub edit_loop
 {
-    my $lines0r = shift;
+    my $lines = shift;
     my $skip_edit = shift;
 
-    my @lines0 = @$lines0r;
-
-    my @lines = @lines0;
-    my ($commands, $problems) = parse(@lines);
+    $lines = [@$lines];
+    my ($commands, $problems) = parse($lines);
 
     if($skip_edit && $commands)
     {
@@ -35,16 +33,16 @@ sub edit_loop
             print $fh "\n";
         }
 
-        while(@lines && $lines[0] =~ /^# NOTE: /)
+        while(@$lines && @$lines[0] =~ /^# NOTE: /)
         {
-            shift @lines;
+            shift @$lines;
         }
-        while(@lines && $lines[0] eq '')
+        while(@$lines && @$lines[0] eq '')
         {
-            shift @lines;
+            shift @$lines;
         }
 
-        for my $line (@lines)
+        for my $line (@$lines)
         {
             print $fh "$line\n";
         }
@@ -55,16 +53,16 @@ sub edit_loop
         system($editor, $fn) && die "Edit of file bailed?";
 
         open($fh, "<", $fn) || die "Cannot reopen temp file $fn: $!";
-        @lines = ();
+        $lines = [];
         while(my $line = <$fh>)
         {
             chomp $line;
-            push @lines, $line;
+            push @$lines, $line;
         }
         close($fh) || die "Cannot close temp file $fn: $!";
         unlink($fn) || die "Cannot unlink temp file $fn: $!";
 
-        ($commands, $problems) = parse(@lines);
+        ($commands, $problems) = parse($lines);
         if($commands)
         {
             return $commands;
@@ -74,12 +72,12 @@ sub edit_loop
 
 sub parse
 {
-    my @lines = @_;
+    my $lines = shift;
 
     my $commands = [];
     my $problems = [];
 
-    for my $line (@lines)
+    for my $line (@$lines)
     {
         $line =~ s/#.*$//;
         $line =~ s/^ *//;
