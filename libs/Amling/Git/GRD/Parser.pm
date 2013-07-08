@@ -19,7 +19,7 @@ sub edit_loop
         {
             return $commands;
         }
-        $skip_edit = 0;
+        $skip_edit = 1;
 
         my ($fh, $fn) = tempfile('SUFFIX' => '.grd');
 
