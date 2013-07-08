@@ -71,8 +71,10 @@ sub parse
     my $commands = [];
     my $problems = [];
 
-    for my $line (@$lines)
+    for my $_line (@$lines)
     {
+        my $line = $_line;
+
         $line =~ s/#.*$//;
         $line =~ s/^ *//;
         $line =~ s/ *$//;
