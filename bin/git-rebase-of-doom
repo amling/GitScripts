@@ -208,6 +208,86 @@ git-rebase-of-doom --onto master --head feature
 # Rebase feature up to the tip of master but exclude commits from dev.
 git-rebase-of-doom master feature --minus dev
 git-rebase-of-doom --onto master --head feature --minus dev
+
+The "language" the generated script is composed of is similar to normal rebase
+but has some key differences.  Rebase commands can be translated as follows:
+
+"pick" - As is.
+
+"fixup" - As is.
+
+"reword" - Use "pick <commit> <message>" to edit the commit message right in
+the rebase script itself.
+
+"squash" - Replaced by "splatter", see details below.
+
+"edit" - Replace "edit <commit>" with "pick <commit>" plus "edit" and you'll
+get a shell invoked by GRD rather than it exiting and expecting --continue.
+
+A more complete reference follows:
+
+branch <name>
+    Save HEAD's current position as a branch when the rebase completes.
+    Existing branches are clobbered silently.
+
+edit
+    Re-entrantly run a shell at this point.  Within the shell you can move HEAD
+    anywhere you like however you like (including nested invocations of GRD)
+    and the script will resume wherever you've left it.  Within the shell
+    GRD_LEVEL will be set appropriately (starts at 1) to indicate how many
+    nested GRDs are in progress.
+
+fixup <commitlike>
+    Amend HEAD with a pick of <commitlike> without interaction (retains HEAD's
+    existing commit message).
+
+fsplatter
+    Pop a commit off the commit stack (see push/pop).  Then flatten all changes
+    "since" then with the commit message of the first change since then.
+    Analogous to splatter but always picks the first commit's message without
+    interaction.
+
+head
+    Save HEAD's current position and return HEAD there when the rebase
+    completes.
+
+head <name>
+    Save HEAD's current position as a branch when the rebase completes and set
+    HEAD to that branch (again, when the rebase completes).  Existing branches
+    are clobbered silently.
+
+load (tag:<tag> | <commitlike>)
+    Move HEAD to a saved tag or a commitlike.
+
+merge (tag:<tag> | <commitlike>)+
+    Check out the first saved tag or commitlike and then merge the remaining
+    saved tags and commitlikes into it.
+
+pick <commitlike> [<message>]
+    Cherry-pick a commit, then optionally alter its message (without
+    interaction).
+
+pop
+    Pop a commit off the commit stack (see push).
+
+push
+    Push HEAD's current position onto the commit stack (see pop).
+
+save <tag>
+    Save HEAD's current position as a tag (see load/merge).
+
+splatter [<message>]
+    Pop a commit off the commit stack (see push/pop).  Then flatten all changes
+    "since" then into one.  If the commit message for the flat commit is not
+    given an editor will be opened with the combined commit messages of the
+    intervening commits.  This is intended to be used to replace rebase's
+    squash.  Pick, squash, squash, ..., squash becomes push, pick, pick, ...,
+    pick, splatter.
+
+squash <commitlike> [<message>]
+    Equivalent to "pick <commitlike> [<message>]" followed by a splatter to
+    HEAD~2.  In particular a long string of these in a row is not what you want
+    to replicated rebase's squash (see splatter).
 EOF
 
     exit $ec;
