@@ -286,19 +286,19 @@ sub build_nodes
     else
     {
         my @new_parents;
-        my %new_parents;
+        my $merge_command = "cached-merge $target";
 
         for my $parent (@mparents)
         {
             my $new_parent = build_nodes($parent, $nodes, $old_new, $parents, $subjects, 0);
 
-            if($new_parent ne 'base')
+            if($new_parent eq 'base')
             {
-                if(!$new_parents{$new_parent})
-                {
-                    push @new_parents, $new_parent;
-                    $new_parents{$new_parent} = 1;
-                }
+                $merge_command = "merge";
+            }
+            else
+            {
+                push @new_parents, $new_parent;
             }
         }
 
@@ -327,7 +327,7 @@ sub build_nodes
                 $cb->($new_parent, 0);
             }
 
-            push @$script, "merge " . join(" ", map { "tag:new-$_" } @new_parents);
+            push @$script, "$merge_command " . join(" ", map { "tag:new-$_" } @new_parents);
         };
     }
 

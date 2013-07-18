@@ -31,6 +31,7 @@ sub parse
 
 use Amling::Git::GRD::Command::Branch;
 use Amling::Git::GRD::Command::BranchHead;
+use Amling::Git::GRD::Command::CachedMerge;
 use Amling::Git::GRD::Command::DetachedHead;
 use Amling::Git::GRD::Command::Edit;
 use Amling::Git::GRD::Command::FSplatter;
