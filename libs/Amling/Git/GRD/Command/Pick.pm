@@ -17,7 +17,7 @@ sub extended_handler
     my $s = shift;
 
     my ($commit, $msg);
-    if($s =~ /^pick ([^ ]+) ([^ ].*)$/)
+    if($s =~ /^pick ([^ ]+) (.*)$/)
     {
         $commit = $1;
         $msg = $2;
