@@ -49,13 +49,14 @@ sub execute_simple
 
     # if $commit's parent is us we're "picking" a change one down the line, we
     # can just fast-forward to it
-    if(Amling::Git::Utils::convert_commitlike("$commit^") eq Amling::Git::Utils::convert_commitlike("HEAD"))
+    if(Amling::Git::Utils::convert_commitlike("$commit^") eq $ctx->get_head())
     {
         print "Fast-forward cherry-picking $commit...\n";
-        Amling::Git::Utils::run_system("git", "reset", "--hard", $commit);
+        $ctx->set_head($commit);
     }
     else
     {
+        $ctx->materialize_head();
         if(!Amling::Git::Utils::run_system("git", "cherry-pick", $commit))
         {
             if(Amling::Git::Utils::is_clean())
@@ -87,11 +88,14 @@ sub execute_simple
                 Amling::Git::Utils::run_system("git", "commit", "-c", $commit) || die "Cannot commit?";
             }
         }
+        $ctx->uptake_head();
     }
 
     if(defined($msg))
     {
+        $ctx->materialize_head();
         Amling::Git::Utils::run_system("git", "commit", "--amend", "-m", $msg) || die "Cannot amend?";
+        $ctx->uptake_head();
     }
 }
 

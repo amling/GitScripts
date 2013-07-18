@@ -25,6 +25,8 @@ sub execute_simple
     my $self = shift;
     my $ctx = shift;
 
+    $ctx->materialize_head();
+
     my $commit = pop @{$ctx->get('commit-stack', [])};
     if(!defined($commit))
     {
@@ -52,6 +54,8 @@ sub execute_simple
 
     Amling::Git::Utils::run_system("git", "reset", "--soft", $commit) || die "Cannot soft reset to $commit";
     Amling::Git::Utils::run_system("git", "commit", "-C", $ccommit) || die "Cannot commit?";
+
+    $ctx->uptake_head();
 }
 
 Amling::Git::GRD::Command::add_command(sub { return __PACKAGE__->handler(@_) });

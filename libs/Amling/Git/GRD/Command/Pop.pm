@@ -30,7 +30,7 @@ sub execute_simple
         die "Empty commit stack popped";
     }
 
-    Amling::Git::Utils::run_system("git", "checkout", $commit) || die "Cannot checkout $commit";
+    $ctx->set_head($commit);
 }
 
 Amling::Git::GRD::Command::add_command(sub { return __PACKAGE__->handler(@_) });

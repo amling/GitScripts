@@ -108,9 +108,7 @@ unless(@commands)
     exit 0;
 }
 
-my $ctx = Amling::Git::GRD::Exec::Context->new();
-
-Amling::Git::Utils::run_system("git", "checkout", $onto_final) || die "Cannot checkout $onto_final";
+my $ctx = Amling::Git::GRD::Exec::Context->new($onto_final);
 
 my $ct = scalar(@commands);
 my $n = 1;

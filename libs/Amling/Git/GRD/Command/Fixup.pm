@@ -48,7 +48,7 @@ sub execute_simple
     my $msg = shift;
 
     # push HEAD^
-    push @{$ctx->get('commit-stack', [])}, Amling::Git::Utils::convert_commitlike('HEAD^');
+    push @{$ctx->get('commit-stack', [])}, Amling::Git::Utils::convert_commitlike($ctx->get_head() . '^');
 
     # pick *
     my $pick_delegate;

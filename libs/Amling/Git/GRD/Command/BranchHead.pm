@@ -25,7 +25,7 @@ sub execute_simple
     my $ctx = shift;
     my $branch = shift;
 
-    $ctx->get('branches', {})->{$branch} = Amling::Git::Utils::convert_commitlike('HEAD');
+    $ctx->get('branches', {})->{$branch} = $ctx->get_head();
     $ctx->set('head', [1, $branch]);
 }
 
