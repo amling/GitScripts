@@ -6,25 +6,21 @@ use warnings;
 use Amling::Git::GRD::Utils;
 use Amling::Git::Utils;
 
-# TODO: eliminate strictly redundant parents in a merge...
-# e.g.  if M is from A, B, and C and A <= C then drop A.
-# This is actually fairly complicated because even if A is a merge of things in C we want to drop it.
-# The rule should probably be drop A if there is a B present s.t.  all closest, non-merge ancestors of A are contained in B.
-# Unfortunately there could be an A and a B that would eliminate each other with this definition, i.e.  it lacks anti-symmetry.
-# TODO: well, maybe do something about stupid merges...
-
 sub generate
 {
-    my $base = shift;
     my $head_options = shift;
     my $plus_options = shift;
     my $minus_options = shift;
     my $tree_options = shift;
 
+    # use of $minus_options below is boned
+
+    # and we should probably convert_commitlike minus_options since we don't
+    # want the target we're transplanting on to to slide around...
+
     $head_options = process_HEAD($head_options);
     $plus_options = process_HEAD($plus_options);
-    $minus_options = {%$minus_options};
-    $tree_options = {%$tree_options};
+    $minus_options = [map { [Amling::Git::Utils::convert_commitlike($_->[0]), ($_->[1] eq "SELF" ? "SELF" : Amling::Git::Utils::convert_commitlike($_->[1]))] } @$minus_options];
 
     # convert trees to plusses
     {
@@ -41,7 +37,7 @@ sub generate
                 push @tree_commits, $h;
                 $tree_commits{$h->{'hash'}} = 1;
             };
-            Amling::Git::Utils::log_commits([(map { "^$_" } keys(%$minus_options)), $tree], $cb);
+            Amling::Git::Utils::log_commits([(map { "^" . $_->[0] } @$minus_options), $tree], $cb);
 
             # now find those that have no parents in the upstream section (all i.e.  parents in the base)
             for my $h (@tree_commits)
@@ -159,27 +155,14 @@ sub generate
         $parents{$commit} = $h->{'parents'};
         $subjects{$commit} = $h->{'msg'};
     };
-    Amling::Git::Utils::log_commits([(map { "^$_" } keys(%$minus_options)), @targets], $log_cb);
+    Amling::Git::Utils::log_commits([(map { "^" . $_->[0] } @$minus_options), @targets], $log_cb);
 
     my %nodes;
-    $nodes{'base'} =
-    {
-        'loads' => 0,
-        'commands' => [],
-        # This one is sort of magic, it needn't do anything since the SHA1 will
-        # always exist.
-        'generated' => 1,
-        'build' => sub
-        {
-            # should never be called
-            die "Base node build called?";
-        },
-    };
     my %old_new;
 
     for my $target (@targets)
     {
-        build_nodes($target, \%nodes, \%old_new, \%parents, \%subjects, 1);
+        build_nodes($target, \%nodes, \%old_new, $minus_options, \%parents, \%subjects, 1);
     }
 
     for my $commit (keys(%$commit_commands))
@@ -203,10 +186,7 @@ sub generate
     # avoid interleaving stuff stupidly
     @new_targets = grep { $nodes{$_}->{'loads'} == 0 } @new_targets;
 
-    if(@new_targets == 0)
-    {
-        push @new_targets, 'base';
-    }
+    # TODO: commands that have been flattened into minus commits aren't going to be run, what to do (there's no canonical place to generate them?)
 
     my @ret;
     for my $new_target (@new_targets)
@@ -223,7 +203,7 @@ sub generate
             {
                 if($load)
                 {
-                    push @ret, "load " . ($target eq "base" ? $base : "tag:new-$target");
+                    push @ret, "load " . $node->{'generated'};
                 }
                 return;
             }
@@ -237,7 +217,7 @@ sub generate
                 push @ret, "save new-$target";
             }
 
-            $node->{'generated'} = 1;
+            $node->{'generated'} = "tag:new-$target";
         };
         $build_cb->($build_cb, $new_target, 0);
     }
@@ -250,6 +230,7 @@ sub build_nodes
     my $target = shift;
     my $nodes = shift;
     my $old_new = shift;
+    my $minus_options = shift;
     my $parents = shift;
     my $subjects = shift;
     my $force_include = shift;
@@ -262,18 +243,49 @@ sub build_nodes
 
     if(!$parents->{$target})
     {
-        if($force_include)
+        my $slide = undef;
+        for my $minus_option (@$minus_options)
         {
-            $old_new->{$target} = "base";
+            open(my $fh, '-|', 'git', 'merge-base', $minus_option->[0], $target) || die "Cannot open git merge-base " . $minus_option->[0] . " $target: $!";
+            my $line = <$fh> || die;
+            chomp $line;
+            if($line eq $target)
+            {
+                $slide = $minus_option->[1];
+                if($slide eq 'SELF')
+                {
+                    $slide = $target;
+                }
+            }
+            close($fh) || die "Cannot close git merge-base " . $minus_option->[0] . " $target: $!";
+            last if(defined($slide));
         }
-        return "base";
+        if(!defined($slide))
+        {
+            die "Could not find minus $target in any minus options?!";
+        }
+
+        if(!$nodes->{$slide})
+        {
+            $nodes->{$slide} =
+            {
+                'loads' => 0,
+                'commands' => [],
+                'build' => sub
+                {
+                    die "Build called on minus node?!";
+                },
+                'generated' => $slide,
+            };
+        }
+        return $old_new->{$target} = $slide;
     }
 
     my $build;
     my @mparents = @{$parents->{$target}};
     if(@mparents == 1)
     {
-        my $parent = build_nodes($mparents[0], $nodes, $old_new, $parents, $subjects, 0);
+        my $parent = build_nodes($mparents[0], $nodes, $old_new, $minus_options, $parents, $subjects, 0);
 
         # no matter what we load result (base or otherwise) and map to ourselves
         ++$nodes->{$parent}->{'loads'};
@@ -294,27 +306,10 @@ sub build_nodes
 
         for my $parent (@mparents)
         {
-            my $new_parent = build_nodes($parent, $nodes, $old_new, $parents, $subjects, 0);
-
-            if($new_parent eq 'base')
-            {
-                $merge_command = "merge";
-            }
-            else
-            {
-                push @new_parents, $new_parent;
-            }
+            push @new_parents, build_nodes($parent, $nodes, $old_new, $minus_options, $parents, $subjects, 0);
         }
 
-        if(@new_parents == 0)
-        {
-            return $old_new->{$target} = "base";
-        }
-
-        if(@new_parents == 1)
-        {
-            return $old_new->{$target} = $new_parents[0];
-        }
+        # TODO: elimination/simplification
 
         for my $new_parent (@new_parents)
         {
@@ -331,7 +326,7 @@ sub build_nodes
                 $cb->($new_parent, 0);
             }
 
-            push @$script, "$merge_command " . join(" ", map { "tag:new-$_" } @new_parents);
+            push @$script, "$merge_command " . join(" ", map { $nodes->{$_}->{'generated'} } @new_parents);
         };
     }
 
