@@ -15,6 +15,7 @@ use Amling::Git::Utils;
 
 sub generate
 {
+    my $base = shift;
     my $head_options = shift;
     my $plus_options = shift;
     my $minus_options = shift;
@@ -165,10 +166,13 @@ sub generate
     {
         'loads' => 0,
         'commands' => [],
+        # This one is sort of magic, it needn't do anything since the SHA1 will
+        # always exist.
+        'generated' => 1,
         'build' => sub
         {
-            # This one is sort of magic.  It will always get hit at the top
-            # and needn't do anything.
+            # should never be called
+            die "Base node build called?";
         },
     };
     my %old_new;
@@ -219,7 +223,7 @@ sub generate
             {
                 if($load)
                 {
-                    push @ret, "load tag:" . ($target eq "base" ? "base" : "new-$target");
+                    push @ret, "load " . ($target eq "base" ? $base : "tag:new-$target");
                 }
                 return;
             }
@@ -228,9 +232,9 @@ sub generate
 
             push @ret, @{$node->{'commands'}};
 
-            if($node->{'loads'} > 1)
+            if($node->{'loads'} > 1 && $target ne "base")
             {
-                push @ret, "save " . ($target eq "base" ? "base" : "new-$target");
+                push @ret, "save new-$target";
             }
 
             $node->{'generated'} = 1;

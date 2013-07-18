@@ -8,11 +8,10 @@ use Amling::Git::Utils;
 sub new
 {
     my $class = shift;
-    my $head = shift || die;
 
     my $self =
     {
-        'HEAD' => $head,
+        'HEAD' => undef,
     };
 
     bless $self, $class;
@@ -47,7 +46,14 @@ sub get_head
 {
     my $self = shift;
 
-    return $self->{'HEAD'};
+    my $commit = $self->{'HEAD'};
+
+    if(!defined($commit))
+    {
+        die "get_head() called with HEAD unset";
+    }
+
+    return $commit;
 }
 
 sub materialize_head
@@ -62,6 +68,11 @@ sub materialize_head
     else
     {
         $commit = $self->{'HEAD'};
+
+        if(!defined($commit))
+        {
+            die "materialize_head() called with HEAD unset";
+        }
     }
 
     Amling::Git::Utils::run_system("git", "checkout", $commit) || die "Cannot checkout $commit";
