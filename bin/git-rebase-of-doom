@@ -34,20 +34,34 @@ use Getopt::Long;
 # TODO: several failures (e.g.  any convert_commitlike, any actual commit (think of empty change!)) could probably stand for more graceful handling
 # TODO: audit messages before each shell invocation indicating expected state and obvious options
 
-my %onto_options;
+my $current_default_onto = undef;
 my %head_options;
 my %plus_options;
-my %minus_options;
+my @minus_options;
 my %tree_options;
 my $skip_edit;
 
 my @options =
 (
-    "onto=s" => sub { $onto_options{$_[1]} = 1; $minus_options{$_[1]} = 1; },
+    "onto=s" => sub { $current_default_onto = $_[1]; push @minus_options, [$_[1], $_[1]]; },
     "head=s" => sub { $head_options{$_[1]} = 1; },
 
     "plus=s" => sub { $plus_options{$_[1]} = 1; },
-    "minus=s" => sub { $minus_options{$_[1]} = 1; },
+    "minus=s" => sub
+    {
+        my $v = $_[1];
+
+        if($v =~ /^(.*):(.*)$/)
+        {
+            push @minus_options, [$1, $2];
+        }
+        else
+        {
+            die "Single argument --minus given before --onto?" unless $current_default_onto;
+            push @minus_options, [$v, $current_default_onto];
+        }
+    },
+    "fixed-minus=s" => sub { push @minus_options, [$_[1], "SELF"]; },
 
     "tree=s" => sub { $tree_options{$_[1]} = 1; },
 
@@ -69,20 +83,14 @@ if(@args == 0)
 }
 elsif(@args == 1)
 {
-    if(!%onto_options)
-    {
-        $onto_options{$args[0]} = 1;
-    }
-    $minus_options{$args[0]} = 1;
+    $current_default_onto = $args[0] unless defined($current_default_onto);
+    push @minus_options, [$args[0], $current_default_onto];
     $head_options{'HEAD'} = 1;
 }
 elsif(@args == 2)
 {
-    if(!%onto_options)
-    {
-        $onto_options{$args[0]} = 1;
-    }
-    $minus_options{$args[0]} = 1;
+    $current_default_onto = $args[0] unless defined($current_default_onto);
+    push @minus_options, [$args[0], $current_default_onto];
     $head_options{$args[1]} = 1;
 }
 else
@@ -90,14 +98,7 @@ else
     die "Invalid number of extra arguments (" . scalar(@args) . ")";
 }
 
-if(scalar(keys(%onto_options)) != 1)
-{
-    die "Invalid number of onto options (" . scalar(keys(%onto_options)) . ")";
-}
-
-my $onto_final = Amling::Git::Utils::convert_commitlike(keys(%onto_options));
-
-my $lines = Amling::Git::GRD::CodeGeneration::generate($onto_final, \%head_options, \%plus_options, \%minus_options, \%tree_options);
+my $lines = Amling::Git::GRD::CodeGeneration::generate(\%head_options, \%plus_options, \@minus_options, \%tree_options);
 
 Amling::Git::GRD::Utils::run_shell(0, 0, 0);
 
