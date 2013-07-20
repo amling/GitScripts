@@ -342,7 +342,7 @@ sub build_nodes
 
                 if(%needed_picks || %needed_bases)
                 {
-                    push @kept_parents, $test_parent;
+                    unshift @kept_parents, $test_parent;
                     $picks_contained{$_} = 1 for(keys(%{$nodes->{$test_parent}->{'picks_contained'}}));
                     $bases_contained{$_} = 1 for(keys(%{$nodes->{$test_parent}->{'bases_contained'}}));
                 }
