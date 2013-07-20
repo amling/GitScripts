@@ -34,6 +34,7 @@ use Getopt::Long;
 # TODO: several failures (e.g.  any convert_commitlike, any actual commit (think of empty change!)) could probably stand for more graceful handling
 # TODO: audit messages before each shell invocation indicating expected state and obvious options
 
+my $first_is_negative = 1;
 my $current_default_onto = undef;
 my %head_options;
 my %plus_options;
@@ -60,8 +61,37 @@ my @options =
             die "Single argument --minus given before --onto?" unless $current_default_onto;
             push @minus_options, [$v, $current_default_onto];
         }
+
+        $first_is_negative = 0;
     },
-    "fixed-minus=s" => sub { push @minus_options, [$_[1], "SELF"]; },
+    "fixed-minus=s" => sub
+    {
+        push @minus_options, [$_[1], "SELF"];
+        $first_is_negative = 0;
+    },
+
+    "<>" => sub
+    {
+        my $arg = "" . $_[0];
+        if($first_is_negative)
+        {
+            if(!defined($current_default_onto))
+            {
+                $current_default_onto = $arg;
+            }
+            push @minus_options, [$arg, $current_default_onto];
+            $first_is_negative = 0;
+            return;
+        }
+
+        if(!%head_options)
+        {
+            $head_options{$arg} = 1;
+            return;
+        }
+
+        $plus_options{$arg} = 1;
+    },
 
     "tree=s" => sub { $tree_options{$_[1]} = 1; },
 
@@ -70,33 +100,17 @@ my @options =
 
 );
 
+my $reason = join(" ", "GRD", @ARGV);
+
 GetOptions(@options) || usage(1);
 
-# we use "<>" for STDIN very soon
-my $reason = join(" ", "GRD", @ARGV);
-my @args = @ARGV;
-@ARGV = ();
-
-if(@args == 0)
+if(!%head_options && !%plus_options)
 {
-    # arguments only
-}
-elsif(@args == 1)
-{
-    $current_default_onto = $args[0] unless defined($current_default_onto);
-    push @minus_options, [$args[0], $current_default_onto];
     $head_options{'HEAD'} = 1;
 }
-elsif(@args == 2)
-{
-    $current_default_onto = $args[0] unless defined($current_default_onto);
-    push @minus_options, [$args[0], $current_default_onto];
-    $head_options{$args[1]} = 1;
-}
-else
-{
-    die "Invalid number of extra arguments (" . scalar(@args) . ")";
-}
+
+# we use "<>" for STDIN very soon
+@ARGV = ();
 
 my $lines = Amling::Git::GRD::CodeGeneration::generate(\%head_options, \%plus_options, \@minus_options, \%tree_options);
 
@@ -190,24 +204,18 @@ Usage: git-rebase-of-doom <options> [<extra arguments>]
    --skip-edit | -q              Skip editting by default.
    --help                        Print this help.
 
-If no extra arguments are provided only the options themselves are used to
-construct the rebase.
+Extra arguments are handled as follows:
 
-If one extra argument it is used like normal git-rebase, i.e.  it is used as a
---minus (rewriting onto itself or the last --onto) and HEAD is used as a
---head.
+*) If there has been no explicit --[fixed-]minus and this rule hasn't been used yet then:
+    *) If there has been --onto use the argument as --minus.
+    *) Otherwise use it as --onto.
+*) Otherwise, if there has been no --head use the argument as --head.
+*) Otherwise, it use the argument as --plus.
 
-If two extra arguments are provided they're used like normal git-rebase, i.e.
-the first is used as a --minus (rewriting onto itself or the last --onto) and
-the second is used as a --head.
+Additionally, if no --plus or --head is specified --head HEAD is added at the end.
 
-Note that these extra arguments are always interpretted last and thus don't
-play well with options in general e.g.  `git-rebase-of-doom master features
---minus other` doesn't work.
-
-Both the one and two extra argument forms act roughly as they do in plain
-git-rebase as does the --onto switch so simple examples generally are the same.
-For example:
+This means that one and two extra act roughly as they do in plain git-rebase so
+simple examples generally are the same.  For example:
 
 # Rebase the HEAD branch up to the tip of master
 git-rebase-of-doom master
@@ -217,8 +225,11 @@ git-rebase-of-doom --onto master --head HEAD
 git-rebase-of-doom master feature
 git-rebase-of-doom --onto master --head feature
 
+# Rebase ^elsewhere ^master feature onto elsewhere.
+git-rebase-of-doom --onto elsewhere master feature
+
 # Rebase feature up to the tip of master but exclude commits from dev as well.
-git-rebase-of-doom --minus dev:master master feature
+git-rebase-of-doom master --minus dev feature
 git-rebase-of-doom --onto master --minus dev --head feature
 
 The "language" the generated script is composed of is similar to normal rebase
