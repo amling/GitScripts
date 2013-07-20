@@ -425,6 +425,8 @@ sub process_HEAD
     return $r2;
 }
 
+# TODO: covers (with all its callers) is an assload of shelling out, consider slurping history and answering this internally?
+
 sub covers
 {
     my $coverer = shift;
