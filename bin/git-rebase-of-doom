@@ -41,6 +41,7 @@ my %plus_options;
 my @minus_options;
 my %tree_options;
 my $skip_edit;
+my $dry_run;
 
 my @options =
 (
@@ -96,6 +97,7 @@ my @options =
     "tree=s" => sub { $tree_options{$_[1]} = 1; },
 
     "skip-edit|q" => \$skip_edit,
+    "dry-run|n" => \$dry_run,
     "help"   => sub { usage(0); },
 
 );
@@ -113,6 +115,15 @@ if(!%head_options && !%plus_options)
 @ARGV = ();
 
 my $lines = Amling::Git::GRD::CodeGeneration::generate(\%head_options, \%plus_options, \@minus_options, \%tree_options);
+
+if($dry_run)
+{
+    for my $line (@$lines)
+    {
+        print "$line\n";
+    }
+    exit 0;
+}
 
 Amling::Git::GRD::Utils::run_shell(0, 0, 0);
 
@@ -202,6 +213,8 @@ Usage: git-rebase-of-doom <options> [<extra arguments>]
    --tree <commit>               Firklewitz this commit.
 
    --skip-edit | -q              Skip editting by default.
+   --dry-run | -n                Just print the generated script, don't
+                                 actually do anything.
    --help                        Print this help.
 
 Extra arguments are handled as follows:
