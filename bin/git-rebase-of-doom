@@ -171,26 +171,39 @@ sub usage
 
     print <<EOF;
 Usage: git-rebase-of-doom <options> [<extra arguments>]
-   --onto <commitlike>                Use this as the destination to rebase onto.
-   --head <commitlike>                Use this as a source of commits and leave HEAD at their tip.
+   --onto <commit>               Use this as the default destination to rebase
+                                 onto and add it as a minus.
+   --head <commit>               Use this as a source of commits and leave HEAD
+                                 at their tip.
 
-   --plus <commitlike>                Use this as a source of commits.
-   --minus <commitlike>               Use this as a source of commits to exclude.
+   --plus <commit>               Use this as a source of commits.
+   --minus <commit>[:<commit>]   Use this as a source of commits to exclude and
+                                 change parent links to these to point to the
+                                 second argument.  This second argument may be
+                                 SELF to indicate to leave the links unaltered
+                                 (but stop generating the script "before" them)
+                                 and defaults to whatever the last --onto was.
+   --fixed-minus <commit>        Alias for --minus <commit>:SELF
 
-   --tree <commitlike>                Firklewitz this commit[like].
+   --tree <commit>               Firklewitz this commit.
 
-   --skip-edit | -q                   Skip editting by default.
-   --help                             Print this help.
+   --skip-edit | -q              Skip editting by default.
+   --help                        Print this help.
 
 If no extra arguments are provided only the options themselves are used to
 construct the rebase.
 
 If one extra argument it is used like normal git-rebase, i.e.  it is used as a
---minus and as an --onto if none is provided and HEAD is used as a --head.
+--minus (rewriting onto itself or the last --onto) and HEAD is used as a
+--head.
 
 If two extra arguments are provided they're used like normal git-rebase, i.e.
-the first is used as a --minus and as an --onto if none is provided and the
-second is used as a --head.
+the first is used as a --minus (rewriting onto itself or the last --onto) and
+the second is used as a --head.
+
+Note that these extra arguments are always interpretted last and thus don't
+play well with options in general e.g.  `git-rebase-of-doom master features
+--minus other` doesn't work.
 
 Both the one and two extra argument forms act roughly as they do in plain
 git-rebase as does the --onto switch so simple examples generally are the same.
@@ -204,9 +217,9 @@ git-rebase-of-doom --onto master --head HEAD
 git-rebase-of-doom master feature
 git-rebase-of-doom --onto master --head feature
 
-# Rebase feature up to the tip of master but exclude commits from dev.
-git-rebase-of-doom master feature --minus dev
-git-rebase-of-doom --onto master --head feature --minus dev
+# Rebase feature up to the tip of master but exclude commits from dev as well.
+git-rebase-of-doom --minus dev:master master feature
+git-rebase-of-doom --onto master --minus dev --head feature
 
 The "language" the generated script is composed of is similar to normal rebase
 but has some key differences.  Rebase commands can be translated as follows:
@@ -261,6 +274,10 @@ load (tag:<tag> | <commitlike>)
 merge (tag:<tag> | <commitlike>)+
     Check out the first saved tag or commitlike and then merge the remaining
     saved tags and commitlikes into it.
+
+cached-merge <template> (tag:<tag> | <commitlike>)+
+    As merge but if <template> has the exact same parents reuse it directly
+    rather than repeating the merge.
 
 pick <commitlike> [<message>]
     Cherry-pick a commit, then optionally alter its message (without
