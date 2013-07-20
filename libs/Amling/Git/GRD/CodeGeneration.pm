@@ -286,12 +286,16 @@ sub build_nodes
                     die "Build called on minus node?!";
                 },
                 'generated' => $slide,
+                'picks_contained' => {},
+                'bases_contained' => {$slide => 1},
             };
         }
         return $old_new->{$target} = $slide;
     }
 
     my $build;
+    my %picks_contained;
+    my %bases_contained;
     my @mparents = @{$parents->{$target}};
     if(@mparents == 1)
     {
@@ -299,6 +303,7 @@ sub build_nodes
 
         # no matter what we load result (base or otherwise) and map to ourselves
         ++$nodes->{$parent}->{'loads'};
+
         $build = sub
         {
             my $cb = shift;
@@ -308,6 +313,9 @@ sub build_nodes
 
             push @$script, "pick $target # " . Amling::Git::GRD::Utils::escape_msg($subjects->{$target});
         };
+        $picks_contained{$_} = 1 for(keys(%{$nodes->{$parent}->{'picks_contained'}}));
+        $picks_contained{$target} = 1;
+        $bases_contained{$_} = 1 for(keys(%{$nodes->{$parent}->{'bases_contained'}}));
     }
     else
     {
@@ -316,7 +324,10 @@ sub build_nodes
 
         for my $parent (@mparents)
         {
-            push @new_parents, build_nodes($parent, $nodes, $old_new, $minus_options, $parents, $subjects, 0);
+            my $new_parent = build_nodes($parent, $nodes, $old_new, $minus_options, $parents, $subjects, 0);
+            push @new_parents, $new_parent;
+            $picks_contained{$_} = 1 for(keys(%{$nodes->{$new_parent}->{'picks_contained'}}));
+            $bases_contained{$_} = 1 for(keys(%{$nodes->{$new_parent}->{'bases_contained'}}));
         }
 
         # TODO: elimination/simplification
@@ -345,6 +356,8 @@ sub build_nodes
         'loads' => 0,
         'commands' => [],
         'build' => $build,
+        'picks_contained' => \%picks_contained,
+        'bases_contained' => \%bases_contained,
     };
     return $old_new->{$target} = $target;
 }
