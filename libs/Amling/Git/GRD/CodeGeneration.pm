@@ -256,19 +256,15 @@ sub build_nodes
         my $slide = undef;
         for my $minus_option (@$minus_options)
         {
-            open(my $fh, '-|', 'git', 'merge-base', $minus_option->[0], $target) || die "Cannot open git merge-base " . $minus_option->[0] . " $target: $!";
-            my $line = <$fh> || die;
-            chomp $line;
-            if($line eq $target)
+            if(covers($minus_option->[0], $target))
             {
                 $slide = $minus_option->[1];
                 if($slide eq 'SELF')
                 {
                     $slide = $target;
                 }
+                last;
             }
-            close($fh) || die "Cannot close git merge-base " . $minus_option->[0] . " $target: $!";
-            last if(defined($slide));
         }
         if(!defined($slide))
         {
@@ -324,13 +320,41 @@ sub build_nodes
 
         for my $parent (@mparents)
         {
-            my $new_parent = build_nodes($parent, $nodes, $old_new, $minus_options, $parents, $subjects, 0);
-            push @new_parents, $new_parent;
-            $picks_contained{$_} = 1 for(keys(%{$nodes->{$new_parent}->{'picks_contained'}}));
-            $bases_contained{$_} = 1 for(keys(%{$nodes->{$new_parent}->{'bases_contained'}}));
+            push @new_parents, build_nodes($parent, $nodes, $old_new, $minus_options, $parents, $subjects, 0);
         }
 
-        # TODO: elimination/simplification
+        {
+            my @kept_parents;
+            my @parent_queue = reverse(@new_parents);
+            while(@parent_queue)
+            {
+                my $test_parent = shift @parent_queue;
+                my %needed_picks = %{$nodes->{$test_parent}->{'picks_contained'}};
+                my %needed_bases = %{$nodes->{$test_parent}->{'bases_contained'}};
+
+                clear_picks(\%needed_picks, \%picks_contained);
+                clear_bases(\%needed_bases, \%bases_contained);
+                for my $queued_parent (@parent_queue)
+                {
+                    clear_picks(\%needed_picks, $nodes->{$queued_parent}->{'picks_contained'});
+                    clear_bases(\%needed_bases, $nodes->{$queued_parent}->{'bases_contained'});
+                }
+
+                if(%needed_picks || %needed_bases)
+                {
+                    push @kept_parents, $test_parent;
+                    $picks_contained{$_} = 1 for(keys(%{$nodes->{$test_parent}->{'picks_contained'}}));
+                    $bases_contained{$_} = 1 for(keys(%{$nodes->{$test_parent}->{'bases_contained'}}));
+                }
+            }
+
+            @new_parents = @kept_parents;
+        }
+
+        if(@new_parents == 1)
+        {
+            return $old_new->{$target} = $new_parents[0];
+        }
 
         for my $new_parent (@new_parents)
         {
@@ -399,6 +423,56 @@ sub process_HEAD
     }
 
     return $r2;
+}
+
+sub covers
+{
+    my $coverer = shift;
+    my $covered = shift;
+
+    my $ret = 0;
+    open(my $fh, '-|', 'git', 'merge-base', $coverer, $covered) || die "Cannot open git merge-base $coverer $covered: $!";
+    my $line = <$fh> || die;
+    chomp $line;
+    if($line eq $covered)
+    {
+        $ret = 1;
+    }
+    close($fh) || die "Cannot close git merge-base $coverer $covered: $!";
+
+    return $ret;
+}
+
+sub clear_picks
+{
+    my $needed_picks = shift;
+    my $covered_picks = shift;
+
+    return unless(%$covered_picks);
+
+    for my $covered_pick (keys(%$covered_picks))
+    {
+        delete $needed_picks->{$covered_pick};
+    }
+}
+
+sub clear_bases
+{
+    my $needed_bases = shift;
+    my $covered_bases = shift;
+
+    for my $covered_base (keys(%$covered_bases))
+    {
+        return unless(%$needed_bases);
+        for my $needed_base (keys(%$needed_bases))
+        {
+            if(covers($covered_base, $needed_base))
+            {
+                delete $needed_bases->{$needed_base};
+                last;
+            }
+        }
+    }
 }
 
 1;
