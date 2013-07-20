@@ -182,11 +182,11 @@ sub generate
 
     my @new_targets = sort(keys(%{{map { $old_new{$_} => 1 } @targets}}));
 
+    my @pregenerated_targets = grep { $nodes{$_}->{'generated'} } @new_targets;
+
     # if it will get loaded further down the line don't generate it directly to
     # avoid interleaving stuff stupidly
     @new_targets = grep { $nodes{$_}->{'loads'} == 0 } @new_targets;
-
-    # TODO: commands that have been flattened into minus commits aren't going to be run, what to do (there's no canonical place to generate them?)
 
     my @ret;
     for my $new_target (@new_targets)
@@ -220,6 +220,16 @@ sub generate
             $node->{'generated'} = "tag:new-$target";
         };
         $build_cb->($build_cb, $new_target, 0);
+    }
+
+    for my $pregenerated_target (@pregenerated_targets)
+    {
+        my $node = $nodes{$pregenerated_target};
+        if(@{$node->{'commands'}})
+        {
+            push @ret, "load " . $node->{'generated'};
+            push @ret, @{$node->{'commands'}};
+        }
     }
 
     return \@ret;
