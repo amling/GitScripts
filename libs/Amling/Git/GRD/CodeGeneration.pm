@@ -434,7 +434,7 @@ sub covers
 
     my $ret = 0;
     open(my $fh, '-|', 'git', 'merge-base', $coverer, $covered) || die "Cannot open git merge-base $coverer $covered: $!";
-    my $line = <$fh> || die;
+    my $line = <$fh> || return 0; # !@#$
     chomp $line;
     if($line eq $covered)
     {
