@@ -72,6 +72,7 @@ sub execute_simple
             if(Amling::Git::Utils::is_clean())
             {
                 print "Shell left clean, assuming skip...\n";
+                $ctx->uptake_head();
                 return;
             }
 
