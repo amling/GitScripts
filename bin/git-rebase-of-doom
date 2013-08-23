@@ -106,7 +106,7 @@ my $reason = join(" ", "GRD", @ARGV);
 
 GetOptions(@options) || usage(1);
 
-if(!%head_options && !%plus_options)
+if(!%head_options && !%plus_options && !%tree_options)
 {
     $head_options{'HEAD'} = 1;
 }
@@ -225,7 +225,8 @@ Extra arguments are handled as follows:
 *) Otherwise, if there has been no --head use the argument as --head.
 *) Otherwise, it use the argument as --plus.
 
-Additionally, if no --plus or --head is specified --head HEAD is added at the end.
+Additionally, if no --plus, --head, or -tree is specified --head HEAD is added
+at the end.
 
 This means that one and two extra act roughly as they do in plain git-rebase so
 simple examples generally are the same.  For example:
