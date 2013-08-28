@@ -66,7 +66,7 @@ sub execute_simple
             }
 
             print "git cherry-pick of $commit blew chunks, please clean it up (get correct version into index)...\n";
-            Amling::Git::GRD::Utils::run_shell(1, 1, 0);
+            Amling::Git::GRD::Utils::run_shell(1, 1, 0, {'GRD_COMMIT' => $commit});
             print "Continuing...\n";
 
             if(Amling::Git::Utils::is_clean())

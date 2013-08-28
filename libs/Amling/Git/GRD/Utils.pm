@@ -10,6 +10,7 @@ sub run_shell
     my $first_shell = shift;
     my $allow_index = shift;
     my $allow_wtree = shift;
+    my $env = shift || {};
 
     my $shell = $ENV{'SHELL'} || '/bin/sh';
     my $grd_level = ($ENV{'GRD_LEVEL'} || 0);
@@ -19,11 +20,9 @@ sub run_shell
     {
         if($first_shell)
         {
-            {
-                local $ENV{'GRD_LEVEL'} = ($grd_level + 1);
-                print "GRD level: " . ($grd_level + 1) . "\n";
-                system($shell);
-            }
+            my $grd_level2 = $grd_level + 1;
+            print "GRD level: $grd_level2\n";
+            _system_with_env([$shell], %$env, 'GRD_LEVEL', $grd_level2);
         }
         else
         {
@@ -92,6 +91,22 @@ sub unescape_msg
     $msg =~ s/\\\\/\\/g;
 
     return $msg;
+}
+
+sub _system_with_env
+{
+    my $cmd = shift;
+    if(!@_)
+    {
+        system(@$cmd);
+        return;
+    }
+
+    my $key = shift;
+    my $value = shift;
+
+    local $ENV{$key} = $value;
+    _system_with_env($cmd, @_);
 }
 
 1;

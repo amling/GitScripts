@@ -38,7 +38,12 @@ sub execute_simple
     if(!Amling::Git::Utils::run_system("git", "merge", "--commit", "--no-ff", @parents1))
     {
         print "git merge of " . join(", ", @parents1) . " into $parent0 blew chunks, please clean it up (get correct version into index)...\n";
-        Amling::Git::GRD::Utils::run_shell(1, 1, 0);
+        my $env =
+        {
+            'GRD_PARENT0' => $parent0,
+            'GRD_PARENTS1' => join(" ", @parents1),
+        };
+        Amling::Git::GRD::Utils::run_shell(1, 1, 0, $env);
         print "Continuing...\n";
 
         Amling::Git::Utils::run_system("git", "commit") || die "Could not commit merge";
