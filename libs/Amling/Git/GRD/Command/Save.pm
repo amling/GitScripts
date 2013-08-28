@@ -25,7 +25,7 @@ sub execute_simple
     my $ctx = shift;
     my $tag = shift;
 
-    $ctx->get('tags', {})->{$tag} = Amling::Git::Utils::convert_commitlike('HEAD');
+    $ctx->get('tags', {})->{$tag} = $ctx->get_head();
 }
 
 Amling::Git::GRD::Command::add_command(sub { return __PACKAGE__->handler(@_) });

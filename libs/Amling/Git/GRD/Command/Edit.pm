@@ -21,9 +21,16 @@ sub args
 
 sub execute_simple
 {
+    my $self = shift;
+    my $ctx = shift;
+
+    $ctx->materialize_head();
+
     print "Edit requested, dropping into shell...\n";
     Amling::Git::GRD::Utils::run_shell(1, 0, 0);
     print "Edit complete, continuing...\n";
+
+    $ctx->uptake_head();
 }
 
 Amling::Git::GRD::Command::add_command(sub { return __PACKAGE__->handler(@_) });

@@ -6,13 +6,6 @@ use warnings;
 use Amling::Git::GRD::Utils;
 use Amling::Git::Utils;
 
-# TODO: eliminate strictly redundant parents in a merge...
-# e.g.  if M is from A, B, and C and A <= C then drop A.
-# This is actually fairly complicated because even if A is a merge of things in C we want to drop it.
-# The rule should probably be drop A if there is a B present s.t.  all closest, non-merge ancestors of A are contained in B.
-# Unfortunately there could be an A and a B that would eliminate each other with this definition, i.e.  it lacks anti-symmetry.
-# TODO: well, maybe do something about stupid merges...
-
 sub generate
 {
     my $head_options = shift;
@@ -20,10 +13,14 @@ sub generate
     my $minus_options = shift;
     my $tree_options = shift;
 
+    # use of $minus_options below is boned
+
+    # and we should probably convert_commitlike minus_options since we don't
+    # want the target we're transplanting on to to slide around...
+
     $head_options = process_HEAD($head_options);
     $plus_options = process_HEAD($plus_options);
-    $minus_options = {%$minus_options};
-    $tree_options = {%$tree_options};
+    $minus_options = [map { [Amling::Git::Utils::convert_commitlike($_->[0]), ($_->[1] eq "SELF" ? "SELF" : Amling::Git::Utils::convert_commitlike($_->[1]))] } @$minus_options];
 
     # convert trees to plusses
     {
@@ -40,7 +37,7 @@ sub generate
                 push @tree_commits, $h;
                 $tree_commits{$h->{'hash'}} = 1;
             };
-            Amling::Git::Utils::log_commits([(map { "^$_" } keys(%$minus_options)), $tree], $cb);
+            Amling::Git::Utils::log_commits([(map { "^" . $_->[0] } @$minus_options), $tree], $cb);
 
             # now find those that have no parents in the upstream section (all i.e.  parents in the base)
             for my $h (@tree_commits)
@@ -158,24 +155,14 @@ sub generate
         $parents{$commit} = $h->{'parents'};
         $subjects{$commit} = $h->{'msg'};
     };
-    Amling::Git::Utils::log_commits([(map { "^$_" } keys(%$minus_options)), @targets], $log_cb);
+    Amling::Git::Utils::log_commits([(map { "^" . $_->[0] } @$minus_options), @targets], $log_cb);
 
     my %nodes;
-    $nodes{'base'} =
-    {
-        'loads' => 0,
-        'commands' => [],
-        'build' => sub
-        {
-            # This one is sort of magic.  It will always get hit at the top
-            # and needn't do anything.
-        },
-    };
     my %old_new;
 
     for my $target (@targets)
     {
-        build_nodes($target, \%nodes, \%old_new, \%parents, \%subjects, 1);
+        build_nodes($target, \%nodes, \%old_new, $minus_options, \%parents, \%subjects, 1);
     }
 
     for my $commit (keys(%$commit_commands))
@@ -195,14 +182,11 @@ sub generate
 
     my @new_targets = sort(keys(%{{map { $old_new{$_} => 1 } @targets}}));
 
+    my @pregenerated_targets = grep { $nodes{$_}->{'generated'} } @new_targets;
+
     # if it will get loaded further down the line don't generate it directly to
     # avoid interleaving stuff stupidly
     @new_targets = grep { $nodes{$_}->{'loads'} == 0 } @new_targets;
-
-    if(@new_targets == 0)
-    {
-        push @new_targets, 'base';
-    }
 
     my @ret;
     for my $new_target (@new_targets)
@@ -219,7 +203,7 @@ sub generate
             {
                 if($load)
                 {
-                    push @ret, "load tag:" . ($target eq "base" ? "base" : "new-$target");
+                    push @ret, "load " . $node->{'generated'};
                 }
                 return;
             }
@@ -228,14 +212,24 @@ sub generate
 
             push @ret, @{$node->{'commands'}};
 
-            if($node->{'loads'} > 1)
+            if($node->{'loads'} > 1 && $target ne "base")
             {
-                push @ret, "save " . ($target eq "base" ? "base" : "new-$target");
+                push @ret, "save new-$target";
             }
 
-            $node->{'generated'} = 1;
+            $node->{'generated'} = "tag:new-$target";
         };
         $build_cb->($build_cb, $new_target, 0);
+    }
+
+    for my $pregenerated_target (@pregenerated_targets)
+    {
+        my $node = $nodes{$pregenerated_target};
+        if(@{$node->{'commands'}})
+        {
+            push @ret, "load " . $node->{'generated'};
+            push @ret, @{$node->{'commands'}};
+        }
     }
 
     return \@ret;
@@ -246,6 +240,7 @@ sub build_nodes
     my $target = shift;
     my $nodes = shift;
     my $old_new = shift;
+    my $minus_options = shift;
     my $parents = shift;
     my $subjects = shift;
     my $force_include = shift;
@@ -258,21 +253,53 @@ sub build_nodes
 
     if(!$parents->{$target})
     {
-        if($force_include)
+        my $slide = undef;
+        for my $minus_option (@$minus_options)
         {
-            $old_new->{$target} = "base";
+            if(covers($minus_option->[0], $target))
+            {
+                $slide = $minus_option->[1];
+                if($slide eq 'SELF')
+                {
+                    $slide = $target;
+                }
+                last;
+            }
         }
-        return "base";
+        if(!defined($slide))
+        {
+            die "Could not find minus $target in any minus options?!";
+        }
+
+        if(!$nodes->{$slide})
+        {
+            $nodes->{$slide} =
+            {
+                'loads' => 0,
+                'commands' => [],
+                'build' => sub
+                {
+                    die "Build called on minus node?!";
+                },
+                'generated' => $slide,
+                'picks_contained' => {},
+                'bases_contained' => {$slide => 1},
+            };
+        }
+        return $old_new->{$target} = $slide;
     }
 
     my $build;
+    my %picks_contained;
+    my %bases_contained;
     my @mparents = @{$parents->{$target}};
     if(@mparents == 1)
     {
-        my $parent = build_nodes($mparents[0], $nodes, $old_new, $parents, $subjects, 0);
+        my $parent = build_nodes($mparents[0], $nodes, $old_new, $minus_options, $parents, $subjects, 0);
 
         # no matter what we load result (base or otherwise) and map to ourselves
         ++$nodes->{$parent}->{'loads'};
+
         $build = sub
         {
             my $cb = shift;
@@ -282,29 +309,46 @@ sub build_nodes
 
             push @$script, "pick $target # " . Amling::Git::GRD::Utils::escape_msg($subjects->{$target});
         };
+        $picks_contained{$_} = 1 for(keys(%{$nodes->{$parent}->{'picks_contained'}}));
+        $picks_contained{$target} = 1;
+        $bases_contained{$_} = 1 for(keys(%{$nodes->{$parent}->{'bases_contained'}}));
     }
     else
     {
         my @new_parents;
-        my %new_parents;
+        my $merge_command = "cached-merge $target";
 
         for my $parent (@mparents)
         {
-            my $new_parent = build_nodes($parent, $nodes, $old_new, $parents, $subjects, 0);
-
-            if($new_parent ne 'base')
-            {
-                if(!$new_parents{$new_parent})
-                {
-                    push @new_parents, $new_parent;
-                    $new_parents{$new_parent} = 1;
-                }
-            }
+            push @new_parents, build_nodes($parent, $nodes, $old_new, $minus_options, $parents, $subjects, 0);
         }
 
-        if(@new_parents == 0)
         {
-            return $old_new->{$target} = "base";
+            my @kept_parents;
+            my @parent_queue = reverse(@new_parents);
+            while(@parent_queue)
+            {
+                my $test_parent = shift @parent_queue;
+                my %needed_picks = %{$nodes->{$test_parent}->{'picks_contained'}};
+                my %needed_bases = %{$nodes->{$test_parent}->{'bases_contained'}};
+
+                clear_picks(\%needed_picks, \%picks_contained);
+                clear_bases(\%needed_bases, \%bases_contained);
+                for my $queued_parent (@parent_queue)
+                {
+                    clear_picks(\%needed_picks, $nodes->{$queued_parent}->{'picks_contained'});
+                    clear_bases(\%needed_bases, $nodes->{$queued_parent}->{'bases_contained'});
+                }
+
+                if(%needed_picks || %needed_bases)
+                {
+                    unshift @kept_parents, $test_parent;
+                    $picks_contained{$_} = 1 for(keys(%{$nodes->{$test_parent}->{'picks_contained'}}));
+                    $bases_contained{$_} = 1 for(keys(%{$nodes->{$test_parent}->{'bases_contained'}}));
+                }
+            }
+
+            @new_parents = @kept_parents;
         }
 
         if(@new_parents == 1)
@@ -327,7 +371,7 @@ sub build_nodes
                 $cb->($new_parent, 0);
             }
 
-            push @$script, "merge " . join(" ", map { "tag:new-$_" } @new_parents);
+            push @$script, "$merge_command " . join(" ", map { $nodes->{$_}->{'generated'} } @new_parents);
         };
     }
 
@@ -336,6 +380,8 @@ sub build_nodes
         'loads' => 0,
         'commands' => [],
         'build' => $build,
+        'picks_contained' => \%picks_contained,
+        'bases_contained' => \%bases_contained,
     };
     return $old_new->{$target} = $target;
 }
@@ -377,6 +423,58 @@ sub process_HEAD
     }
 
     return $r2;
+}
+
+# TODO: covers (with all its callers) is an assload of shelling out, consider slurping history and answering this internally?
+
+sub covers
+{
+    my $coverer = shift;
+    my $covered = shift;
+
+    my $ret = 0;
+    open(my $fh, '-|', 'git', 'merge-base', $coverer, $covered) || die "Cannot open git merge-base $coverer $covered: $!";
+    my $line = <$fh> || return 0; # !@#$
+    chomp $line;
+    if($line eq $covered)
+    {
+        $ret = 1;
+    }
+    close($fh) || die "Cannot close git merge-base $coverer $covered: $!";
+
+    return $ret;
+}
+
+sub clear_picks
+{
+    my $needed_picks = shift;
+    my $covered_picks = shift;
+
+    return unless(%$covered_picks);
+
+    for my $covered_pick (keys(%$covered_picks))
+    {
+        delete $needed_picks->{$covered_pick};
+    }
+}
+
+sub clear_bases
+{
+    my $needed_bases = shift;
+    my $covered_bases = shift;
+
+    for my $covered_base (keys(%$covered_bases))
+    {
+        return unless(%$needed_bases);
+        for my $needed_base (keys(%$needed_bases))
+        {
+            if(covers($covered_base, $needed_base))
+            {
+                delete $needed_bases->{$needed_base};
+                last;
+            }
+        }
+    }
 }
 
 1;

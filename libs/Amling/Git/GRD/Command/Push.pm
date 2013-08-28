@@ -24,7 +24,7 @@ sub execute_simple
     my $self = shift;
     my $ctx = shift;
 
-    push @{$ctx->get('commit-stack', [])}, Amling::Git::Utils::convert_commitlike('HEAD');
+    push @{$ctx->get('commit-stack', [])}, $ctx->get_head();
 }
 
 Amling::Git::GRD::Command::add_command(sub { return __PACKAGE__->handler(@_) });

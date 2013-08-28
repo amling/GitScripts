@@ -5,6 +5,8 @@ $| = 1;
 use strict;
 use warnings;
 
+no warnings ('recursion');
+
 if(@ARGV < 1)
 {
     die "Usage: $0 <main branch> <query commit>...";
@@ -50,9 +52,10 @@ my @query_commits;
 for my $query_commit (@query_commits)
 {
     my $found = 0;
+    my %already;
     for my $principal_commit (reverse(@principal_ancestors))
     {
-        if(find($principal_commit, $query_commit, {}))
+        if(find($principal_commit, $query_commit, \%already))
         {
             print "$query_commit first in $principal_commit\n";
             $found = 1;
@@ -74,11 +77,6 @@ sub find
     }
 
     if($already_checked->{$commit})
-    {
-        return 0;
-    }
-
-    if($principal_ancestors{$commit})
     {
         return 0;
     }

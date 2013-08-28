@@ -44,6 +44,8 @@ sub execute_simple
     my $ctx = shift;
     my $msg = shift;
 
+    $ctx->materialize_head();
+
     my $commit = pop @{$ctx->get('commit-stack', [])};
     if(!defined($commit))
     {
@@ -83,6 +85,8 @@ sub execute_simple
         Amling::Git::Utils::run_system("git", "commit", "-F", $commit_msg_fn, "-e") || die "Cannot commit?";
     }
     unlink($commit_msg_fn) || die "Cannot unlink temp file $commit_msg_fn";
+
+    $ctx->uptake_head();
 }
 
 sub str_simple

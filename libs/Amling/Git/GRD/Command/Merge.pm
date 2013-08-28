@@ -33,7 +33,8 @@ sub execute_simple
     my $parent0 = Amling::Git::GRD::Command::Load::convert_arg("Merge", $ctx, shift);
     my @parents1 = map { Amling::Git::GRD::Command::Load::convert_arg("Merge", $ctx, $_) } @_;
 
-    Amling::Git::Utils::run_system("git", "checkout", $parent0) || die "Cannot checkout $parent0";
+    $ctx->materialize_head($parent0);
+
     if(!Amling::Git::Utils::run_system("git", "merge", "--commit", "--no-ff", @parents1))
     {
         print "git merge of " . join(", ", @parents1) . " into $parent0 blew chunks, please clean it up (get correct version into index)...\n";
@@ -42,6 +43,8 @@ sub execute_simple
 
         Amling::Git::Utils::run_system("git", "commit") || die "Could not commit merge";
     }
+
+    $ctx->uptake_head();
 }
 
 Amling::Git::GRD::Command::add_command(sub { return __PACKAGE__->handler(@_) });

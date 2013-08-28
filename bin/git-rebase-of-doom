@@ -34,70 +34,96 @@ use Getopt::Long;
 # TODO: several failures (e.g.  any convert_commitlike, any actual commit (think of empty change!)) could probably stand for more graceful handling
 # TODO: audit messages before each shell invocation indicating expected state and obvious options
 
-my %onto_options;
+my $first_is_negative = 1;
+my $current_default_onto = undef;
 my %head_options;
 my %plus_options;
-my %minus_options;
+my @minus_options;
 my %tree_options;
 my $skip_edit;
+my $dry_run;
 
 my @options =
 (
-    "onto=s" => sub { $onto_options{$_[1]} = 1; $minus_options{$_[1]} = 1; },
+    "onto=s" => sub { $current_default_onto = $_[1]; push @minus_options, [$_[1], $_[1]]; },
     "head=s" => sub { $head_options{$_[1]} = 1; },
 
     "plus=s" => sub { $plus_options{$_[1]} = 1; },
-    "minus=s" => sub { $minus_options{$_[1]} = 1; },
+    "minus=s" => sub
+    {
+        my $v = $_[1];
+
+        if($v =~ /^(.*):(.*)$/)
+        {
+            push @minus_options, [$1, $2];
+        }
+        else
+        {
+            die "Single argument --minus given before --onto?" unless $current_default_onto;
+            push @minus_options, [$v, $current_default_onto];
+        }
+
+        $first_is_negative = 0;
+    },
+    "fixed-minus=s" => sub
+    {
+        push @minus_options, [$_[1], "SELF"];
+        $first_is_negative = 0;
+    },
+
+    "<>" => sub
+    {
+        my $arg = "" . $_[0];
+        if($first_is_negative)
+        {
+            if(!defined($current_default_onto))
+            {
+                $current_default_onto = $arg;
+            }
+            push @minus_options, [$arg, $current_default_onto];
+            $first_is_negative = 0;
+            return;
+        }
+
+        if(!%head_options)
+        {
+            $head_options{$arg} = 1;
+            return;
+        }
+
+        $plus_options{$arg} = 1;
+    },
 
     "tree=s" => sub { $tree_options{$_[1]} = 1; },
 
     "skip-edit|q" => \$skip_edit,
-    "help"   => sub { usage(0); },
+    "dry-run|n" => \$dry_run,
+    "help" => sub { usage(0); },
 
 );
 
+my $reason = join(" ", "GRD", @ARGV);
+
 GetOptions(@options) || usage(1);
 
-# we use "<>" for STDIN very soon
-my $reason = join(" ", "GRD", @ARGV);
-my @args = @ARGV;
-@ARGV = ();
-
-if(@args == 0)
+if(!%head_options && !%plus_options)
 {
-    # arguments only
-}
-elsif(@args == 1)
-{
-    if(!%onto_options)
-    {
-        $onto_options{$args[0]} = 1;
-    }
-    $minus_options{$args[0]} = 1;
     $head_options{'HEAD'} = 1;
 }
-elsif(@args == 2)
+
+# we use "<>" for STDIN very soon
+@ARGV = ();
+
+my $lines = Amling::Git::GRD::CodeGeneration::generate(\%head_options, \%plus_options, \@minus_options, \%tree_options);
+
+if($dry_run)
 {
-    if(!%onto_options)
+    for my $line (@$lines)
     {
-        $onto_options{$args[0]} = 1;
+        print "$line\n";
     }
-    $minus_options{$args[0]} = 1;
-    $head_options{$args[1]} = 1;
+    exit 0;
 }
-else
-{
-    die "Invalid number of extra arguments (" . scalar(@args) . ")";
-}
-
-if(scalar(keys(%onto_options)) != 1)
-{
-    die "Invalid number of onto options (" . scalar(keys(%onto_options)) . ")";
-}
-
-my $onto_final = Amling::Git::Utils::convert_commitlike(keys(%onto_options));
-
-my $lines = Amling::Git::GRD::CodeGeneration::generate(\%head_options, \%plus_options, \%minus_options, \%tree_options);
 
 Amling::Git::GRD::Utils::run_shell(0, 0, 0);
 
@@ -109,8 +135,6 @@ unless(@commands)
 }
 
 my $ctx = Amling::Git::GRD::Exec::Context->new();
-
-Amling::Git::Utils::run_system("git", "checkout", $onto_final) || die "Cannot checkout $onto_final";
 
 my $ct = scalar(@commands);
 my $n = 1;
@@ -172,30 +196,39 @@ sub usage
 
     print <<EOF;
 Usage: git-rebase-of-doom <options> [<extra arguments>]
-   --onto <commitlike>                Use this as the destination to rebase onto.
-   --head <commitlike>                Use this as a source of commits and leave HEAD at their tip.
+   --onto <commit>               Use this as the default destination to rebase
+                                 onto and add it as a minus.
+   --head <commit>               Use this as a source of commits and leave HEAD
+                                 at their tip.
 
-   --plus <commitlike>                Use this as a source of commits.
-   --minus <commitlike>               Use this as a source of commits to exclude.
+   --plus <commit>               Use this as a source of commits.
+   --minus <commit>[:<commit>]   Use this as a source of commits to exclude and
+                                 change parent links to these to point to the
+                                 second argument.  This second argument may be
+                                 SELF to indicate to leave the links unaltered
+                                 (but stop generating the script "before" them)
+                                 and defaults to whatever the last --onto was.
+   --fixed-minus <commit>        Alias for --minus <commit>:SELF
 
-   --tree <commitlike>                Firklewitz this commit[like].
+   --tree <commit>               Firklewitz this commit.
 
-   --skip-edit | -q                   Skip editting by default.
-   --help                             Print this help.
+   --skip-edit | -q              Skip editting by default.
+   --dry-run | -n                Just print the generated script, don't
+                                 actually do anything.
+   --help                        Print this help.
 
-If no extra arguments are provided only the options themselves are used to
-construct the rebase.
+Extra arguments are handled as follows:
 
-If one extra argument it is used like normal git-rebase, i.e.  it is used as a
---minus and as an --onto if none is provided and HEAD is used as a --head.
+*) If there has been no explicit --[fixed-]minus and this rule hasn't been used yet then:
+    *) If there has been --onto use the argument as --minus.
+    *) Otherwise use it as --onto.
+*) Otherwise, if there has been no --head use the argument as --head.
+*) Otherwise, it use the argument as --plus.
 
-If two extra arguments are provided they're used like normal git-rebase, i.e.
-the first is used as a --minus and as an --onto if none is provided and the
-second is used as a --head.
+Additionally, if no --plus or --head is specified --head HEAD is added at the end.
 
-Both the one and two extra argument forms act roughly as they do in plain
-git-rebase as does the --onto switch so simple examples generally are the same.
-For example:
+This means that one and two extra act roughly as they do in plain git-rebase so
+simple examples generally are the same.  For example:
 
 # Rebase the HEAD branch up to the tip of master
 git-rebase-of-doom master
@@ -205,9 +238,12 @@ git-rebase-of-doom --onto master --head HEAD
 git-rebase-of-doom master feature
 git-rebase-of-doom --onto master --head feature
 
-# Rebase feature up to the tip of master but exclude commits from dev.
-git-rebase-of-doom master feature --minus dev
-git-rebase-of-doom --onto master --head feature --minus dev
+# Rebase ^elsewhere ^master feature onto elsewhere.
+git-rebase-of-doom --onto elsewhere master feature
+
+# Rebase feature up to the tip of master but exclude commits from dev as well.
+git-rebase-of-doom master --minus dev feature
+git-rebase-of-doom --onto master --minus dev --head feature
 
 The "language" the generated script is composed of is similar to normal rebase
 but has some key differences.  Rebase commands can be translated as follows:
@@ -262,6 +298,10 @@ load (tag:<tag> | <commitlike>)
 merge (tag:<tag> | <commitlike>)+
     Check out the first saved tag or commitlike and then merge the remaining
     saved tags and commitlikes into it.
+
+cached-merge <template> (tag:<tag> | <commitlike>)+
+    As merge but if <template> has the exact same parents reuse it directly
+    rather than repeating the merge.
 
 pick <commitlike> [<message>]
     Cherry-pick a commit, then optionally alter its message (without

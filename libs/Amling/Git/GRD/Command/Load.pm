@@ -25,7 +25,7 @@ sub execute_simple
     my $ctx = shift;
     my $commit = convert_arg("Load", $ctx, shift);
 
-    Amling::Git::Utils::run_system("git", "checkout", $commit) || die "Cannot checkout $commit";
+    $ctx->set_head($commit);
 }
 
 sub convert_arg

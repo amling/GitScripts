@@ -24,7 +24,7 @@ sub execute_simple
     my $self = shift;
     my $ctx = shift;
 
-    $ctx->set('head', [0, Amling::Git::Utils::convert_commitlike("HEAD")]);
+    $ctx->set('head', [0, $ctx->get_head()]);
 }
 
 Amling::Git::GRD::Command::add_command(sub { return __PACKAGE__->handler(@_) });
