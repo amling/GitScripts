@@ -90,6 +90,7 @@ sub _resolve_conflict
     return resolve_blocks($resolver->());
 }
 
+use Amling::Git::G3MD::Resolver::Auto;
 use Amling::Git::G3MD::Resolver::CharacterMerge;
 use Amling::Git::G3MD::Resolver::Edit;
 use Amling::Git::G3MD::Resolver::Punt;
