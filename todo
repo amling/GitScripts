@@ -7,6 +7,11 @@ G3MD
         [something to] handle touching prefix/suffix, e.g.  (ABc,abc,abC) -> (ABC) or (AB,A,) -> (B)
         [something to] handle indent conflict better by semimatching projected lines so we only conflict on the relevant part
             in particular we allow ("a","a"," a") -> " a" but not e.g.  ("  a","a"," a")
+        edit
+            should rerun 3-way on the results since presumably you changed something even if you left conflicts
+                git-merge-file
+        threeedit?
+            like edit but in three buffers
     help?
 GRD
     various cleanup (in script as TODO)
