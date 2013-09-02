@@ -26,7 +26,10 @@ use lib "$FindBin::RealBin/../libs";
 use Amling::Git::G3MD::Parser;
 use Amling::Git::G3MD::Resolver;
 
-for my $f (@ARGV)
+my @f = @ARGV;
+@ARGV = ();
+
+for my $f (@f)
 {
     my $lines = slurp($f);
     my $blocks = Amling::Git::G3MD::Parser::parse_lines($lines);
