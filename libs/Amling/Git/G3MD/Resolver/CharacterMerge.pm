@@ -196,10 +196,11 @@ sub _stage2
     my $resolved_text = "";
     my $had_left = 0;
     my $had_right = 0;
+    my $had_double = 0;
 
     my $flush_block = sub
     {
-        if($had_left && $had_right)
+        if($had_left + $had_double + $had_right >= 2)
         {
             push @blocks, ['CONFLICT', $lhs_text, $mhs_text, $rhs_text];
         }
@@ -217,6 +218,7 @@ sub _stage2
         $resolved_text = "";
         $had_left = 0;
         $had_right = 0;
+        $had_double = 0;
     };
 
     for my $stage1_e (@$stage1)
@@ -238,6 +240,11 @@ sub _stage2
         {
             $resolved_text .= $lhs_e;
             $had_left = 1;
+        }
+        elsif($lhs_e eq $rhs_e)
+        {
+            $resolved_text .= $lhs_e;
+            $had_double = 1;
         }
         else
         {
