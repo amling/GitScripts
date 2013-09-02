@@ -72,7 +72,9 @@ sub _handle
     unlink($fn1) || die "Cannot unlink temp file $fn1: $!";
     unlink($fn2) || die "Cannot unlink temp file $fn2: $!";
 
-    # TODO: determine if something went wrong, etc.
+    # TODO: consider allowing other exits:
+    # *) intentional bail back to resolve menu
+    # *) reloading of main and reference even?
 
     return [map { ['LINE', $_] } @$lines2];
 }
