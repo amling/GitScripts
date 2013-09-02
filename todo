@@ -11,9 +11,10 @@ G3MD
 GRD
     various cleanup (in script as TODO)
     maybe try to figure out "already merged" changes and skip them
-        too hard in general case...
-        git machinery is an absolute mess (rev-list --cherry-pick)
-        git-cherry?!
+        git-cherry/git-patch-id can give us the data we need
+        unclear in general case what with the multiple places we could be playing onto...
+            maybe invoking cherry on each onto/plus pair and then seeding the ontos as containing those commits?
+            we'd also need to have pick generate as NOP if it's already "contained" in the top
     allow return to editting script at some failure points
         ideally we'd dump the saved map, stack, etc.  into the script and so just drop state and run the new script from the beginning
 GBD
