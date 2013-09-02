@@ -84,5 +84,6 @@ use Amling::Git::G3MD::Resolver::LeftBack;
 use Amling::Git::G3MD::Resolver::RightBack;
 
 use Amling::Git::G3MD::Resolver::Sort;
+use Amling::Git::G3MD::Resolver::Git;
 
 1;
