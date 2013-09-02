@@ -205,7 +205,10 @@ sub _stage2
         }
         else
         {
-            push @blocks, ['RESOLVED', $resolved_text];
+            if($resolved_text ne '')
+            {
+                push @blocks, ['RESOLVED', $resolved_text];
+            }
         }
 
         $lhs_text = "";
@@ -294,12 +297,15 @@ sub _stage3
         }
         elsif($type eq 'RESOLVED')
         {
-            $lhs_text .= $stage2_e->[1];
-            $mhs_text .= $stage2_e->[1];
-            $rhs_text .= $stage2_e->[1];
-            if($stage2_e->[1] eq "\n")
+            for my $c (split(//, $stage2_e->[1]))
             {
-                $flush_block->();
+                $lhs_text .= $c;
+                $mhs_text .= $c;
+                $rhs_text .= $c;
+                if($c eq "\n")
+                {
+                    $flush_block->();
+                }
             }
         }
         else
