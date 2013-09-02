@@ -74,8 +74,12 @@ sub _resolve_conflict
     my %resolvers;
     for my $resolver (@$resolvers)
     {
-        print "(" . $resolver->[0] . ") " . $resolver->[1] . "\n";
-        $resolvers{$resolver->[0]} = $resolver->[2];
+        my $label = $resolver->[0];
+        if($label !~ s/^#//)
+        {
+            print "($label) " . $resolver->[1] . "\n";
+        }
+        $resolvers{$label} = $resolver->[2];
     }
     print "> ";
     my $ans = <>;
@@ -89,5 +93,10 @@ sub _resolve_conflict
 use Amling::Git::G3MD::Resolver::CharacterMerge;
 use Amling::Git::G3MD::Resolver::Edit;
 use Amling::Git::G3MD::Resolver::Punt;
+
+use Amling::Git::G3MD::Resolver::LeftFront;
+use Amling::Git::G3MD::Resolver::RightFront;
+use Amling::Git::G3MD::Resolver::LeftBack;
+use Amling::Git::G3MD::Resolver::RightBack;
 
 1;
