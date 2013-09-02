@@ -57,6 +57,37 @@ sub handle_simple
     return Amling::Git::G3MD::Parser::parse_lines(\@lines);
 }
 
+sub resolve_blocks
+{
+    my $class = shift;
+    my $blocks = shift;
+
+    my @ret;
+    for my $block (@$blocks)
+    {
+        my $type = $block->[0];
+        if(0)
+        {
+        }
+        elsif($type eq 'LINE')
+        {
+            push @ret, $block;
+        }
+        elsif($type eq 'CONFLICT')
+        {
+            my @conflict = @$block;
+            shift @conflict;
+            push @ret, @{Amling::Git::G3MD::Resolver::Git->handle_simple(\@conflict)};
+        }
+        else
+        {
+            die;
+        }
+    }
+
+    return \@ret;
+}
+
 Amling::Git::G3MD::Resolver::add_resolver(sub { return __PACKAGE__->handle(@_); });
 
 1;

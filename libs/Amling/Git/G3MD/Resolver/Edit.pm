@@ -4,6 +4,7 @@ use strict;
 use warnings;
 
 use Amling::Git::G3MD::Parser;
+use Amling::Git::G3MD::Resolver::Git;
 use Amling::Git::G3MD::Resolver::Simple;
 use Amling::Git::G3MD::Resolver;
 use Amling::Git::G3MD::Utils;
@@ -36,7 +37,9 @@ sub handle_simple
 
     unlink($fn) || die "Cannot unlink temp file $fn: $!";
 
-    return Amling::Git::G3MD::Parser::parse_lines($lines);
+    my $blocks = Amling::Git::G3MD::Parser::parse_lines($lines);
+
+    return Amling::Git::G3MD::Resolver::Git->resolve_blocks($blocks);
 }
 
 Amling::Git::G3MD::Resolver::add_resolver(sub { return __PACKAGE__->handle(@_); });
