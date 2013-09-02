@@ -8,8 +8,7 @@ G3MD
         [something to] handle indent conflict better by semimatching projected lines so we only conflict on the relevant part
             in particular we allow ("a","a"," a") -> " a" but not e.g.  ("  a","a"," a")
         edit
-            should rerun 3-way on the results since presumably you changed something even if you left conflicts
-                git-merge-file
+            maybe always post-process with "git" resolver?
         threeedit?
             like edit but in three buffers
     help?
