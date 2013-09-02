@@ -7,7 +7,7 @@ sub get_resolvers
 {
     my $conflict = shift;
 
-    return [['ch', 'Character merge', sub { return _handle($conflict); }]];
+    return [['c', 'Character merge', sub { return _handle($conflict); }]];
 }
 
 sub _handle

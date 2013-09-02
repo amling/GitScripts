@@ -14,19 +14,19 @@ sub get_resolvers
 
     if($lhs_text eq $mhs_text && $mhs_text eq $rhs_text)
     {
-        return [['auto', 'Automatic matched', sub { return [map { ['LINE', $_] } @$mhs_lines]; }]];
+        return [['a', 'Automatic matched', sub { return [map { ['LINE', $_] } @$mhs_lines]; }]];
     }
     if($lhs_text eq $rhs_text)
     {
-        return [['auto', 'Automatic double', sub { return [map { ['LINE', $_] } @$lhs_lines]; }]];
+        return [['a', 'Automatic double', sub { return [map { ['LINE', $_] } @$lhs_lines]; }]];
     }
     if($lhs_text eq $mhs_text)
     {
-        return [['auto', 'Automatic right', sub { return [map { ['LINE', $_] } @$rhs_lines]; }]];
+        return [['a', 'Automatic right', sub { return [map { ['LINE', $_] } @$rhs_lines]; }]];
     }
     if($mhs_text eq $rhs_text)
     {
-        return [['auto', 'Automatic left', sub { return [map { ['LINE', $_] } @$lhs_lines]; }]];
+        return [['a', 'Automatic left', sub { return [map { ['LINE', $_] } @$lhs_lines]; }]];
     }
 
     return [];

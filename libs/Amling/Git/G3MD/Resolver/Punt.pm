@@ -11,7 +11,7 @@ sub get_resolvers
 {
     my $conflict = shift;
 
-    return [['p', 'punt', sub { return _handle($conflict); }]];
+    return [['p', 'Punt', sub { return _handle($conflict); }]];
 }
 
 sub _handle
