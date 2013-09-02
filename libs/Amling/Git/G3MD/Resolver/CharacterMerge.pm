@@ -4,16 +4,19 @@ use strict;
 use warnings;
 
 use Amling::Git::G3MD::Algo;
+use Amling::Git::G3MD::Resolver::Simple;
+use Amling::Git::G3MD::Resolver;
 
-sub get_resolvers
+use base ('Amling::Git::G3MD::Resolver::Simple');
+
+sub names
 {
-    my $conflict = shift;
-
-    return [['c', 'Character merge', sub { return _handle($conflict); }]];
+    return ['c', 'cm', 'char', 'character'];
 }
 
-sub _handle
+sub handle_simple
 {
+    my $class = shift;
     my $conflict = shift;
     my ($lhs_title, $lhs_lines, $mhs_title, $mhs_lines, $rhs_title, $rhs_lines) = @$conflict;
 
@@ -382,6 +385,6 @@ sub _stage4
     return \@ret;
 }
 
-Amling::Git::G3MD::Resolver::add_resolver_source(\&get_resolvers);
+Amling::Git::G3MD::Resolver::add_resolver(sub { return __PACKAGE__->handle(@_); });
 
 1;

@@ -3,13 +3,19 @@ package Amling::Git::G3MD::Resolver::Sort;
 use strict;
 use warnings;
 
-use Amling::Git::G3MD::Parser;
+use Amling::Git::G3MD::Resolver::Simple;
 use Amling::Git::G3MD::Resolver;
-use Amling::Git::G3MD::Utils;
-use File::Temp ('tempfile');
 
-sub get_resolvers
+use base ('Amling::Git::G3MD::Resolver::Simple');
+
+sub names
 {
+    return ['s', 'sort'];
+}
+
+sub handle_simple
+{
+    my $class = shift;
     my $conflict = shift;
     my ($lhs_title, $lhs_lines, $mhs_title, $mhs_lines, $rhs_title, $rhs_lines) = @$conflict;
 
@@ -24,7 +30,7 @@ sub get_resolvers
 
         for my $line (@$ar)
         {
-            return [] if($hr->{$line});
+            return undef if($hr->{$line});
             $hr->{$line} = 1;
             $all_lines{$line} = 1;
         }
@@ -54,31 +60,9 @@ sub get_resolvers
         push @ret, ['LINE', $line] if($present);
     }
 
-    return [['s', 'Sort', sub { return \@ret; }]];
+    return \@ret;
 }
 
-sub _handle
-{
-    my $conflict = shift;
-
-    my ($fh, $fn) = tempfile('SUFFIX' => '.conflict');
-
-    for my $line (@{Amling::Git::G3MD::Utils::format_conflict($conflict)})
-    {
-        print $fh "$line\n";
-    }
-    close($fh) || die "Cannot close temp file $fn: $!";
-
-    my $editor = $ENV{'EDITOR'} || "vi";
-    system($editor, $fn) && die "Edit of file bailed?";
-
-    my $lines = Amling::Git::G3MD::Utils::slurp($fn);
-
-    unlink($fn) || die "Cannot unlink temp file $fn: $!";
-
-    return Amling::Git::G3MD::Parser::parse_lines($lines);
-}
-
-Amling::Git::G3MD::Resolver::add_resolver_source(\&get_resolvers);
+Amling::Git::G3MD::Resolver::add_resolver(sub { return __PACKAGE__->handle(@_); });
 
 1;

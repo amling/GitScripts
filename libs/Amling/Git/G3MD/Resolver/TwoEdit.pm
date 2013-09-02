@@ -4,17 +4,20 @@ use strict;
 use warnings;
 
 use Amling::Git::G3MD::Algo;
+use Amling::Git::G3MD::Resolver::Simple;
+use Amling::Git::G3MD::Resolver;
 use File::Temp ('tempfile');
 
-sub get_resolvers
-{
-    my $conflict = shift;
+use base ('Amling::Git::G3MD::Resolver::Simple');
 
-    return [['t', 'Two diff edit', sub { return _handle($conflict); }]];
+sub names
+{
+    return ['t', 'twoedit'];
 }
 
-sub _handle
+sub handle_simple
 {
+    my $class = shift;
     my $conflict = shift;
     my ($lhs_title, $lhs_lines, $mhs_title, $mhs_lines, $rhs_title, $rhs_lines) = @$conflict;
 
@@ -300,6 +303,6 @@ sub _format_diff
     return \@ret;
 }
 
-Amling::Git::G3MD::Resolver::add_resolver_source(\&get_resolvers);
+Amling::Git::G3MD::Resolver::add_resolver(sub { return __PACKAGE__->handle(@_); });
 
 1;

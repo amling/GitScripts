@@ -7,17 +7,9 @@ use Amling::Git::G3MD::Resolver::BasePeel;
 
 use base ('Amling::Git::G3MD::Resolver::BasePeel');
 
-sub label
+sub names
 {
-    return 'lb';
-}
-
-sub description
-{
-    my $class = shift;
-    my $nbr = shift;
-
-    return "Peel $nbr matching left-back line(s)";
+    return ['lb', 'leftback'];
 }
 
 sub peel_pair
@@ -30,6 +22,6 @@ sub peel_pair
     return [pop @$lhs_lines, pop @$mhs_lines];
 }
 
-Amling::Git::G3MD::Resolver::add_resolver_source(sub { return __PACKAGE__->get_resolvers(@_); });
+Amling::Git::G3MD::Resolver::add_resolver(sub { return __PACKAGE__->handle(@_); });
 
 1;

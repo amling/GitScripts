@@ -4,19 +4,21 @@ use strict;
 use warnings;
 
 use Amling::Git::G3MD::Parser;
+use Amling::Git::G3MD::Resolver::Simple;
 use Amling::Git::G3MD::Resolver;
 use Amling::Git::G3MD::Utils;
 use File::Temp ('tempfile');
 
-sub get_resolvers
-{
-    my $conflict = shift;
+use base ('Amling::Git::G3MD::Resolver::Simple');
 
-    return [['e', 'Edit', sub { return _handle($conflict); }]];
+sub names
+{
+    return ['e', 'edit'];
 }
 
-sub _handle
+sub handle_simple
 {
+    my $class = shift;
     my $conflict = shift;
 
     my ($fh, $fn) = tempfile('SUFFIX' => '.conflict');
@@ -37,6 +39,6 @@ sub _handle
     return Amling::Git::G3MD::Parser::parse_lines($lines);
 }
 
-Amling::Git::G3MD::Resolver::add_resolver_source(\&get_resolvers);
+Amling::Git::G3MD::Resolver::add_resolver(sub { return __PACKAGE__->handle(@_); });
 
 1;

@@ -3,8 +3,19 @@ package Amling::Git::G3MD::Resolver::Auto;
 use strict;
 use warnings;
 
-sub get_resolvers
+use Amling::Git::G3MD::Resolver::Simple;
+use Amling::Git::G3MD::Resolver;
+
+use base ('Amling::Git::G3MD::Resolver::Simple');
+
+sub names
 {
+    return ['a', 'auto', 'automatic'];
+}
+
+sub handle_simple
+{
+    my $class = shift;
     my $conflict = shift;
     my ($lhs_title, $lhs_lines, $mhs_title, $mhs_lines, $rhs_title, $rhs_lines) = @$conflict;
 
@@ -14,24 +25,24 @@ sub get_resolvers
 
     if($lhs_text eq $mhs_text && $mhs_text eq $rhs_text)
     {
-        return [['a', 'Automatic matched', sub { return [map { ['LINE', $_] } @$mhs_lines]; }]];
+        return [map { ['LINE', $_] } @$mhs_lines];
     }
     if($lhs_text eq $rhs_text)
     {
-        return [['a', 'Automatic double', sub { return [map { ['LINE', $_] } @$lhs_lines]; }]];
+        return [map { ['LINE', $_] } @$lhs_lines];
     }
     if($lhs_text eq $mhs_text)
     {
-        return [['a', 'Automatic right', sub { return [map { ['LINE', $_] } @$rhs_lines]; }]];
+        return [map { ['LINE', $_] } @$rhs_lines];
     }
     if($mhs_text eq $rhs_text)
     {
-        return [['a', 'Automatic left', sub { return [map { ['LINE', $_] } @$lhs_lines]; }]];
+        return [map { ['LINE', $_] } @$lhs_lines];
     }
 
-    return [];
+    return undef;
 }
 
-Amling::Git::G3MD::Resolver::add_resolver_source(\&get_resolvers);
+Amling::Git::G3MD::Resolver::add_resolver(sub { return __PACKAGE__->handle(@_); });
 
 1;

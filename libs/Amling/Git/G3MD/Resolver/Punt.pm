@@ -3,24 +3,25 @@ package Amling::Git::G3MD::Resolver::Punt;
 use strict;
 use warnings;
 
+use Amling::Git::G3MD::Resolver::Simple;
 use Amling::Git::G3MD::Resolver;
 use Amling::Git::G3MD::Utils;
-use File::Temp ('tempfile');
 
-sub get_resolvers
+use base ('Amling::Git::G3MD::Resolver::Simple');
+
+sub names
 {
-    my $conflict = shift;
-
-    return [['p', 'Punt', sub { return _handle($conflict); }]];
+    return ['p', 'punt'];
 }
 
-sub _handle
+sub handle_simple
 {
+    my $class = shift;
     my $conflict = shift;
 
     return [map { ['LINE', $_] } @{Amling::Git::G3MD::Utils::format_conflict($conflict)}];
 }
 
-Amling::Git::G3MD::Resolver::add_resolver_source(\&get_resolvers);
+Amling::Git::G3MD::Resolver::add_resolver(sub { return __PACKAGE__->handle(@_); });
 
 1;
