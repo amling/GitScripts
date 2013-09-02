@@ -3,6 +3,9 @@ package Amling::Git::G3MD::Resolver::Edit;
 use strict;
 use warnings;
 
+use Amling::Git::G3MD::Utils;
+use File::Temp ('tempfile');
+
 sub get_resolvers
 {
     my $conflict = shift;
@@ -14,7 +17,22 @@ sub _handle
 {
     my $conflict = shift;
 
-    # TODO
+    my ($fh, $fn) = tempfile('SUFFIX' => '.grd');
+
+    for my $line Amling::Git::G3MD::Utils::format_conflict($conflict)
+    {
+        print $fh "   $line\n";
+    }
+    close($fh) || die "Cannot close temp file $fn: $!";
+
+    my $editor = $ENV{'EDITOR'} || "vi";
+    system($editor, $fn) && die "Edit of file bailed?";
+
+    my $lines = Amling::Git::G3MD::Utils::slurp($fn);
+
+    unlink($fn) || die "Cannot unlink temp file $fn: $!";
+
+    return $lines;
 }
 
 Amling::Git::G3MD::Resolver::add_resolver_source(\&get_resolvers);

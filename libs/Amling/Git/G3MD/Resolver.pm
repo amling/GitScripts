@@ -65,7 +65,7 @@ sub _resolve_conflict
 
     # TODO: consider pager?
     print "Conflict:\n";
-    for my $line format_conflict($conflict)
+    for my $line Amling::Git::G3MD::Utils::format_conflict($conflict)
     {
         print "   $line\n";
     }
