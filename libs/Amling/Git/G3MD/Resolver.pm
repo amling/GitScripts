@@ -77,7 +77,7 @@ sub _resolve_conflict
         print "(" . $resolver->[0] . ") " . $resolver->[1] . "\n";
         $resolvers{$resolver->[0]} = $resolver->[2];
     }
-    print "> \n";
+    print "> ";
     my $ans = <>;
     chomp $ans;
     my $resolver = $resolvers{$ans};
