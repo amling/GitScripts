@@ -75,15 +75,13 @@ sub _resolve_conflict
 use Amling::Git::G3MD::Resolver::Auto;
 use Amling::Git::G3MD::Resolver::CharacterMerge;
 use Amling::Git::G3MD::Resolver::Edit;
-use Amling::Git::G3MD::Resolver::TwoEdit;
-use Amling::Git::G3MD::Resolver::Punt;
-
-use Amling::Git::G3MD::Resolver::LeftFront;
-use Amling::Git::G3MD::Resolver::RightFront;
-use Amling::Git::G3MD::Resolver::LeftBack;
-use Amling::Git::G3MD::Resolver::RightBack;
-
-use Amling::Git::G3MD::Resolver::Sort;
 use Amling::Git::G3MD::Resolver::Git;
+use Amling::Git::G3MD::Resolver::LeftBack;
+use Amling::Git::G3MD::Resolver::LeftFront;
+use Amling::Git::G3MD::Resolver::Punt;
+use Amling::Git::G3MD::Resolver::RightBack;
+use Amling::Git::G3MD::Resolver::RightFront;
+use Amling::Git::G3MD::Resolver::Sort;
+use Amling::Git::G3MD::Resolver::TwoEdit;
 
 1;
