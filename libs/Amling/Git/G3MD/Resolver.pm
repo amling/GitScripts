@@ -93,6 +93,7 @@ sub _resolve_conflict
 use Amling::Git::G3MD::Resolver::Auto;
 use Amling::Git::G3MD::Resolver::CharacterMerge;
 use Amling::Git::G3MD::Resolver::Edit;
+use Amling::Git::G3MD::Resolver::TwoEdit;
 use Amling::Git::G3MD::Resolver::Punt;
 
 use Amling::Git::G3MD::Resolver::LeftFront;
