@@ -33,7 +33,7 @@ my @f = @ARGV;
 for my $f (@f)
 {
     my $lines = Amling::Git::G3MD::Utils::slurp($f);
-    my $blocks = Amling::Git::G3MD::Parser::parse_lines($lines);
+    my $blocks = Amling::Git::G3MD::Parser::parse_3way($lines);
     my $lines2 = Amling::Git::G3MD::Resolver::resolve_blocks($blocks);
     Amling::Git::G3MD::Utils::unslurp($f, $lines2);
 }

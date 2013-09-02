@@ -3,7 +3,7 @@ package Amling::Git::G3MD::Parser;
 use strict;
 use warnings;
 
-sub parse_lines
+sub parse_3way
 {
     my $lines = shift;
 

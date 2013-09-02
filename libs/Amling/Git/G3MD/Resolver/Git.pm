@@ -54,7 +54,7 @@ sub handle_simple
     unlink($fn2) || die "Cannot unlink temp file $fn2: $!";
     unlink($fn3) || die "Cannot unlink temp file $fn3: $!";
 
-    return Amling::Git::G3MD::Parser::parse_lines(\@lines);
+    return Amling::Git::G3MD::Parser::parse_3way(\@lines);
 }
 
 sub resolve_blocks
