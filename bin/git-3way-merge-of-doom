@@ -1,0 +1,64 @@
+#!/usr/bin/perl
+
+# Copyright (C) 2010   Keith Amling, keith.amling@gmail.com
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+$| = 1;
+
+use strict;
+use warnings;
+
+use FindBin;
+use lib "$FindBin::RealBin/../libs";
+
+use Amling::Git::G3MD::Parser;
+use Amling::Git::G3MD::Resolver;
+
+for my $f (@ARGV)
+{
+    my $lines = slurp($f);
+    my $blocks = Amling::Git::G3MD::Parser::parse_lines($lines);
+    my $lines2 = Amling::Git::G3MD::Resolver::resolve_blocks($blocks);
+    unslurp($f, $lines2);
+}
+
+sub slurp
+{
+    my $f = shift;
+
+    my @lines;
+    open(my $fh, '<', $f) || die "Cannot open $f for reading: $!";
+    while(my $line = <$fh>))
+    {
+        chomp $line;
+        push @lines, $line;
+    }
+    close($fh) || die "Cannot close $f for reading: $!";
+
+    return \@lines;
+}
+
+sub unslurp
+{
+    my $f = shift;
+    my $lines = shift;
+
+    open(my $fh, '>', $f) || die "Cannot open $f for writing: $!";
+    for my $line (@$lines)
+    {
+        print $fh "$line\n";
+    }
+    close($fh) || die "Cannot close $f for writing: $!";
+}
