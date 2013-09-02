@@ -17,7 +17,6 @@ sub get_resolvers
     my $depth = 0;
     while(1)
     {
-use Data::Dumper; print Dumper($lhs_lines1, $mhs_lines1, $rhs_lines1);
         my ($one, $two) = @{$class->peel_pair($lhs_lines1, $mhs_lines1, $rhs_lines1)};
         if(!defined($one) || !defined($two) || $one ne $two)
         {
@@ -34,7 +33,8 @@ use Data::Dumper; print Dumper($lhs_lines1, $mhs_lines1, $rhs_lines1);
     }
     for(my $d = 1; $d < $depth; ++$d)
     {
-        push @ret, ["#$d" . $class->label(), $class->description($d), sub { return $class->_handle($conflict, $d); }];
+        my $d_copy = $d;
+        push @ret, ["#$d" . $class->label(), $class->description($d), sub { return $class->_handle($conflict, $d_copy); }];
     }
     if($depth > 1)
     {
