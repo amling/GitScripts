@@ -87,5 +87,6 @@ sub _resolve_conflict
 
 use Amling::Git::G3MD::Resolver::CharacterMerge;
 use Amling::Git::G3MD::Resolver::Edit;
+use Amling::Git::G3MD::Resolver::Punt;
 
 1;
