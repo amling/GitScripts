@@ -19,7 +19,7 @@ sub _handle
 {
     my $conflict = shift;
 
-    my ($fh, $fn) = tempfile('SUFFIX' => '.grd');
+    my ($fh, $fn) = tempfile('SUFFIX' => '.conflict');
 
     for my $line (@{Amling::Git::G3MD::Utils::format_conflict($conflict)})
     {
