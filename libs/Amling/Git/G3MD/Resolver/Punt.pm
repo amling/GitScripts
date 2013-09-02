@@ -18,7 +18,7 @@ sub _handle
 {
     my $conflict = shift;
 
-    return Amling::Git::G3MD::Utils::format_conflict($conflict);
+    return [map { ['LINE', $_] } @{Amling::Git::G3MD::Utils::format_conflict($conflict)}];
 }
 
 Amling::Git::G3MD::Resolver::add_resolver_source(\&get_resolvers);

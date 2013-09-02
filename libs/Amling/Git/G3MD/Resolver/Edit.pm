@@ -34,9 +34,7 @@ sub _handle
 
     unlink($fn) || die "Cannot unlink temp file $fn: $!";
 
-    my $blocks = Amling::Git::G3MD::Parser::parse_lines($lines);
-    my $lines2 = Amling::Git::G3MD::Resolver::resolve_blocks($blocks);
-    return $lines2;
+    return Amling::Git::G3MD::Parser::parse_lines($lines);
 }
 
 Amling::Git::G3MD::Resolver::add_resolver_source(\&get_resolvers);

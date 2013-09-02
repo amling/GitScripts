@@ -82,7 +82,8 @@ sub _resolve_conflict
     chomp $ans;
     my $resolver = $resolvers{$ans};
     die unless($resolver);
-    return $resolver->();
+
+    return resolve_blocks($resolver->());
 }
 
 use Amling::Git::G3MD::Resolver::CharacterMerge;
