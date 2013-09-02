@@ -3,6 +3,8 @@ package Amling::Git::G3MD::Resolver::CharacterMerge;
 use strict;
 use warnings;
 
+use Amling::Git::G3MD::Algo;
+
 sub get_resolvers
 {
     my $conflict = shift;
@@ -87,101 +89,71 @@ sub _stage1
     my $mhs_text = join("", map { "$_\n" } @$mhs_lines);
     my $rhs_text = join("", map { "$_\n" } @$rhs_lines);
 
-    my $last = length($lhs_text) . "," .  length($mhs_text) . "," .  length($rhs_text);
-
-    my %already = ("0,0,0" => undef);
-    my %q = (0 => ["0,0,0"]);
-    my $d = 0;
-    SRCH:
-    while(%q)
+    my $cb =
     {
-        my $sqr = $q{$d};
-        if(!defined($sqr))
+        'first' => '0,0,0',
+        'last' => length($lhs_text) . "," .  length($mhs_text) . "," .  length($rhs_text),
+        'step' => sub
         {
-            ++$d;
-            next;
-        }
-        if(!@$sqr)
+            my $e = shift;
+
+            return _steps($e, $lhs_text, $mhs_text, $rhs_text);
+        },
+        'result' => sub
         {
-            delete $q{$d};
-            ++$d;
-            next;
+            my $prev = shift;
+            my $pos = shift;
+
+            my ($prev_lhs_depth, $prev_mhs_depth, $prev_rhs_depth) = split(/,/, $prev);
+            my ($pos_lhs_depth, $pos_mhs_depth, $pos_rhs_depth) = split(/,/, $pos);
+
+            my $lhs_element;
+            if($prev_lhs_depth == $pos_lhs_depth)
+            {
+                $lhs_element = "";
+            }
+            elsif($prev_lhs_depth + 1 == $pos_lhs_depth)
+            {
+                $lhs_element = substr($lhs_text, $prev_lhs_depth, 1);
+            }
+            else
+            {
+                die;
+            }
+
+            my $mhs_element;
+            if($prev_mhs_depth == $pos_mhs_depth)
+            {
+                $mhs_element = "";
+            }
+            elsif($prev_mhs_depth + 1 == $pos_mhs_depth)
+            {
+                $mhs_element = substr($mhs_text, $prev_mhs_depth, 1);
+            }
+            else
+            {
+                die;
+            }
+
+            my $rhs_element;
+            if($prev_rhs_depth == $pos_rhs_depth)
+            {
+                $rhs_element = "";
+            }
+            elsif($prev_rhs_depth + 1 == $pos_rhs_depth)
+            {
+                $rhs_element = substr($rhs_text, $prev_rhs_depth, 1);
+            }
+            else
+            {
+                die;
+            }
+
+            return [$lhs_element, $mhs_element, $rhs_element];
         }
+    };
 
-        my $e = shift @$sqr;
-
-        for my $ne_pair (@{_steps($e, $lhs_text, $mhs_text, $rhs_text)})
-        {
-            my ($ne, $step) = @$ne_pair;
-
-            next if($already{$ne});
-            $already{$ne} = $e;
-
-            last SRCH if($ne eq $last);
-
-            my $d2 = $d + $step;
-            push @{$q{$d} ||= []}, $ne;
-        }
-    }
-
-    my $pos = $last;
-    my @ret;
-    while(1)
-    {
-        my $prev = $already{$pos};
-        last unless(defined($prev));
-
-        my ($prev_lhs_depth, $prev_mhs_depth, $prev_rhs_depth) = split(/,/, $prev);
-        my ($pos_lhs_depth, $pos_mhs_depth, $pos_rhs_depth) = split(/,/, $pos);
-
-        my $lhs_element;
-        if($prev_lhs_depth == $pos_lhs_depth)
-        {
-            $lhs_element = "";
-        }
-        elsif($prev_lhs_depth + 1 == $pos_lhs_depth)
-        {
-            $lhs_element = substr($lhs_text, $prev_lhs_depth, 1);
-        }
-        else
-        {
-            die;
-        }
-
-        my $mhs_element;
-        if($prev_mhs_depth == $pos_mhs_depth)
-        {
-            $mhs_element = "";
-        }
-        elsif($prev_mhs_depth + 1 == $pos_mhs_depth)
-        {
-            $mhs_element = substr($mhs_text, $prev_mhs_depth, 1);
-        }
-        else
-        {
-            die;
-        }
-
-        my $rhs_element;
-        if($prev_rhs_depth == $pos_rhs_depth)
-        {
-            $rhs_element = "";
-        }
-        elsif($prev_rhs_depth + 1 == $pos_rhs_depth)
-        {
-            $rhs_element = substr($rhs_text, $prev_rhs_depth, 1);
-        }
-        else
-        {
-            die;
-        }
-
-        unshift @ret, [$lhs_element, $mhs_element, $rhs_element];
-
-        $pos = $prev;
-    }
-
-    return \@ret;
+    return Amling::Git::G3MD::Algo::dfs($cb);
 }
 
 sub _stage2
