@@ -101,4 +101,6 @@ use Amling::Git::G3MD::Resolver::RightFront;
 use Amling::Git::G3MD::Resolver::LeftBack;
 use Amling::Git::G3MD::Resolver::RightBack;
 
+use Amling::Git::G3MD::Resolver::Sort;
+
 1;
