@@ -12,7 +12,7 @@ use base ('Amling::Git::G3MD::Resolver::Simple');
 
 sub names
 {
-    return ['t', 'twoedit'];
+    return ['2e', 't', 'twoedit'];
 }
 
 sub handle_simple
