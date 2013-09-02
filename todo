@@ -1,7 +1,4 @@
 G3MD
-    menu is getting unwieldy, maybe more real command parser?
-        allow arbitrary length unabbreviations
-        maybe give up one prefiltering relevance and just allow them all?
     resolvers
         split?
             to give other resolvers a better shot at pieces...
@@ -10,6 +7,7 @@ G3MD
         [something to] handle touching prefix/suffix, e.g.  (ABc,abc,abC) -> (ABC) or (AB,A,) -> (B)
         [something to] handle indent conflict better by semimatching projected lines so we only conflict on the relevant part
             in particular we allow ("a","a"," a") -> " a" but not e.g.  ("  a","a"," a")
+    help?
 GRD
     various cleanup (in script as TODO)
     maybe try to figure out "already merged" changes and skip them
