@@ -82,6 +82,7 @@ sub _two_diff
     my $lhs_lines = shift;
     my $rhs_lines = shift;
 
+    my $cache = {};
     my $cb =
     {
         'first' => '0,0',
@@ -99,8 +100,13 @@ sub _two_diff
 
             my @steps;
 
-            if(defined($lhs_e) && defined($rhs_e) && $lhs_e eq $rhs_e)
+            if(defined($lhs_e) && defined($rhs_e))
             {
+                my $dist = $cache->{$e};
+                if(!defined($dist))
+                {
+                    $dist = $cache->{$e} = _line_dist($lhs_e, $rhs_e);
+                }
                 push @steps, ["$lhs_depth2,$rhs_depth2", 0];
             }
             if(defined($lhs_e))
@@ -168,6 +174,80 @@ sub _two_diff
     return [$ct, $r];
 }
 
+sub _line_dist
+{
+    my $lhs = shift;
+    my $rhs = shift;
+
+    my $cb =
+    {
+        'first' => '0,0',
+        'last' => length($lhs) . "," . length($rhs),
+        'step' => sub
+        {
+            my $e = shift;
+
+            my ($lhs_depth, $rhs_depth) = split(/,/, $e);
+            my $lhs_depth2 = $lhs_depth + 1;
+            my $rhs_depth2 = $rhs_depth + 1;
+
+            my $lhs_e = ($lhs_depth < length($lhs)) ? substr($lhs, $lhs_depth, 1) : undef;
+            my $rhs_e = ($rhs_depth < length($rhs)) ? substr($rhs, $rhs_depth, 1) : undef;
+
+            my @steps;
+
+            if(defined($lhs_e) && defined($rhs_e) && $lhs_e eq $rhs_e)
+            {
+                push @steps, ["$lhs_depth2,$rhs_depth2", 0];
+            }
+            if(defined($lhs_e))
+            {
+                push @steps, ["$lhs_depth2,$rhs_depth", 1];
+            }
+            if(defined($rhs_e))
+            {
+                push @steps, ["$lhs_depth,$rhs_depth2", 1];
+            }
+
+            return \@steps;
+        },
+        'result' => sub
+        {
+            my $prev = shift;
+            my $pos = shift;
+
+            my ($prev_lhs_depth, $prev_rhs_depth) = split(/,/, $prev);
+            my ($pos_lhs_depth, $pos_rhs_depth) = split(/,/, $pos);
+
+            if($prev_lhs_depth == $pos_lhs_depth && $prev_rhs_depth + 1 == $pos_rhs_depth)
+            {
+                return 1;
+            }
+
+            if($prev_lhs_depth + 1 == $pos_lhs_depth && $prev_rhs_depth == $pos_rhs_depth)
+            {
+                return 1;
+            }
+
+            if($prev_lhs_depth + 1 == $pos_lhs_depth && $prev_rhs_depth + 1 == $pos_rhs_depth && substr($lhs, $prev_lhs_depth, 1) eq substr($rhs, $prev_rhs_depth, 1))
+            {
+                return 0;
+            }
+
+            die;
+        },
+    };
+
+
+    my $ct = 0;
+    for my $d (@{Amling::Git::G3MD::Algo::dfs($cb)})
+    {
+        $ct += $d;
+    }
+
+    return $ct;
+}
+
 sub _format_diff
 {
     my $diff = shift;
@@ -196,22 +276,21 @@ sub _format_diff
 
     for my $e (@$diff)
     {
-        if(defined($e->[0]) && defined($e->[1]))
+        if(defined($e->[0]) && defined($e->[1]) && $e->[0] eq $e->[1])
         {
             $flush_block->();
             push @ret, $e->[0];
+            next;
         }
-        elsif(defined($e->[0]))
+
+        if(defined($e->[0]))
         {
             push @lhs, $e->[0];
         }
-        elsif(defined($e->[1]))
+
+        if(defined($e->[1]))
         {
             push @rhs, $e->[1];
-        }
-        else
-        {
-            die;
         }
     }
     $flush_block->();
