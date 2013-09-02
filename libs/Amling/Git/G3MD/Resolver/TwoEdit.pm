@@ -4,6 +4,7 @@ use strict;
 use warnings;
 
 use Amling::Git::G3MD::Algo;
+use Amling::Git::G3MD::Resolver::Git;
 use Amling::Git::G3MD::Resolver::Simple;
 use Amling::Git::G3MD::Resolver;
 use File::Temp ('tempfile');
@@ -25,61 +26,27 @@ sub handle_simple
     my $rhs_diff = _two_diff($mhs_lines, $rhs_lines);
     my $dbl_diff = _two_diff($lhs_lines, $rhs_lines);
 
-    my $main_title;
-    my $main_lines;
-    my $ref_title;
-    my $ref_lines;
+    my ($lhs_lines2, $mhs_lines2, $rhs_lines2);
     if($dbl_diff->[0] <= $lhs_diff->[0] && $dbl_diff->[0] <= $rhs_diff->[0])
     {
-        $main_title = "$lhs_title/$rhs_title";
-        $main_lines = _format_diff($dbl_diff->[1], $lhs_title, $rhs_title);
-        $ref_title = $mhs_title;
-        $ref_lines = $mhs_lines;
+        my $main_lines2;
+        ($main_lines2, $mhs_lines2) = @{_two_edit("$lhs_title/$rhs_title", _format_diff($dbl_diff->[1], $lhs_title, $rhs_title), $mhs_title, $mhs_lines)};
+        ($lhs_lines2, $rhs_lines2) = @{_split_2way($main_lines2)};
     }
     elsif($rhs_diff->[0] <= $lhs_diff->[0])
     {
-        $main_title = $lhs_title;
-        $main_lines = $lhs_lines;
-        $ref_title = "$mhs_title/$rhs_title";
-        $ref_lines = _format_diff($rhs_diff->[1], $mhs_title, $rhs_title);
+        my $ref_lines2;
+        ($lhs_lines2, $ref_lines2) = @{_two_edit($lhs_title, $lhs_lines, "$mhs_title/$rhs_title", _format_diff($rhs_diff->[1], $mhs_title, $rhs_title))};
+        ($mhs_lines2, $rhs_lines2) = @{_split_2way($ref_lines2)};
     }
     else
     {
-        $main_title = $rhs_title;
-        $main_lines = $rhs_lines;
-        $ref_title = "$mhs_title/$lhs_title";
-        $ref_lines = _format_diff($lhs_diff->[1], $mhs_title, $lhs_title);
+        my $ref_lines2;
+        ($rhs_lines2, $ref_lines2) = @{_two_edit($rhs_title, $rhs_lines, "$mhs_title/$lhs_title", _format_diff($lhs_diff->[1], $mhs_title, $lhs_title))};
+        ($mhs_lines2, $lhs_lines2) = @{_split_2way($ref_lines2)};
     }
 
-    $ref_lines = ["# Main: $main_title", "# Reference: $ref_title", @$ref_lines];
-
-    my ($fh1, $fn1) = tempfile('SUFFIX' => '.main.conflict');
-    my ($fh2, $fn2) = tempfile('SUFFIX' => '.ref.conflict');
-
-    for my $line (@$main_lines)
-    {
-        print $fh1 "$line\n";
-    }
-    close($fh1) || die "Cannot close temp file $fn1: $!";
-
-    for my $line (@$ref_lines)
-    {
-        print $fh2 "$line\n";
-    }
-    close($fh2) || die "Cannot close temp file $fn2: $!";
-
-    system('vim', '-O', $fn1, $fn2) && die "Edit of files bailed?";
-
-    my $lines2 = Amling::Git::G3MD::Utils::slurp($fn1);
-
-    unlink($fn1) || die "Cannot unlink temp file $fn1: $!";
-    unlink($fn2) || die "Cannot unlink temp file $fn2: $!";
-
-    # TODO: consider allowing other exits:
-    # *) intentional bail back to resolve menu
-    # *) reloading of main and reference even?
-
-    return [map { ['LINE', $_] } @$lines2];
+    return Amling::Git::G3MD::Resolver::Git->handle_simple([$lhs_title, $lhs_lines2, $mhs_title, $mhs_lines2, $rhs_title, $rhs_lines2]);
 }
 
 sub _two_diff
@@ -301,6 +268,79 @@ sub _format_diff
     $flush_block->();
 
     return \@ret;
+}
+
+sub _two_edit
+{
+    my $main_title = shift;
+    my $main_lines = shift;
+    my $ref_title = shift;
+    my $ref_lines = shift;
+
+    my ($fh1, $fn1) = tempfile('SUFFIX' => '.main.conflict');
+    my ($fh2, $fn2) = tempfile('SUFFIX' => '.ref.conflict');
+
+    for my $line (@$main_lines)
+    {
+        print $fh1 "$line\n";
+    }
+    close($fh1) || die "Cannot close temp file $fn1: $!";
+
+    print $fh2 "####### Main: $main_title\n";
+    print $fh2 "####### Ref: $ref_title\n";
+    for my $line (@$ref_lines)
+    {
+        print $fh2 "$line\n";
+    }
+    close($fh2) || die "Cannot close temp file $fn2: $!";
+
+    system('vim', '-O', $fn1, $fn2) && die "Edit of files bailed?";
+
+    my $main_lines2 = Amling::Git::G3MD::Utils::slurp($fn1);
+    my $ref_lines2 = Amling::Git::G3MD::Utils::slurp($fn2);
+
+    unlink($fn1) || die "Cannot unlink temp file $fn1: $!";
+    unlink($fn2) || die "Cannot unlink temp file $fn2: $!";
+
+    while(@$ref_lines2 && $ref_lines2->[0] =~ /^####### /)
+    {
+        shift @$ref_lines2;
+    }
+
+    return [$main_lines2, $ref_lines2];
+}
+
+sub _split_2way
+{
+    my $lines = shift;
+
+    my $blocks = Amling::Git::G3MD::Parser::parse_2way($lines);
+
+    my @lhs;
+    my @rhs;
+    for my $block (@$blocks)
+    {
+        my $type = $block->[0];
+        if(0)
+        {
+        }
+        elsif($type eq 'LINE')
+        {
+            push @lhs, $block->[1];
+            push @rhs, $block->[1];
+        }
+        elsif($type eq 'CONFLICT')
+        {
+            push @lhs, @{$block->[2]};
+            push @rhs, @{$block->[4]};
+        }
+        else
+        {
+            die;
+        }
+    }
+
+    return [\@lhs, \@rhs];
 }
 
 Amling::Git::G3MD::Resolver::add_resolver(sub { return __PACKAGE__->handle(@_); });
