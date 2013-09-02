@@ -280,14 +280,14 @@ sub _two_edit
     my ($fh1, $fn1) = tempfile('SUFFIX' => '.main.conflict');
     my ($fh2, $fn2) = tempfile('SUFFIX' => '.ref.conflict');
 
+    print $fh1 "####### $main_title\n";
     for my $line (@$main_lines)
     {
         print $fh1 "$line\n";
     }
     close($fh1) || die "Cannot close temp file $fn1: $!";
 
-    print $fh2 "####### Main: $main_title\n";
-    print $fh2 "####### Ref: $ref_title\n";
+    print $fh2 "####### $ref_title\n";
     for my $line (@$ref_lines)
     {
         print $fh2 "$line\n";
@@ -301,6 +301,11 @@ sub _two_edit
 
     unlink($fn1) || die "Cannot unlink temp file $fn1: $!";
     unlink($fn2) || die "Cannot unlink temp file $fn2: $!";
+
+    while(@$main_lines2 && $main_lines2->[0] =~ /^####### /)
+    {
+        shift @$main_lines2;
+    }
 
     while(@$ref_lines2 && $ref_lines2->[0] =~ /^####### /)
     {
