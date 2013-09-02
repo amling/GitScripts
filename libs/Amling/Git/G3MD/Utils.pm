@@ -26,7 +26,7 @@ sub slurp
 
     my @lines;
     open(my $fh, '<', $f) || die "Cannot open $f for reading: $!";
-    while(my $line = <$fh>))
+    while(my $line = <$fh>)
     {
         chomp $line;
         push @lines, $line;

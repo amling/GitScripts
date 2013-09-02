@@ -1,4 +1,4 @@
-package Amling::Git::G3MD::Resolver;
+package Amling::Git::G3MD::Parser;
 
 use strict;
 use warnings;
@@ -23,7 +23,7 @@ sub parse_lines
         }
         elsif($s == 0)
         {
-            if($s =~ /^<<<<<<< (.*)$/)
+            if($line =~ /^<<<<<<< (.*)$/)
             {
                 $s = 1;
                 $lhs_title = $1;
@@ -35,7 +35,7 @@ sub parse_lines
         }
         elsif($s == 1)
         {
-            if($s =~ /^\|\|\|\|\|\|\| (.*)$/)
+            if($line =~ /^\|\|\|\|\|\|\| (.*)$/)
             {
                 $s = 2;
                 $mhs_title = $1;
@@ -47,7 +47,7 @@ sub parse_lines
         }
         elsif($s == 2)
         {
-            if($s =~ /^=======$/)
+            if($line =~ /^=======$/)
             {
                 $s = 3;
             }
@@ -58,7 +58,7 @@ sub parse_lines
         }
         elsif($s == 3)
         {
-            if($s =~ /^>>>>>>> (.*)$/)
+            if($line =~ /^>>>>>>> (.*)$/)
             {
                 $rhs_title = $1;
 

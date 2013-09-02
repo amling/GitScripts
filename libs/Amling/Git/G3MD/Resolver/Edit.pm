@@ -3,6 +3,8 @@ package Amling::Git::G3MD::Resolver::Edit;
 use strict;
 use warnings;
 
+use Amling::Git::G3MD::Parser;
+use Amling::Git::G3MD::Resolver;
 use Amling::Git::G3MD::Utils;
 use File::Temp ('tempfile');
 
@@ -19,9 +21,9 @@ sub _handle
 
     my ($fh, $fn) = tempfile('SUFFIX' => '.grd');
 
-    for my $line Amling::Git::G3MD::Utils::format_conflict($conflict)
+    for my $line (@{Amling::Git::G3MD::Utils::format_conflict($conflict)})
     {
-        print $fh "   $line\n";
+        print $fh "$line\n";
     }
     close($fh) || die "Cannot close temp file $fn: $!";
 
@@ -32,7 +34,9 @@ sub _handle
 
     unlink($fn) || die "Cannot unlink temp file $fn: $!";
 
-    return $lines;
+    my $blocks = Amling::Git::G3MD::Parser::parse_lines($lines);
+    my $lines2 = Amling::Git::G3MD::Resolver::resolve_blocks($blocks);
+    return $lines2;
 }
 
 Amling::Git::G3MD::Resolver::add_resolver_source(\&get_resolvers);

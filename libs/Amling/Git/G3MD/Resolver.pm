@@ -37,11 +37,11 @@ sub resolve_blocks
         if(0)
         {
         }
-        elsif($type->[0] eq 'LINE')
+        elsif($type eq 'LINE')
         {
-            push @lines, $type->[1];
+            push @lines, $block->[1];
         }
-        elsif($type->[0] eq 'CONFLICT')
+        elsif($type eq 'CONFLICT')
         {
             my $conflict = [@$block];
             shift @$conflict;
@@ -65,7 +65,7 @@ sub _resolve_conflict
 
     # TODO: consider pager?
     print "Conflict:\n";
-    for my $line Amling::Git::G3MD::Utils::format_conflict($conflict)
+    for my $line (@{Amling::Git::G3MD::Utils::format_conflict($conflict)})
     {
         print "   $line\n";
     }
