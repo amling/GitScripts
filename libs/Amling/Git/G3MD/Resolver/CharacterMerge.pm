@@ -35,48 +35,48 @@ sub handle_simple
 sub _steps
 {
     my $e = shift;
-    my $lhs_text = shift;
-    my $mhs_text = shift;
-    my $rhs_text = shift;
+    my $lhs_tokens = shift;
+    my $mhs_tokens = shift;
+    my $rhs_tokens = shift;
 
     my ($lhs_depth, $mhs_depth, $rhs_depth) = split(/,/, $e);
     my $lhs_depth2 = $lhs_depth + 1;
     my $mhs_depth2 = $mhs_depth + 1;
     my $rhs_depth2 = $rhs_depth + 1;
 
-    my $lhs_c = ($lhs_depth < @$lhs_text ? $lhs_text->[$lhs_depth] : "");
-    my $mhs_c = ($mhs_depth < @$mhs_text ? $mhs_text->[$mhs_depth] : "");
-    my $rhs_c = ($rhs_depth < @$rhs_text ? $rhs_text->[$rhs_depth] : "");
+    my $lhs_token = ($lhs_depth < @$lhs_tokens ? $lhs_tokens->[$lhs_depth] : "");
+    my $mhs_token = ($mhs_depth < @$mhs_tokens ? $mhs_tokens->[$mhs_depth] : "");
+    my $rhs_token = ($rhs_depth < @$rhs_tokens ? $rhs_tokens->[$rhs_depth] : "");
 
     my @steps;
 
-    if($lhs_c ne '' && $mhs_c ne '' && $rhs_c ne '' && $lhs_c eq $mhs_c && $mhs_c eq $rhs_c)
+    if($lhs_token ne '' && $mhs_token ne '' && $rhs_token ne '' && $lhs_token eq $mhs_token && $mhs_token eq $rhs_token)
     {
         push @steps, ["$lhs_depth2,$mhs_depth2,$rhs_depth2", 0];
         # mmm, I think like 2 side case it's never worth refusing a match
         return \@steps;
     }
-    if($lhs_c ne '' && $mhs_c ne '' && $lhs_c eq $mhs_c)
+    if($lhs_token ne '' && $mhs_token ne '' && $lhs_token eq $mhs_token)
     {
         push @steps, ["$lhs_depth2,$mhs_depth2,$rhs_depth", 1];
     }
-    if($mhs_c ne '' && $rhs_c ne '' && $mhs_c eq $rhs_c)
+    if($mhs_token ne '' && $rhs_token ne '' && $mhs_token eq $rhs_token)
     {
         push @steps, ["$lhs_depth,$mhs_depth2,$rhs_depth2", 1];
     }
-    if($lhs_c ne '' && $rhs_c ne '' && $lhs_c eq $rhs_c)
+    if($lhs_token ne '' && $rhs_token ne '' && $lhs_token eq $rhs_token)
     {
         push @steps, ["$lhs_depth2,$mhs_depth,$rhs_depth2", 1];
     }
-    if($lhs_c ne '')
+    if($lhs_token ne '')
     {
         push @steps, ["$lhs_depth2,$mhs_depth,$rhs_depth", 1];
     }
-    if($mhs_c ne '')
+    if($mhs_token ne '')
     {
         push @steps, ["$lhs_depth,$mhs_depth2,$rhs_depth", 1];
     }
-    if($rhs_c ne '')
+    if($rhs_token ne '')
     {
         push @steps, ["$lhs_depth,$mhs_depth,$rhs_depth2", 1];
     }
@@ -109,19 +109,19 @@ sub _stage1
     my $mhs_lines = shift;
     my $rhs_lines = shift;
 
-    my $lhs_text = _make_tokens($lhs_lines);
-    my $mhs_text = _make_tokens($mhs_lines);
-    my $rhs_text = _make_tokens($rhs_lines);
+    my $lhs_tokens = _make_tokens($lhs_lines);
+    my $mhs_tokens = _make_tokens($mhs_lines);
+    my $rhs_tokens = _make_tokens($rhs_lines);
 
     my $cb =
     {
         'first' => '0,0,0',
-        'last' => scalar(@$lhs_text) . "," . scalar(@$mhs_text) . "," .  scalar(@$rhs_text),
+        'last' => scalar(@$lhs_tokens) . "," . scalar(@$mhs_tokens) . "," .  scalar(@$rhs_tokens),
         'step' => sub
         {
             my $e = shift;
 
-            return _steps($e, $lhs_text, $mhs_text, $rhs_text);
+            return _steps($e, $lhs_tokens, $mhs_tokens, $rhs_tokens);
         },
         'result' => sub
         {
@@ -138,7 +138,7 @@ sub _stage1
             }
             elsif($prev_lhs_depth + 1 == $pos_lhs_depth)
             {
-                $lhs_element = $lhs_text->[$prev_lhs_depth];
+                $lhs_element = $lhs_tokens->[$prev_lhs_depth];
             }
             else
             {
@@ -152,7 +152,7 @@ sub _stage1
             }
             elsif($prev_mhs_depth + 1 == $pos_mhs_depth)
             {
-                $mhs_element = $mhs_text->[$prev_mhs_depth];
+                $mhs_element = $mhs_tokens->[$prev_mhs_depth];
             }
             else
             {
@@ -166,7 +166,7 @@ sub _stage1
             }
             elsif($prev_rhs_depth + 1 == $pos_rhs_depth)
             {
-                $rhs_element = $rhs_text->[$prev_rhs_depth];
+                $rhs_element = $rhs_tokens->[$prev_rhs_depth];
             }
             else
             {
