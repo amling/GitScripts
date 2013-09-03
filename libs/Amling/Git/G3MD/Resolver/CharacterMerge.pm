@@ -16,7 +16,7 @@ sub names
 
 sub description
 {
-    return '3-way merge by character';
+    return '3-way merge by character.';
 }
 
 sub handle_simple
