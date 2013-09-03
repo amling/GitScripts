@@ -41,7 +41,7 @@ sub handle_simple
     close($fh2) || die "Cannot close temp file $fn2: $!";
     close($fh3) || die "Cannot close temp file $fn3: $!";
 
-    open(my $fh, '-|', 'git', 'merge-file', '-L', $lhs_title, '-L', $mhs_title, '-L', $rhs_title, '-p', '-q', $fn1, $fn2, $fn3) || die "Cannot open git merge-file ...: $!";
+    open(my $fh, '-|', 'git', 'merge-file', '--diff3', '-L', $lhs_title, '-L', $mhs_title, '-L', $rhs_title, '-p', '-q', $fn1, $fn2, $fn3) || die "Cannot open git merge-file ...: $!";
     my @lines;
     while(my $line = <$fh>)
     {
