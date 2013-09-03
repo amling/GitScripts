@@ -15,6 +15,11 @@ sub names
     return ['3e', 'threeedit'];
 }
 
+sub description
+{
+    return 'Edit the entire conflict block in 3 separate files.';
+}
+
 sub handle_simple
 {
     my $class = shift;
@@ -56,6 +61,6 @@ sub handle_simple
     return Amling::Git::G3MD::Resolver::Git->handle_simple([$lhs_title, $lhs_lines2, $mhs_title, $mhs_lines2, $rhs_title, $rhs_lines2]);
 }
 
-Amling::Git::G3MD::Resolver::add_resolver(sub { return __PACKAGE__->handle(@_); });
+Amling::Git::G3MD::Resolver::add_resolver(__PACKAGE__);
 
 1;

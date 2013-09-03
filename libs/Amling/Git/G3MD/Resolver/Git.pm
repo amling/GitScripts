@@ -11,7 +11,12 @@ use base ('Amling::Git::G3MD::Resolver::Simple');
 
 sub names
 {
-    return ['g', 'git'];
+    return ['git', 'g'];
+}
+
+sub description
+{
+    return 'Shell out to git merge-file.'
 }
 
 sub handle_simple
@@ -88,6 +93,6 @@ sub resolve_blocks
     return \@ret;
 }
 
-Amling::Git::G3MD::Resolver::add_resolver(sub { return __PACKAGE__->handle(@_); });
+Amling::Git::G3MD::Resolver::add_resolver(__PACKAGE__);
 
 1;

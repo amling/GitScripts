@@ -5,7 +5,7 @@ use warnings;
 
 sub _names
 {
-    return ['sp', 'split'];
+    return ['split', 'sp'];
 }
 
 sub handle
@@ -78,6 +78,13 @@ sub _handle2
     return Amling::Git::G3MD::Resolver::Git->resolve_blocks(\@ret);
 }
 
-Amling::Git::G3MD::Resolver::add_resolver(sub { return __PACKAGE__->handle(@_); });
+sub help
+{
+    my $class = shift;
+
+    return [$class->_names()->[0], "{" . join("|", @{$class->_names()}) . "} <N> <N> <N> - Split the conflict block by stripping off specified number of lines from each side."];
+}
+
+Amling::Git::G3MD::Resolver::add_resolver(__PACKAGE__);
 
 1;

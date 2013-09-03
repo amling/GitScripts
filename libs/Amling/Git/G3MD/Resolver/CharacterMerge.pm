@@ -11,7 +11,12 @@ use base ('Amling::Git::G3MD::Resolver::Simple');
 
 sub names
 {
-    return ['c', 'cm', 'char', 'character'];
+    return ['character', 'char', 'cm', 'c'];
+}
+
+sub description
+{
+    return '3-way merge by character';
 }
 
 sub handle_simple
@@ -406,6 +411,6 @@ sub _stage4
     return \@ret;
 }
 
-Amling::Git::G3MD::Resolver::add_resolver(sub { return __PACKAGE__->handle(@_); });
+Amling::Git::G3MD::Resolver::add_resolver(__PACKAGE__);
 
 1;

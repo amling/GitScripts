@@ -48,22 +48,44 @@ sub _resolve_conflict
 {
     my $conflict = shift;
 
+    # TODO: consider pager?
+    print "Conflict:\n";
+    for my $line (@{Amling::Git::G3MD::Utils::format_conflict($conflict)})
+    {
+        print "   $line\n";
+    }
+
     while(1)
     {
-        # TODO: consider pager?
-        print "Conflict:\n";
-        for my $line (@{Amling::Git::G3MD::Utils::format_conflict($conflict)})
-        {
-            print "   $line\n";
-        }
-
         print "> ";
         my $ans = <>;
         chomp $ans;
 
+        if($ans eq '')
+        {
+            return _resolve_conflict($conflict);
+        }
+
+        if($ans eq 'h' || $ans eq '?')
+        {
+            my @help;
+            for my $resolver (@resolvers)
+            {
+                push @help, $resolver->help();
+            }
+            @help = sort { $a->[0] cmp $b->[0] } @help;
+
+            for my $help (@help)
+            {
+                print $help->[1] . "\n";
+            }
+
+            next;
+        }
+
         for my $resolver (@resolvers)
         {
-            my $result = $resolver->($ans, $conflict);
+            my $result = $resolver->handle($ans, $conflict);
             next unless($result);
             return resolve_blocks($result);
         }

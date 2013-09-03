@@ -13,7 +13,12 @@ use base ('Amling::Git::G3MD::Resolver::Simple');
 
 sub names
 {
-    return ['2e', 't', 'twoedit'];
+    return ['2e', 'twoedit'];
+}
+
+sub description
+{
+    return 'Edit the entire conflict block in 2 separate files (putting the most similar files together, diffed).';
 }
 
 sub handle_simple
@@ -369,6 +374,6 @@ sub _split_2way
     return [\@lhs, \@rhs];
 }
 
-Amling::Git::G3MD::Resolver::add_resolver(sub { return __PACKAGE__->handle(@_); });
+Amling::Git::G3MD::Resolver::add_resolver(__PACKAGE__);
 
 1;

@@ -10,7 +10,12 @@ use base ('Amling::Git::G3MD::Resolver::Simple');
 
 sub names
 {
-    return ['s', 'sort'];
+    return ['sort', 's'];
+}
+
+sub description
+{
+    return 'Process conflict as a sorted list.';
 }
 
 sub handle_simple
@@ -67,6 +72,6 @@ sub handle_simple
     return \@ret;
 }
 
-Amling::Git::G3MD::Resolver::add_resolver(sub { return __PACKAGE__->handle(@_); });
+Amling::Git::G3MD::Resolver::add_resolver(__PACKAGE__);
 
 1;

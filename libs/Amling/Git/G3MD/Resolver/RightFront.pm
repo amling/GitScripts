@@ -7,9 +7,14 @@ use Amling::Git::G3MD::Resolver::BasePeel;
 
 use base ('Amling::Git::G3MD::Resolver::BasePeel');
 
-sub names
+sub hside
 {
-    return ['rf', 'right-front'];
+    return 'right';
+}
+
+sub vside
+{
+    return 'front';
 }
 
 sub peel_pair
@@ -22,6 +27,6 @@ sub peel_pair
     return [shift @$mhs_lines, shift @$rhs_lines];
 }
 
-Amling::Git::G3MD::Resolver::add_resolver(sub { return __PACKAGE__->handle(@_); });
+Amling::Git::G3MD::Resolver::add_resolver(__PACKAGE__);
 
 1;

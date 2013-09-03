@@ -10,7 +10,12 @@ use base ('Amling::Git::G3MD::Resolver::Simple');
 
 sub names
 {
-    return ['a', 'auto', 'automatic'];
+    return ['automatic', 'auto', 'a'];
+}
+
+sub description
+{
+    return 'Do the right thing if two or more sides match.';
 }
 
 sub handle_simple
@@ -43,6 +48,6 @@ sub handle_simple
     return undef;
 }
 
-Amling::Git::G3MD::Resolver::add_resolver(sub { return __PACKAGE__->handle(@_); });
+Amling::Git::G3MD::Resolver::add_resolver(__PACKAGE__);
 
 1;

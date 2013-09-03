@@ -11,7 +11,12 @@ use base ('Amling::Git::G3MD::Resolver::Simple');
 
 sub names
 {
-    return ['p', 'punt'];
+    return ['punt', 'p'];
+}
+
+sub description
+{
+    return 'Leave the conflict as-is.';
 }
 
 sub handle_simple
@@ -22,6 +27,6 @@ sub handle_simple
     return [map { ['LINE', $_] } @{Amling::Git::G3MD::Utils::format_conflict($conflict)}];
 }
 
-Amling::Git::G3MD::Resolver::add_resolver(sub { return __PACKAGE__->handle(@_); });
+Amling::Git::G3MD::Resolver::add_resolver(__PACKAGE__);
 
 1;

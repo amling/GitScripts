@@ -14,7 +14,12 @@ use base ('Amling::Git::G3MD::Resolver::Simple');
 
 sub names
 {
-    return ['e', 'edit'];
+    return ['edit', 'e'];
+}
+
+sub description
+{
+    return 'Edit the entire conflict block.';
 }
 
 sub handle_simple
@@ -42,6 +47,6 @@ sub handle_simple
     return Amling::Git::G3MD::Resolver::Git->resolve_blocks($blocks);
 }
 
-Amling::Git::G3MD::Resolver::add_resolver(sub { return __PACKAGE__->handle(@_); });
+Amling::Git::G3MD::Resolver::add_resolver(__PACKAGE__);
 
 1;

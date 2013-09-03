@@ -3,13 +3,23 @@ package Amling::Git::G3MD::Resolver::BasePeel;
 use strict;
 use warnings;
 
+sub _names
+{
+    my $class = shift;
+
+    my $hside = $class->hside();
+    my $vside = $class->vside();
+
+    return [substr($hside, 0, 1) . substr($vside, 0, 1), "$hside$vside"];
+}
+
 sub handle
 {
     my $class = shift;
     my $line = shift;
     my $conflict = shift;
 
-    for my $name (@{$class->names()})
+    for my $name (@{$class->_names()})
     {
         if($line =~ /^\s*\Q$name\E\s*$/)
         {
@@ -68,6 +78,16 @@ sub _handle2
     }
 
     return \@ret;
+}
+
+sub help
+{
+    my $class = shift;
+
+    my $hside = $class->hside();
+    my $vside = $class->vside();
+
+    return [$class->_names()->[0], "{" . join("|", @{$class->_names()}) . "} [<N> | * | ALL] - Peel matching line(s) (defaults 1) from $hside $vside."];
 }
 
 1;
