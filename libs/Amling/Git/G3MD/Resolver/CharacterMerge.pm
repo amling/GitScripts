@@ -84,15 +84,34 @@ sub _steps
     return \@steps;
 }
 
+sub _make_tokens
+{
+    my $lines = shift;
+
+    my @ret;
+    for my $line (@$lines)
+    {
+        my $line2 = $line;
+        if($line2 =~ s/^(\s+)//)
+        {
+            push @ret, $1;
+        }
+        push @ret, split(//, $line2);
+        push @ret, "\n";
+    }
+
+    return \@ret;
+}
+
 sub _stage1
 {
     my $lhs_lines = shift;
     my $mhs_lines = shift;
     my $rhs_lines = shift;
 
-    my $lhs_text = [split(//, join("", map { "$_\n" } @$lhs_lines))];
-    my $mhs_text = [split(//, join("", map { "$_\n" } @$mhs_lines))];
-    my $rhs_text = [split(//, join("", map { "$_\n" } @$rhs_lines))];
+    my $lhs_text = _make_tokens($lhs_lines);
+    my $mhs_text = _make_tokens($mhs_lines);
+    my $rhs_text = _make_tokens($rhs_lines);
 
     my $cb =
     {
