@@ -15,7 +15,7 @@ sub handle
         {
             return $class->_handle2(1, $conflict);
         }
-        if($line =~ /^\s*\Q$name\E\s+(\d*)\s*$/)
+        if($line =~ /^\s*\Q$name\E\s+(\d+)\s*$/)
         {
             return $class->_handle2($1, $conflict);
         }
@@ -24,6 +24,8 @@ sub handle
             return $class->_handle2(undef, $conflict);
         }
     }
+
+    return undef;
 }
 
 sub _handle2
