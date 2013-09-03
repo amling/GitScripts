@@ -44,9 +44,9 @@ sub _steps
     my $mhs_depth2 = $mhs_depth + 1;
     my $rhs_depth2 = $rhs_depth + 1;
 
-    my $lhs_c = ($lhs_depth < length($lhs_text) ? substr($lhs_text, $lhs_depth, 1) : "");
-    my $mhs_c = ($mhs_depth < length($mhs_text) ? substr($mhs_text, $mhs_depth, 1) : "");
-    my $rhs_c = ($rhs_depth < length($rhs_text) ? substr($rhs_text, $rhs_depth, 1) : "");
+    my $lhs_c = ($lhs_depth < @$lhs_text ? $lhs_text->[$lhs_depth] : "");
+    my $mhs_c = ($mhs_depth < @$mhs_text ? $mhs_text->[$mhs_depth] : "");
+    my $rhs_c = ($rhs_depth < @$rhs_text ? $rhs_text->[$rhs_depth] : "");
 
     my @steps;
 
@@ -90,14 +90,14 @@ sub _stage1
     my $mhs_lines = shift;
     my $rhs_lines = shift;
 
-    my $lhs_text = join("", map { "$_\n" } @$lhs_lines);
-    my $mhs_text = join("", map { "$_\n" } @$mhs_lines);
-    my $rhs_text = join("", map { "$_\n" } @$rhs_lines);
+    my $lhs_text = [split(//, join("", map { "$_\n" } @$lhs_lines))];
+    my $mhs_text = [split(//, join("", map { "$_\n" } @$mhs_lines))];
+    my $rhs_text = [split(//, join("", map { "$_\n" } @$rhs_lines))];
 
     my $cb =
     {
         'first' => '0,0,0',
-        'last' => length($lhs_text) . "," .  length($mhs_text) . "," .  length($rhs_text),
+        'last' => scalar(@$lhs_text) . "," . scalar(@$mhs_text) . "," .  scalar(@$rhs_text),
         'step' => sub
         {
             my $e = shift;
@@ -119,7 +119,7 @@ sub _stage1
             }
             elsif($prev_lhs_depth + 1 == $pos_lhs_depth)
             {
-                $lhs_element = substr($lhs_text, $prev_lhs_depth, 1);
+                $lhs_element = $lhs_text->[$prev_lhs_depth];
             }
             else
             {
@@ -133,7 +133,7 @@ sub _stage1
             }
             elsif($prev_mhs_depth + 1 == $pos_mhs_depth)
             {
-                $mhs_element = substr($mhs_text, $prev_mhs_depth, 1);
+                $mhs_element = $mhs_text->[$prev_mhs_depth];
             }
             else
             {
@@ -147,7 +147,7 @@ sub _stage1
             }
             elsif($prev_rhs_depth + 1 == $pos_rhs_depth)
             {
-                $rhs_element = substr($rhs_text, $prev_rhs_depth, 1);
+                $rhs_element = $rhs_text->[$prev_rhs_depth];
             }
             else
             {
