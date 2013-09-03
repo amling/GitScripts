@@ -79,15 +79,19 @@ sub _two_diff
                 {
                     $dist = $cache->{$e} = _line_dist($lhs_e, $rhs_e);
                 }
-                push @steps, ["$lhs_depth2,$rhs_depth2", 0];
+                push @steps, ["$lhs_depth2,$rhs_depth2", $dist];
+
+                # refuse to punt an exact match since at worst it trades insert
+                # here for delete there
+                return \@steps if($dist == 0);
             }
             if(defined($lhs_e))
             {
-                push @steps, ["$lhs_depth2,$rhs_depth", 1];
+                push @steps, ["$lhs_depth2,$rhs_depth", length($lhs_e)];
             }
             if(defined($rhs_e))
             {
-                push @steps, ["$lhs_depth,$rhs_depth2", 1];
+                push @steps, ["$lhs_depth,$rhs_depth2", length($rhs_e)];
             }
 
             return \@steps;
