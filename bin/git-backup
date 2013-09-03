@@ -72,8 +72,8 @@ my %local_branches;
     {
         chomp $l;
         $l =~ s/^..//;
-        next if($l =~ /^\(no branch\)/);
-        if($l =~ /^([^ ]*) *([0-9a-f]{40}) .*$/)
+        next if($l =~ /^\(.*\) +[0-9a-f]{40}/);
+        if($l =~ /^([^ ]*) +([0-9a-f]{40}) .*$/)
         {
             my ($name, $hash) = ($1, $2);
             if($name =~ s/^\Q$local_prefix\E//)
