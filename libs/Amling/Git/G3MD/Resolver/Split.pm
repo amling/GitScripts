@@ -16,7 +16,7 @@ sub handle
 
     for my $name (@{$class->_names()})
     {
-        if($line =~ /^\s*\Q$name\E\s+(\d+)\s+(\d+)\s+(\d+)\s*$/)
+        if($line =~ /^\s*\Q$name\E\s+(-?\d+)\s+(-?\d+)\s+(-?\d+)\s*$/)
         {
             return $class->_handle2($1, $2, $3, $conflict);
         }
@@ -45,6 +45,11 @@ sub _handle2
     for my $tuple ([\@lhs_lines1, \@lhs_lines2, $lhs_lines, $lhs_depth], [\@mhs_lines1, \@mhs_lines2, $mhs_lines, $mhs_depth], [\@rhs_lines1, \@rhs_lines2, $rhs_lines, $rhs_depth])
     {
         my ($lines1, $lines2, $lines, $depth) = @$tuple;
+
+        if($depth < 0)
+        {
+            $depth = @$lines + $depth;
+        }
 
         for(my $i = 0; $i < @$lines; ++$i)
         {
@@ -82,7 +87,7 @@ sub help
 {
     my $class = shift;
 
-    return [$class->_names()->[0], "{" . join("|", @{$class->_names()}) . "} <N> <N> <N> - Split the conflict block by stripping off specified number of lines from each side."];
+    return [$class->_names()->[0], "{" . join("|", @{$class->_names()}) . "} <N> <N> <N> - Split the conflict block by stripping off specified number of lines from each side (negative means indexed from the back)."];
 }
 
 Amling::Git::G3MD::Resolver::add_resolver(__PACKAGE__);
