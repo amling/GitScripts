@@ -3,6 +3,9 @@ package Amling::Git::G3MD::Resolver::Split;
 use strict;
 use warnings;
 
+use Amling::Git::G3MD::Resolver::Git;
+use Amling::Git::G3MD::Resolver;
+
 sub _names
 {
     return ['split', 'sp'];
