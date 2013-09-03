@@ -100,11 +100,13 @@ use Amling::Git::G3MD::Resolver::Edit;
 use Amling::Git::G3MD::Resolver::Git;
 use Amling::Git::G3MD::Resolver::LeftBack;
 use Amling::Git::G3MD::Resolver::LeftFront;
+use Amling::Git::G3MD::Resolver::Ours;
 use Amling::Git::G3MD::Resolver::Punt;
 use Amling::Git::G3MD::Resolver::RightBack;
 use Amling::Git::G3MD::Resolver::RightFront;
 use Amling::Git::G3MD::Resolver::Sort;
 use Amling::Git::G3MD::Resolver::Split;
+use Amling::Git::G3MD::Resolver::Theirs;
 use Amling::Git::G3MD::Resolver::ThreeEdit;
 use Amling::Git::G3MD::Resolver::TwoEdit;
 
