@@ -1,22 +1,20 @@
 G3MD
-    handle touching prefix/suffix, e.g.  (ABc,abc,abC) -> (ABC) or (AB,A,) -> (B)
-    handle indent conflict better by semimatching projected lines so we only conflict on the relevant part
-        in particular we allow ("a","a"," a") -> " a" but not e.g.  ("  a","a"," a")
-    even allow programmatic projections?!
-    conflict blocks should probably show the smallest pair-wise diff and the other
-        if M-L is smallest show R first as result plus M-L unified as reference for change
-        if L-R is smallest show R-L first as result plus M as reference ... for nothing?
-    blocking?
-        hmm, it's like a 3-way version of longest subseq but we actually want to be a little more careful
-        in particular, X/X/Y is better than X/Y/Z but is "worse" than X/X/X
-            can maybe get away with ordering options by X/Y/Z count breaking ties with X/X/Y count
-G3MC[har]
-    pipe conflict headers through it!
+    resolvers
+        split?
+            to give other resolvers a better shot at pieces...
+            e.g.  split 1,1,2?
+                is almost certainly gonna require better command specification/parsing
+        [something to] handle touching prefix/suffix, e.g.  (ABc,abc,abC) -> (ABC) or (AB,A,) -> (B)
+        [something to] handle indent conflict better by semimatching projected lines so we only conflict on the relevant part
+            in particular we allow ("a","a"," a") -> " a" but not e.g.  ("  a","a"," a")
+    help?
 GRD
     various cleanup (in script as TODO)
     maybe try to figure out "already merged" changes and skip them
-        too hard in general case...
-        git machinery is an absolute mess (rev-list --cherry-pick)
+        git-cherry/git-patch-id can give us the data we need
+        unclear in general case what with the multiple places we could be playing onto...
+            maybe invoking cherry on each onto/plus pair and then seeding the ontos as containing those commits?
+            we'd also need to have pick generate as NOP if it's already "contained" in the top
     allow return to editting script at some failure points
         ideally we'd dump the saved map, stack, etc.  into the script and so just drop state and run the new script from the beginning
 GBD
