@@ -150,15 +150,32 @@ sub _two_diff
     return [$ct, $r];
 }
 
+sub _make_tokens
+{
+    my $line = shift;
+
+    my @ret;
+    if($line =~ s/^(\s+)//)
+    {
+        push @ret, $1;
+    }
+    push @ret, split(//, $line);
+
+    return \@ret;
+}
+
 sub _line_dist
 {
     my $lhs = shift;
     my $rhs = shift;
 
+    my $lhs_tokens = _make_tokens($lhs);
+    my $rhs_tokens = _make_tokens($rhs);
+
     my $cb =
     {
         'first' => '0,0',
-        'last' => length($lhs) . "," . length($rhs),
+        'last' => scalar(@$lhs_tokens) . "," . scalar(@$rhs_tokens),
         'step' => sub
         {
             my $e = shift;
@@ -167,8 +184,8 @@ sub _line_dist
             my $lhs_depth2 = $lhs_depth + 1;
             my $rhs_depth2 = $rhs_depth + 1;
 
-            my $lhs_e = ($lhs_depth < length($lhs)) ? substr($lhs, $lhs_depth, 1) : undef;
-            my $rhs_e = ($rhs_depth < length($rhs)) ? substr($rhs, $rhs_depth, 1) : undef;
+            my $lhs_e = ($lhs_depth < @$lhs_tokens) ? $lhs_tokens->[$lhs_depth] : undef;
+            my $rhs_e = ($rhs_depth < @$rhs_tokens) ? $rhs_tokens->[$rhs_depth] : undef;
 
             my @steps;
 
@@ -205,7 +222,7 @@ sub _line_dist
                 return 1;
             }
 
-            if($prev_lhs_depth + 1 == $pos_lhs_depth && $prev_rhs_depth + 1 == $pos_rhs_depth && substr($lhs, $prev_lhs_depth, 1) eq substr($rhs, $prev_rhs_depth, 1))
+            if($prev_lhs_depth + 1 == $pos_lhs_depth && $prev_rhs_depth + 1 == $pos_rhs_depth && $lhs_tokens->[$prev_lhs_depth] eq $rhs_tokens->[$prev_rhs_depth])
             {
                 return 0;
             }
