@@ -53,6 +53,8 @@ sub _steps
     if($lhs_c ne '' && $mhs_c ne '' && $rhs_c ne '' && $lhs_c eq $mhs_c && $mhs_c eq $rhs_c)
     {
         push @steps, ["$lhs_depth2,$mhs_depth2,$rhs_depth2", 0];
+        # mmm, I think like 2 side case it's never worth refusing a match
+        return \@steps;
     }
     if($lhs_c ne '' && $mhs_c ne '' && $lhs_c eq $mhs_c)
     {
