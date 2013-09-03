@@ -38,7 +38,7 @@ if($@)
         chomp $branch;
 
         $branch =~ s/^..//;
-        if($branch eq "(no branch)")
+        if($branch =~ /^\(.*\)$/)
         {
             next;
         }

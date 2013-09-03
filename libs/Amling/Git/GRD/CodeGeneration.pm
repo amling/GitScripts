@@ -69,7 +69,7 @@ sub generate
                 $line =~ s/^..//;
 
                 # this BS probably won't happen but let's be sure
-                next if($line eq "(no branch)");
+                next if($line =~ /^\(.*\)$/);
 
                 my $branch = $line;
 
