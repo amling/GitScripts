@@ -50,33 +50,33 @@ sub _steps
 
     my @steps;
 
-    if(defined($lhs_c) && defined($mhs_c) && defined($rhs_c) && $lhs_c eq $mhs_c && $mhs_c eq $rhs_c)
+    if($lhs_c ne '' && $mhs_c ne '' && $rhs_c ne '' && $lhs_c eq $mhs_c && $mhs_c eq $rhs_c)
     {
         push @steps, ["$lhs_depth2,$mhs_depth2,$rhs_depth2", 0];
     }
-    if(defined($lhs_c) && defined($mhs_c) && $lhs_c eq $mhs_c)
+    if($lhs_c ne '' && $mhs_c ne '' && $lhs_c eq $mhs_c)
     {
         push @steps, ["$lhs_depth2,$mhs_depth2,$rhs_depth", 1];
     }
-    if(defined($mhs_c) && defined($rhs_c) && $mhs_c eq $rhs_c)
+    if($mhs_c ne '' && $rhs_c ne '' && $mhs_c eq $rhs_c)
     {
         push @steps, ["$lhs_depth,$mhs_depth2,$rhs_depth2", 1];
     }
-    if(defined($lhs_c) && defined($rhs_c) && $lhs_c eq $rhs_c)
+    if($lhs_c ne '' && $rhs_c ne '' && $lhs_c eq $rhs_c)
     {
         push @steps, ["$lhs_depth2,$mhs_depth,$rhs_depth2", 1];
     }
-    if(defined($lhs_c))
+    if($lhs_c ne '')
     {
-        push @steps, ["$lhs_depth2,$mhs_depth,$rhs_depth", 2];
+        push @steps, ["$lhs_depth2,$mhs_depth,$rhs_depth", 1];
     }
-    if(defined($mhs_c))
+    if($mhs_c ne '')
     {
-        push @steps, ["$lhs_depth,$mhs_depth2,$rhs_depth", 2];
+        push @steps, ["$lhs_depth,$mhs_depth2,$rhs_depth", 1];
     }
-    if(defined($rhs_c))
+    if($rhs_c ne '')
     {
-        push @steps, ["$lhs_depth,$mhs_depth,$rhs_depth2", 2];
+        push @steps, ["$lhs_depth,$mhs_depth,$rhs_depth2", 1];
     }
 
     return \@steps;
