@@ -1,9 +1,5 @@
 G3MD
     resolvers
-        split?
-            to give other resolvers a better shot at pieces...
-            e.g.  split 1,1,2?
-                is almost certainly gonna require better command specification/parsing
         [something to] handle touching prefix/suffix, e.g.  (ABc,abc,abC) -> (ABC) or (AB,A,) -> (B)
         [something to] handle indent conflict better by semimatching projected lines so we only conflict on the relevant part
             in particular we allow ("a","a"," a") -> " a" but not e.g.  ("  a","a"," a")

@@ -82,6 +82,7 @@ use Amling::Git::G3MD::Resolver::Punt;
 use Amling::Git::G3MD::Resolver::RightBack;
 use Amling::Git::G3MD::Resolver::RightFront;
 use Amling::Git::G3MD::Resolver::Sort;
+use Amling::Git::G3MD::Resolver::Split;
 use Amling::Git::G3MD::Resolver::ThreeEdit;
 use Amling::Git::G3MD::Resolver::TwoEdit;
 
