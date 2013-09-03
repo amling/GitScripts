@@ -44,7 +44,11 @@ sub handle_simple
         my $rhs_present = $rhs_lines{$line} || 0;
 
         my $present;
-        if($lhs_present == $mhs_present)
+        if($lhs_present == $rhs_present)
+        {
+            $present = $lhs_present;
+        }
+        elsif($lhs_present == $mhs_present)
         {
             $present = $rhs_present;
         }
