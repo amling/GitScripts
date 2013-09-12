@@ -74,7 +74,7 @@ my $commit_cb = sub
         'parents' => $hr->{'parents'},
     };
 };
-Amling::Git::Utils::log_commits([(map { "^$_" } @good), @bad], $commit_cb);
+Amling::Git::Utils::log_commits(['--name-only', (map { "^$_" } @good), @bad], $commit_cb);
 
 for my $good (@good)
 {

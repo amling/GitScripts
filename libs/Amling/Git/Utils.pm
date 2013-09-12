@@ -42,7 +42,7 @@ sub log_commits
     my $args = shift;
     my $cb = shift;
 
-    open(my $fh, '-|', 'git', 'log', '--format=raw', '--name-only', @$args) || die "Cannot open git log: $!";
+    open(my $fh, '-|', 'git', 'log', '--format=raw', @$args) || die "Cannot open git log: $!";
     my @buffer;
     while(my $line = <$fh>)
     {
