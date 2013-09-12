@@ -79,7 +79,13 @@ sub dump_commits
     {
         $prefix = '';
         my @parents = @{$cdata->{'parents'}};
-        if(@parents == 1)
+        if(0)
+        {
+        }
+        elsif(@parents == 0)
+        {
+        }
+        elsif(@parents == 1)
         {
             dump_commits($lines, $indent, $already, $data, $parents[0], $free_parent);
         }
@@ -90,7 +96,7 @@ sub dump_commits
         }
         else
         {
-            die;
+            die "More than 2 parents for $commit";
         }
 
         $already->{$commit} = 1;
