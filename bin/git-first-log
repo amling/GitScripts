@@ -43,10 +43,11 @@ for my $arg (@ARGV)
         my $h = shift;
         $h{$h->{'hash'}} = $h;
     };
-    Amling::Git::Utils::log_commits(['--boundary', (map { "^" . $_ } @minus_options), $arg], $cb);
+    my $root = Amling::Git::Utils::convert_commitlike($arg);
+    Amling::Git::Utils::log_commits(['--boundary', (map { "^" . $_ } @minus_options), $root], $cb);
 
     my @lines;
-    dump_commits(\@lines, '', {}, \%h, Amling::Git::Utils::convert_commitlike($arg), '0000000000000000000000000000000000000000');
+    dump_commits(\@lines, '', {}, \%h, $root, '0000000000000000000000000000000000000000');
 
     print map { "$_\n" } reverse(@lines);
 }

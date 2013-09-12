@@ -116,12 +116,12 @@ sub convert_commitlike
 
     open(my $fh, '-|', 'git', 'rev-parse', $commitlike) || die "Cannot open rev-parse $commitlike: $!";
     my $commit = <$fh> || die "Could not read head commit for $commitlike";
+    close($fh) || die "Cannot open log $commitlike: $!";
     chomp $commit;
     if($commit !~ /^([0-9a-f]{40})$/)
     {
-        die "Bad head commit for $commitlike: $commit";
+        die "Bad rev-parse for $commitlike: $commit";
     }
-    close($fh) || die "Cannot open log $commitlike: $!";
 
     return $commit;
 }
