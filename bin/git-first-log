@@ -63,22 +63,23 @@ sub dump_commits
 
     if($commit eq $free_parent)
     {
-        return;
+        return 0;
     }
 
-    my $prefix;
+    my $delta = 0;
+    my $sha1_prefix = '';
+    my $subj_prefix = '';
     my $cdata = $data->{$commit} || die "No data for $commit?";
     if($cdata->{'decoration'} eq '-')
     {
-        $prefix = '(-)';
+        $sha1_prefix = '(-)';
     }
     elsif($already->{$commit})
     {
-        $prefix = '(v)';
+        $sha1_prefix = '(v)';
     }
     else
     {
-        $prefix = '';
         my @parents = @{$cdata->{'parents'}};
         if(0)
         {
@@ -88,27 +89,34 @@ sub dump_commits
         }
         elsif(@parents == 1)
         {
-            dump_commits($lines, $indent, $already, $data, $parents[0], $free_parent);
+            $delta += dump_commits($lines, $indent, $already, $data, $parents[0], $free_parent);
+            $delta += 1;
         }
         elsif(@parents == 2)
         {
-            dump_commits($lines, $indent, $already, $data, $parents[0], $free_parent);
-            dump_commits($lines, "$indent  ", $already, $data, $parents[1], $parents[0]);
+            $delta += dump_commits($lines, $indent, $already, $data, $parents[0], $free_parent);
+            my $sub_delta = dump_commits($lines, "$indent  ", $already, $data, $parents[1], $parents[0]);
+            $delta += $sub_delta;
+            $subj_prefix = "(+$sub_delta) ";
         }
         else
         {
             # TODO: could probably do something nicer but this is so rare
             # e.g.  rewrite parents of (A, B, C, D) to (A, "B,C,D") and fill in implicit parents of "B,C,D" as (B, "C,D"), etc.
-            dump_commits($lines, $indent, $already, $data, $parents[0], $free_parent);
+            $delta += dump_commits($lines, $indent, $already, $data, $parents[0], $free_parent);
+            my $sub_delta = 0;
             for(my $i = @parents - 1; $i > 0; --$i)
             {
-                dump_commits($lines, "$indent    ", $already, $data, $parents[$i], '0000000000000000000000000000000000000000');
+                $sub_delta += dump_commits($lines, "$indent    ", $already, $data, $parents[$i], '0000000000000000000000000000000000000000');
                 push @$lines, "$indent  ($i)";
             }
+            $subj_prefix = "(+$sub_delta) ";
         }
 
         $already->{$commit} = 1;
     }
 
-    push @$lines, $indent . $prefix . substr($commit, 0, 12) . ' ' . $cdata->{'subj'};
+    push @$lines, $indent . $sha1_prefix . substr($commit, 0, 12) . ' ' . $subj_prefix . $cdata->{'subj'};
+
+    return $delta;
 }
