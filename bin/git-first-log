@@ -96,7 +96,14 @@ sub dump_commits
         }
         else
         {
-            die "More than 2 parents for $commit";
+            # TODO: could probably do something nicer but this is so rare
+            # e.g.  rewrite parents of (A, B, C, D) to (A, "B,C,D") and fill in implicit parents of "B,C,D" as (B, "C,D"), etc.
+            dump_commits($lines, $indent, $already, $data, $parents[0], $free_parent);
+            for(my $i = @parents - 1; $i > 0; --$i)
+            {
+                dump_commits($lines, "$indent    ", $already, $data, $parents[$i], '0000000000000000000000000000000000000000');
+                push @$lines, "$indent  ($i)";
+            }
         }
 
         $already->{$commit} = 1;
