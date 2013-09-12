@@ -43,7 +43,7 @@ for my $arg (@ARGV)
         my $h = shift;
         $h{$h->{'hash'}} = $h;
     };
-    Amling::Git::Utils::log_commits([(map { "^" . $_ } @minus_options), $arg], $cb);
+    Amling::Git::Utils::log_commits(['--boundary', (map { "^" . $_ } @minus_options), $arg], $cb);
 
     my @lines;
     dump_commits(\@lines, '', {}, \%h, Amling::Git::Utils::convert_commitlike($arg), '0000000000000000000000000000000000000000');
@@ -65,22 +65,20 @@ sub dump_commits
         return;
     }
 
-    if(!$data->{$commit})
-    {
-        # TODO: stop being lazy and get subject
-        push @$lines, $indent . '(-)' . substr($commit, 0, 12);
-        return;
-    }
-
     my $prefix;
-    if($already->{$commit})
+    my $cdata = $data->{$commit} || die "No data for $commit?";
+    if($cdata->{'decoration'} eq '-')
+    {
+        $prefix = '(-)';
+    }
+    elsif($already->{$commit})
     {
         $prefix = '(v)';
     }
     else
     {
         $prefix = '';
-        my @parents = @{$data->{$commit}->{'parents'}};
+        my @parents = @{$cdata->{'parents'}};
         if(@parents == 1)
         {
             dump_commits($lines, $indent, $already, $data, $parents[0], $free_parent);
@@ -98,5 +96,5 @@ sub dump_commits
         $already->{$commit} = 1;
     }
 
-    push @$lines, $indent . $prefix . substr($commit, 0, 12) . ' ' . $data->{$commit}->{'subj'};
+    push @$lines, $indent . $prefix . substr($commit, 0, 12) . ' ' . $cdata->{'subj'};
 }
