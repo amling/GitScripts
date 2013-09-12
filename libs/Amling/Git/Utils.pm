@@ -72,9 +72,10 @@ sub _log_commits_aux
         if(0)
         {
         }
-        elsif($line =~ /^commit ([a-f0-9]{40})$/)
+        elsif($line =~ /^commit ((?:[-<>] )?)([a-f0-9]{40})$/)
         {
-            $commit->set_hash($1);
+            $commit->set_decoration(substr($1, 0, 1));
+            $commit->set_hash($2);
         }
         elsif($line =~ /^tree ([a-f0-9]{40})$/)
         {

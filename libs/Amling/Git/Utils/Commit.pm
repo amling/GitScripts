@@ -39,6 +39,14 @@ sub _set
     $this->{$key} = $value;
 }
 
+sub set_decoration
+{
+    my $this = shift;
+    my $decoration = shift;
+
+    $this->_set('decoration', $decoration);
+}
+
 sub set_hash
 {
     my $this = shift;
