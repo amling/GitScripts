@@ -88,6 +88,10 @@ sub add_body_line
     my $this = shift;
     my $line = shift;
 
+    if(!defined($this->{'subj'}))
+    {
+        $this->{'subj'} = $line;
+    }
     if(defined($this->{'msg'}))
     {
         $this->{'msg'} .= "\n$line";
