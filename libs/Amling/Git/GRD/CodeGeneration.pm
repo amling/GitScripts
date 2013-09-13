@@ -29,32 +29,36 @@ sub options
 
     my $first_is_negative = 1;
     my $current_default_onto = undef;
+    my $head_options = $this->{'HEAD_OPTIONS'};
+    my $plus_options = $this->{'PLUS_OPTIONS'};
+    my $minus_options = $this->{'MINUS_OPTIONS'};
+    my $tree_options = $this->{'TREE_OPTIONS'};
 
     return
     (
-        "onto=s" => sub { $current_default_onto = $_[1]; push @{$this->{'MINUS_OPTIONS'}}, [$_[1], $_[1]]; },
-        "head=s" => sub { $this->{'HEAD_OPTIONS'}->{$_[1]} = 1; },
+        "onto=s" => sub { $current_default_onto = $_[1]; push @$minus_options, [$_[1], $_[1]]; },
+        "head=s" => sub { $head_options->{$_[1]} = 1; },
 
-        "plus=s" => sub { $this->{'PLUS_OPTIONS'}->{$_[1]} = 1; },
+        "plus=s" => sub { $plus_options->{$_[1]} = 1; },
         "minus=s" => sub
         {
             my $v = $_[1];
 
             if($v =~ /^(.*):(.*)$/)
             {
-                push @{$this->{'MINUS_OPTIONS'}}, [$1, $2];
+                push @$minus_options, [$1, $2];
             }
             else
             {
                 die "Single argument --minus given before --onto?" unless $current_default_onto;
-                push @{$this->{'MINUS_OPTIONS'}}, [$v, $current_default_onto];
+                push @$minus_options, [$v, $current_default_onto];
             }
 
             $first_is_negative = 0;
         },
         "fixed-minus=s" => sub
         {
-            push @{$this->{'MINUS_OPTIONS'}}, [$_[1], "SELF"];
+            push @$minus_options, [$_[1], "SELF"];
             $first_is_negative = 0;
         },
 
@@ -67,21 +71,21 @@ sub options
                 {
                     $current_default_onto = $arg;
                 }
-                push @{$this->{'MINUS_OPTIONS'}}, [$arg, $current_default_onto];
+                push @$minus_options, [$arg, $current_default_onto];
                 $first_is_negative = 0;
                 return;
             }
 
-            if(!%{$this->{'HEAD_OPTIONS'}})
+            if(!%$head_options)
             {
-                $this->{'HEAD_OPTIONS'}->{$arg} = 1;
+                $head_options->{$arg} = 1;
                 return;
             }
 
-            $this->{'PLUS_OPTIONS'}->{$arg} = 1;
+            $plus_options->{$arg} = 1;
         },
 
-        "tree=s" => sub { $this->{'TREE_OPTIONS'}->{$_[1]} = 1; },
+        "tree=s" => sub { $tree_options->{$_[1]} = 1; },
     );
 }
 
