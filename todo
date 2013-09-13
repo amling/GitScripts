@@ -5,6 +5,8 @@ G3MD
             in particular we allow ("a","a"," a") -> " a" but not e.g.  ("  a","a"," a")
     help?
 GRD
+    --no-eliminate-merges for e.g.  non-rebasing, just editting history
+        this is probably best done after moving getopt shit fore CodeGen into CodeGen itself
     various cleanup (in script as TODO)
     maybe try to figure out "already merged" changes and skip them
         git-cherry/git-patch-id can give us the data we need
