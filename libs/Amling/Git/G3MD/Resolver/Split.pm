@@ -49,9 +49,9 @@ sub _handle2
     {
         my ($lines1, $lines2, $lines, $depth) = @$tuple;
 
-        if($depth < 0)
+        if($depth =~ s/^-//)
         {
-            $depth = @$lines + $depth;
+            $depth = @$lines - $depth;
         }
 
         for(my $i = 0; $i < @$lines; ++$i)
