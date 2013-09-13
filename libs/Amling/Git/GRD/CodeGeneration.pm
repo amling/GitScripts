@@ -16,6 +16,7 @@ sub new
         'PLUS_OPTIONS' => {},
         'MINUS_OPTIONS' => [],
         'TREE_OPTIONS' => {},
+        'MERGE_CLEANING' => 1,
     };
 
     bless $this, $class;
@@ -86,6 +87,8 @@ sub options
         },
 
         "tree=s" => sub { $tree_options->{$_[1]} = 1; },
+
+        'merge-cleaning!' => \($this->{'MERGE_CLEANING'}),
     );
 }
 
@@ -261,7 +264,7 @@ sub generate
 
     for my $target (@targets)
     {
-        build_nodes($target, \%nodes, \%old_new, $minus_options, \%parents, \%subjects, 1);
+        $this->build_nodes($target, \%nodes, \%old_new, $minus_options, \%parents, \%subjects, 1);
     }
 
     for my $commit (keys(%$commit_commands))
@@ -336,6 +339,7 @@ sub generate
 
 sub build_nodes
 {
+    my $this = shift;
     my $target = shift;
     my $nodes = shift;
     my $old_new = shift;
@@ -405,7 +409,7 @@ sub build_nodes
     }
     elsif(@mparents == 1)
     {
-        my $parent = build_nodes($mparents[0], $nodes, $old_new, $minus_options, $parents, $subjects, 0);
+        my $parent = $this->build_nodes($mparents[0], $nodes, $old_new, $minus_options, $parents, $subjects, 0);
 
         # no matter what we load result (base or otherwise) and map to ourselves
         ++$nodes->{$parent}->{'loads'};
@@ -430,9 +434,10 @@ sub build_nodes
 
         for my $parent (@mparents)
         {
-            push @new_parents, build_nodes($parent, $nodes, $old_new, $minus_options, $parents, $subjects, 0);
+            push @new_parents, $this->build_nodes($parent, $nodes, $old_new, $minus_options, $parents, $subjects, 0);
         }
 
+        if($this->{'MERGE_CLEANING'})
         {
             my @kept_parents;
             my @parent_queue = reverse(@new_parents);

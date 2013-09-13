@@ -155,6 +155,8 @@ Usage: git-rebase-of-doom <options> [<extra arguments>]
 
    --tree <commit>               Firklewitz this commit.
 
+   --[no]merge-cleaning          Do or don't eliminate dead merges.
+
    --skip-edit | -q              Skip editting by default.
    --dry-run | -n                Just print the generated script, don't
                                  actually do anything.
