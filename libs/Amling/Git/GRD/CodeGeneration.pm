@@ -293,7 +293,18 @@ sub build_nodes
     my %picks_contained;
     my %bases_contained;
     my @mparents = @{$parents->{$target}};
-    if(@mparents == 1)
+    if(@mparents == 0)
+    {
+        $build = sub
+        {
+            my $cb = shift;
+            my $script = shift;
+
+            push @$script, "load $target # [INITIAL] " . Amling::Git::GRD::Utils::escape_msg($subjects->{$target});
+        };
+        $picks_contained{$target} = 1;
+    }
+    elsif(@mparents == 1)
     {
         my $parent = build_nodes($mparents[0], $nodes, $old_new, $minus_options, $parents, $subjects, 0);
 
