@@ -35,7 +35,7 @@ sub execute_simple
 
     $ctx->materialize_head($parent0);
 
-    if(!Amling::Git::Utils::run_system("git", "merge", "--commit", "--no-ff", @parents1))
+    if(!Amling::Git::Utils::run_system("git", "merge", "--no-edit", "--commit", "--no-ff", @parents1))
     {
         print "git merge of " . join(", ", @parents1) . " into $parent0 blew chunks, please clean it up (get correct version into index)...\n";
         my $env =
