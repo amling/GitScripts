@@ -6,12 +6,102 @@ use warnings;
 use Amling::Git::GRD::Utils;
 use Amling::Git::Utils;
 
+sub new
+{
+    my $class = shift;
+
+    my $this =
+    {
+        'FIRST_IS_NEGATIVE' => 1,
+        'CURRENT_DEFAULT_ONTO' => undef,
+        'HEAD_OPTIONS' => {},
+        'PLUS_OPTIONS' => {},
+        'MINUS_OPTIONS' => [],
+        'TREE_OPTIONS' => {},
+    };
+
+    bless $this, $class;
+
+    return $this;
+}
+
+sub options
+{
+    my $this = shift;
+
+    return
+    (
+        "onto=s" => sub { $this->{'CURRENT_DEFAULT_ONTO'} = $_[1]; push @{$this->{'MINUS_OPTIONS'}}, [$_[1], $_[1]]; },
+        "head=s" => sub { $this->{'HEAD_OPTIONS'}->{$_[1]} = 1; },
+
+        "plus=s" => sub { $this->{'PLUS_OPTIONS'}->{$_[1]} = 1; },
+        "minus=s" => sub
+        {
+            my $v = $_[1];
+
+            if($v =~ /^(.*):(.*)$/)
+            {
+                push @{$this->{'MINUS_OPTIONS'}}, [$1, $2];
+            }
+            else
+            {
+                die "Single argument --minus given before --onto?" unless $this->{'CURRENT_DEFAULT_ONTO'};
+                push @{$this->{'MINUS_OPTIONS'}}, [$v, $this->{'CURRENT_DEFAULT_ONTO'}];
+            }
+
+            $this->{'FIRST_IS_NEGATIVE'} = 0;
+        },
+        "fixed-minus=s" => sub
+        {
+            push @{$this->{'MINUS_OPTIONS'}}, [$_[1], "SELF"];
+            $this->{'FIRST_IS_NEGATIVE'} = 0;
+        },
+
+        "<>" => sub
+        {
+            my $arg = "" . $_[0];
+            if($this->{'FIRST_IS_NEGATIVE'})
+            {
+                if(!defined($this->{'CURRENT_DEFAULT_ONTO'}))
+                {
+                    $this->{'CURRENT_DEFAULT_ONTO'} = $arg;
+                }
+                push @{$this->{'MINUS_OPTIONS'}}, [$arg, $this->{'CURRENT_DEFAULT_ONTO'}];
+                $this->{'FIRST_IS_NEGATIVE'} = 0;
+                return;
+            }
+
+            if(!%{$this->{'HEAD_OPTIONS'}})
+            {
+                $this->{'HEAD_OPTIONS'}->{$arg} = 1;
+                return;
+            }
+
+            $this->{'PLUS_OPTIONS'}->{$arg} = 1;
+        },
+
+        "tree=s" => sub { $this->{'TREE_OPTIONS'}->{$_[1]} = 1; },
+    );
+}
+
+sub finish_options
+{
+    my $this = shift;
+
+    if(!%{$this->{'HEAD_OPTIONS'}} && !%{$this->{'PLUS_OPTIONS'}} && !%{$this->{'TREE_OPTIONS'}})
+    {
+        $this->{'HEAD_OPTIONS'}->{'HEAD'} = 1;
+    }
+}
+
 sub generate
 {
-    my $head_options = shift;
-    my $plus_options = shift;
-    my $minus_options = shift;
-    my $tree_options = shift;
+    my $this = shift;
+
+    my $head_options = $this->{'HEAD_OPTIONS'};
+    my $plus_options = $this->{'PLUS_OPTIONS'};
+    my $minus_options = $this->{'MINUS_OPTIONS'};
+    my $tree_options = $this->{'TREE_OPTIONS'};
 
     # use of $minus_options below is boned
 
