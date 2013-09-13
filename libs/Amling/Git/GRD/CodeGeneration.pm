@@ -12,8 +12,6 @@ sub new
 
     my $this =
     {
-        'FIRST_IS_NEGATIVE' => 1,
-        'CURRENT_DEFAULT_ONTO' => undef,
         'HEAD_OPTIONS' => {},
         'PLUS_OPTIONS' => {},
         'MINUS_OPTIONS' => [],
@@ -29,9 +27,12 @@ sub options
 {
     my $this = shift;
 
+    my $first_is_negative = 1;
+    my $current_default_onto = undef;
+
     return
     (
-        "onto=s" => sub { $this->{'CURRENT_DEFAULT_ONTO'} = $_[1]; push @{$this->{'MINUS_OPTIONS'}}, [$_[1], $_[1]]; },
+        "onto=s" => sub { $current_default_onto = $_[1]; push @{$this->{'MINUS_OPTIONS'}}, [$_[1], $_[1]]; },
         "head=s" => sub { $this->{'HEAD_OPTIONS'}->{$_[1]} = 1; },
 
         "plus=s" => sub { $this->{'PLUS_OPTIONS'}->{$_[1]} = 1; },
@@ -45,29 +46,29 @@ sub options
             }
             else
             {
-                die "Single argument --minus given before --onto?" unless $this->{'CURRENT_DEFAULT_ONTO'};
-                push @{$this->{'MINUS_OPTIONS'}}, [$v, $this->{'CURRENT_DEFAULT_ONTO'}];
+                die "Single argument --minus given before --onto?" unless $current_default_onto;
+                push @{$this->{'MINUS_OPTIONS'}}, [$v, $current_default_onto];
             }
 
-            $this->{'FIRST_IS_NEGATIVE'} = 0;
+            $first_is_negative = 0;
         },
         "fixed-minus=s" => sub
         {
             push @{$this->{'MINUS_OPTIONS'}}, [$_[1], "SELF"];
-            $this->{'FIRST_IS_NEGATIVE'} = 0;
+            $first_is_negative = 0;
         },
 
         "<>" => sub
         {
             my $arg = "" . $_[0];
-            if($this->{'FIRST_IS_NEGATIVE'})
+            if($first_is_negative)
             {
-                if(!defined($this->{'CURRENT_DEFAULT_ONTO'}))
+                if(!defined($current_default_onto))
                 {
-                    $this->{'CURRENT_DEFAULT_ONTO'} = $arg;
+                    $current_default_onto = $arg;
                 }
-                push @{$this->{'MINUS_OPTIONS'}}, [$arg, $this->{'CURRENT_DEFAULT_ONTO'}];
-                $this->{'FIRST_IS_NEGATIVE'} = 0;
+                push @{$this->{'MINUS_OPTIONS'}}, [$arg, $current_default_onto];
+                $first_is_negative = 0;
                 return;
             }
 
