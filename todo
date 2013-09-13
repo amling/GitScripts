@@ -5,6 +5,9 @@ G3MD
             in particular we allow ("a","a"," a") -> " a" but not e.g.  ("  a","a"," a")
     help?
 GRD
+    merge elimination might be too aggressive
+        rather than deciding contained uniqueness maybe we should look at whether or not it would actually be a FF in the new history
+        this amounts to considering merges themselves as having uniqueness
     --no-eliminate-merges for e.g.  non-rebasing, just editting history
         this is probably best done after moving getopt shit fore CodeGen into CodeGen itself
     various cleanup (in script as TODO)
