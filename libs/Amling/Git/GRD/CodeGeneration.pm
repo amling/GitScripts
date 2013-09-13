@@ -93,9 +93,13 @@ sub finish_options
 {
     my $this = shift;
 
-    if(!%{$this->{'HEAD_OPTIONS'}} && !%{$this->{'PLUS_OPTIONS'}} && !%{$this->{'TREE_OPTIONS'}})
+    my $head_options = $this->{'HEAD_OPTIONS'};
+    my $plus_options = $this->{'PLUS_OPTIONS'};
+    my $tree_options = $this->{'TREE_OPTIONS'};
+
+    if(!%$head_options && !%$plus_options && !%$tree_options)
     {
-        $this->{'HEAD_OPTIONS'}->{'HEAD'} = 1;
+        $head_options->{'HEAD'} = 1;
     }
 }
 
