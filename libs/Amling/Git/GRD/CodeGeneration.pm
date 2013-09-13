@@ -483,6 +483,8 @@ sub build_nodes
 
             push @$script, "$merge_command " . join(" ", map { $nodes->{$_}->{'generated'} } @new_parents);
         };
+        # this means merges are considered to have uniqueness as well
+        $picks_contained{$target} = 1;
     }
 
     $nodes->{$target} =
