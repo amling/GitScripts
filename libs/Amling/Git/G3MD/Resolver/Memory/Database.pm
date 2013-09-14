@@ -3,6 +3,7 @@ package Amling::Git::G3MD::Resolver::Memory::Database;
 use strict;
 use warnings;
 
+use Amling::Git::Utils;
 use Digest;
 
 sub _get_root
@@ -48,7 +49,7 @@ sub query
 
     if(-f $fn)
     {
-        return slurp($fn);
+        return Amling::Git::Utils::slurp($fn);
     }
 
     return undef;
@@ -60,8 +61,8 @@ sub record
     my $result = shift;
 
     my $id = _get_id($conflict);
-    unslurp(_get_root() . "/$id.in", _get_lines($conflict));
-    unslurp(_get_root() . "/$id.out", $result);
+    Amling::Git::Utils::unslurp(_get_root() . "/$id.in", _get_lines($conflict));
+    Amling::Git::Utils::unslurp(_get_root() . "/$id.out", $result);
 }
 
 1;
