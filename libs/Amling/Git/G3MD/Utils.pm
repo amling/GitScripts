@@ -20,33 +20,4 @@ sub format_conflict
     return \@ret;
 }
 
-sub slurp
-{
-    my $f = shift;
-
-    my @lines;
-    open(my $fh, '<', $f) || die "Cannot open $f for reading: $!";
-    while(my $line = <$fh>)
-    {
-        chomp $line;
-        push @lines, $line;
-    }
-    close($fh) || die "Cannot close $f for reading: $!";
-
-    return \@lines;
-}
-
-sub unslurp
-{
-    my $f = shift;
-    my $lines = shift;
-
-    open(my $fh, '>', $f) || die "Cannot open $f for writing: $!";
-    for my $line (@$lines)
-    {
-        print $fh "$line\n";
-    }
-    close($fh) || die "Cannot close $f for writing: $!";
-}
-
 1;
