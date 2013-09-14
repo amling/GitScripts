@@ -26,9 +26,23 @@ sub handle_simple
 
     print "Starting recording memory...\n";
     my $result = Amling::Git::G3MD::Resolver::resolve_conflict($conflict);
-    print "Recording completed.\n";
 
-    Amling::Git::G3MD::Resolver::Memory::Database::record($conflict, $result);
+    my $ok = 1;
+    for my $line (@$result)
+    {
+        if($line =~ /^(<<<<<<<|\|\|\|\|\|\|\||=======|>>>>>>>)( |$)/)
+        {
+            print "Recording refused (still contains conflict headers).\n";
+            $ok = 0;
+            last;
+        }
+    }
+
+    if($ok)
+    {
+        Amling::Git::G3MD::Resolver::Memory::Database::record($conflict, $result);
+        print "Recording completed.\n";
+    }
 
     return [map { ['LINE', $_] } @$result];
 }
