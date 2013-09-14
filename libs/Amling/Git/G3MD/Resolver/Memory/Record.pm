@@ -24,7 +24,9 @@ sub handle_simple
     my $class = shift;
     my $conflict = shift;
 
+    print "Starting recording memory...\n";
     my $result = Amling::Git::G3MD::Resolver::resolve_conflict($conflict);
+    print "Recording completed.\n";
 
     Amling::Git::G3MD::Resolver::Memory::Database::record($conflict, $result);
 

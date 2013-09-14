@@ -23,13 +23,16 @@ sub handle_simple
     my $class = shift;
     my $conflict = shift;
 
+    print "Querying memory...\n";
     my $result = Amling::Git::G3MD::Resolver::Memory::Database::query($conflict);
 
     if(!defined($result))
     {
+        print "Miss.\n";
         return undef;
     }
 
+    print "Hit.\n";
     return [map { ['LINE', $_] } @$result];
 }
 
