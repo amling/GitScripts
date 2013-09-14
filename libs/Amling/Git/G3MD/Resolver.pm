@@ -33,7 +33,7 @@ sub resolve_blocks
             my $conflict = [@$block];
             shift @$conflict;
 
-            push @lines, @{_resolve_conflict($conflict)};
+            push @lines, @{resolve_conflict($conflict)};
         }
         else
         {
@@ -44,7 +44,7 @@ sub resolve_blocks
     return \@lines;
 }
 
-sub _resolve_conflict
+sub resolve_conflict
 {
     my $conflict = shift;
 
@@ -63,7 +63,7 @@ sub _resolve_conflict
 
         if($ans eq '')
         {
-            return _resolve_conflict($conflict);
+            return resolve_conflict($conflict);
         }
 
         if($ans eq 'h' || $ans eq '?')
@@ -100,6 +100,9 @@ use Amling::Git::G3MD::Resolver::Edit;
 use Amling::Git::G3MD::Resolver::Git;
 use Amling::Git::G3MD::Resolver::LeftBack;
 use Amling::Git::G3MD::Resolver::LeftFront;
+use Amling::Git::G3MD::Resolver::Memory::Main;
+use Amling::Git::G3MD::Resolver::Memory::Query;
+use Amling::Git::G3MD::Resolver::Memory::Record;
 use Amling::Git::G3MD::Resolver::Ours;
 use Amling::Git::G3MD::Resolver::Punt;
 use Amling::Git::G3MD::Resolver::RightBack;

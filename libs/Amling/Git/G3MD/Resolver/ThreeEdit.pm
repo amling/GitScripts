@@ -6,6 +6,7 @@ use warnings;
 use Amling::Git::G3MD::Resolver::Git;
 use Amling::Git::G3MD::Resolver::Simple;
 use Amling::Git::G3MD::Resolver;
+use Amling::Git::Utils;
 use File::Temp ('tempfile');
 
 use base ('Amling::Git::G3MD::Resolver::Simple');
@@ -50,9 +51,9 @@ sub handle_simple
 
     system('vim', '-O', $fn1, $fn2, $fn3) && die "Edit of files bailed?";
 
-    my $lhs_lines2 = Amling::Git::G3MD::Utils::slurp($fn1);
-    my $mhs_lines2 = Amling::Git::G3MD::Utils::slurp($fn2);
-    my $rhs_lines2 = Amling::Git::G3MD::Utils::slurp($fn3);
+    my $lhs_lines2 = Amling::Git::Utils::slurp($fn1);
+    my $mhs_lines2 = Amling::Git::Utils::slurp($fn2);
+    my $rhs_lines2 = Amling::Git::Utils::slurp($fn3);
 
     unlink($fn1) || die "Cannot unlink temp file $fn1: $!";
     unlink($fn2) || die "Cannot unlink temp file $fn2: $!";

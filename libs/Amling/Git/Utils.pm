@@ -4,6 +4,7 @@ use strict;
 use warnings;
 
 use Amling::Git::Utils::Commit;
+use File::Basename;
 
 sub find_root
 {
@@ -170,6 +171,37 @@ sub run_system
     print "Running: " . join(", ", @cmd) . "...\n";
 
     return (system(@cmd) == 0);
+}
+
+sub slurp
+{
+    my $f = shift;
+
+    my @lines;
+    open(my $fh, '<', $f) || die "Cannot open $f for reading: $!";
+    while(my $line = <$fh>)
+    {
+        chomp $line;
+        push @lines, $line;
+    }
+    close($fh) || die "Cannot close $f for reading: $!";
+
+    return \@lines;
+}
+
+sub unslurp
+{
+    my $f = shift;
+    my $lines = shift;
+
+    (system('mkdir', '-p', dirname($f)) == 0) || die "Cannot mkdir -p " . dirname($f) . ": $!";
+
+    open(my $fh, '>', $f) || die "Cannot open $f for writing: $!";
+    for my $line (@$lines)
+    {
+        print $fh "$line\n";
+    }
+    close($fh) || die "Cannot close $f for writing: $!";
 }
 
 1;

@@ -8,6 +8,7 @@ use Amling::Git::G3MD::Resolver::Git;
 use Amling::Git::G3MD::Resolver::Simple;
 use Amling::Git::G3MD::Resolver;
 use Amling::Git::G3MD::Utils;
+use Amling::Git::Utils;
 use File::Temp ('tempfile');
 
 use base ('Amling::Git::G3MD::Resolver::Simple');
@@ -38,7 +39,7 @@ sub handle_simple
     my $editor = $ENV{'EDITOR'} || "vi";
     system($editor, $fn) && die "Edit of file bailed?";
 
-    my $lines = Amling::Git::G3MD::Utils::slurp($fn);
+    my $lines = Amling::Git::Utils::slurp($fn);
 
     unlink($fn) || die "Cannot unlink temp file $fn: $!";
 

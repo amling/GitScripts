@@ -7,6 +7,7 @@ use Amling::Git::G3MD::Algo;
 use Amling::Git::G3MD::Resolver::Git;
 use Amling::Git::G3MD::Resolver::Simple;
 use Amling::Git::G3MD::Resolver;
+use Amling::Git::Utils;
 use File::Temp ('tempfile');
 
 use base ('Amling::Git::G3MD::Resolver::Simple');
@@ -322,8 +323,8 @@ sub _two_edit
 
     system('vim', '-O', $fn1, $fn2) && die "Edit of files bailed?";
 
-    my $main_lines2 = Amling::Git::G3MD::Utils::slurp($fn1);
-    my $ref_lines2 = Amling::Git::G3MD::Utils::slurp($fn2);
+    my $main_lines2 = Amling::Git::Utils::slurp($fn1);
+    my $ref_lines2 = Amling::Git::Utils::slurp($fn2);
 
     unlink($fn1) || die "Cannot unlink temp file $fn1: $!";
     unlink($fn2) || die "Cannot unlink temp file $fn2: $!";

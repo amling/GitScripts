@@ -25,15 +25,15 @@ use lib "$FindBin::RealBin/../libs";
 
 use Amling::Git::G3MD::Parser;
 use Amling::Git::G3MD::Resolver;
-use Amling::Git::G3MD::Utils;
+use Amling::Git::Utils;
 
 my @f = @ARGV;
 @ARGV = ();
 
 for my $f (@f)
 {
-    my $lines = Amling::Git::G3MD::Utils::slurp($f);
+    my $lines = Amling::Git::Utils::slurp($f);
     my $blocks = Amling::Git::G3MD::Parser::parse_3way($lines);
     my $lines2 = Amling::Git::G3MD::Resolver::resolve_blocks($blocks);
-    Amling::Git::G3MD::Utils::unslurp($f, $lines2);
+    Amling::Git::Utils::unslurp($f, $lines2);
 }
