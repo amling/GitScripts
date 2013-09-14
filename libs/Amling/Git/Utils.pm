@@ -4,6 +4,7 @@ use strict;
 use warnings;
 
 use Amling::Git::Utils::Commit;
+use File::Basename;
 
 sub find_root
 {
@@ -192,6 +193,8 @@ sub unslurp
 {
     my $f = shift;
     my $lines = shift;
+
+    (system('mkdir', '-p', dirname($f)) == 0) || die "Cannot mkdir -p " . dirname($f) . ": $!";
 
     open(my $fh, '>', $f) || die "Cannot open $f for writing: $!";
     for my $line (@$lines)
