@@ -8,7 +8,7 @@ use Digest;
 
 sub _get_root
 {
-    my $dir = $ENV{'HOME'} . "/.gm3d/memory";
+    my $dir = $ENV{'HOME'} . "/.g3md/memory";
 }
 
 sub _get_lines
