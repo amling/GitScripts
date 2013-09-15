@@ -26,9 +26,7 @@ sub handle_simple
     my $conflict = shift;
     my ($lhs_title, $lhs_lines, $mhs_title, $mhs_lines, $rhs_title, $rhs_lines) = @$conflict;
 
-    my $stage1 = _stage1($lhs_lines, $mhs_lines, $rhs_lines);
-    #use Data::Dumper; print Dumper($stage1);
-    my $stage2 = _stage2($stage1);
+    my $stage2 = _stage12($lhs_lines, $mhs_lines, $rhs_lines);
     #use Data::Dumper; print Dumper($stage2);
     my $stage3 = _stage3($stage2);
     #use Data::Dumper; print Dumper($stage3);
@@ -109,7 +107,7 @@ sub _make_tokens
     return \@ret;
 }
 
-sub _stage1
+sub _stage12
 {
     my $lhs_lines = shift;
     my $mhs_lines = shift;
@@ -167,7 +165,7 @@ sub _stage1
         elsif($type eq 'LINE')
         {
             my $text = pack("H*", $block->[1]);
-            push @ret, [$text, $text, $text];
+            push @ret, ['RESOLVED', $text];
         }
         elsif($type eq 'CONFLICT')
         {
@@ -180,7 +178,7 @@ sub _stage1
             my $sub_mhs_text = pack("H*", join("", @$sub_mhs_lines));
             my $sub_rhs_text = pack("H*", join("", @$sub_rhs_lines));
 
-            push @ret, [$sub_lhs_text, $sub_mhs_text, $sub_rhs_text];
+            push @ret, ['CONFLICT', $sub_lhs_text, $sub_mhs_text, $sub_rhs_text];
         }
         else
         {
@@ -189,83 +187,6 @@ sub _stage1
     }
 
     return \@ret;
-}
-
-sub _stage2
-{
-    my $stage1 = shift;
-
-    my @blocks;
-
-    my $lhs_text = "";
-    my $mhs_text = "";
-    my $rhs_text = "";
-    my $resolved_text = "";
-    my $had_left = 0;
-    my $had_right = 0;
-    my $had_double = 0;
-    my $had_conflict = 0;
-
-    my $flush_block = sub
-    {
-        if($had_left + $had_double + $had_right + $had_conflict >= 2)
-        {
-            push @blocks, ['CONFLICT', $lhs_text, $mhs_text, $rhs_text];
-        }
-        else
-        {
-            if($resolved_text ne '')
-            {
-                push @blocks, ['RESOLVED', $resolved_text];
-            }
-        }
-
-        $lhs_text = "";
-        $mhs_text = "";
-        $rhs_text = "";
-        $resolved_text = "";
-        $had_left = 0;
-        $had_right = 0;
-        $had_double = 0;
-    };
-
-    for my $stage1_e (@$stage1)
-    {
-        my ($lhs_e, $mhs_e, $rhs_e) = @$stage1_e;
-
-        if($lhs_e eq $mhs_e && $mhs_e eq $rhs_e)
-        {
-            $flush_block->();
-            push @blocks, ['RESOLVED', $mhs_e];
-            next;
-        }
-        elsif($lhs_e eq $mhs_e)
-        {
-            $resolved_text .= $rhs_e;
-            $had_right = 1;
-        }
-        elsif($mhs_e eq $rhs_e)
-        {
-            $resolved_text .= $lhs_e;
-            $had_left = 1;
-        }
-        elsif($lhs_e eq $rhs_e)
-        {
-            $resolved_text .= $lhs_e;
-            $had_double = 1;
-        }
-        else
-        {
-            $had_conflict = 2;
-        }
-
-        $lhs_text .= $lhs_e;
-        $mhs_text .= $mhs_e;
-        $rhs_text .= $rhs_e;
-    }
-    $flush_block->();
-
-    return \@blocks;
 }
 
 sub _stage3
