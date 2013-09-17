@@ -1,4 +1,4 @@
-package Amling::Git::G3MD::Resolver::Split;
+package Amling::Git::G3MD::Resolver::BackSplit;
 
 use strict;
 use warnings;
@@ -11,7 +11,7 @@ use base ('Amling::Git::G3MD::Resolver::BaseSplit');
 
 sub _names
 {
-    return ['split', 'sp'];
+    return ['backsplit', 'bsp'];
 }
 
 sub decide_prefix
@@ -20,12 +20,12 @@ sub decide_prefix
     my $depth = shift;
     my $length = shift;
 
-    return $depth;
+    return $length - $depth;
 }
 
 sub side
 {
-    return "front";
+    return "back";
 }
 
 Amling::Git::G3MD::Resolver::add_resolver(__PACKAGE__);
