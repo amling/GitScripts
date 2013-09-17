@@ -2,6 +2,8 @@ G3MD
     resolvers
         [something to] handle indent conflict better by semimatching projected lines so we only conflict on the relevant part
             in particular we allow ("a","a"," a") -> " a" but not e.g.  ("  a","a"," a")
+        maybe bring slow/exact character merge back
+            that example from Carl was handled way less well by `git merge-file`
     help?
 GRD
     various cleanup (in script as TODO)
