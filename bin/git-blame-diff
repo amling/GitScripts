@@ -1,0 +1,199 @@
+#!/usr/bin/perl
+
+$| = 1;
+
+use strict;
+use warnings;
+
+use Getopt::Long;
+
+my $left_commit = undef;
+my $right_commit = undef;
+my $ignore_whitespace = 0;
+
+GetOptions(
+    "left=s" => \$left_commit,
+    "right=s" => \$right_commit,
+    "w!" => \$ignore_whitespace,
+) || die;
+
+my %lpaths;
+my %rpaths;
+my @lines;
+{
+    my $lpath = undef;
+    my $rpath = undef;
+    my $lline = undef;
+    my $rline = undef;
+    while(<>)
+    {
+        chomp;
+        if(/^--- a\/(.*)$/)
+        {
+            $lpath = $1;
+            $lpaths{$lpath} = 1;
+        }
+        if(/^\+\+\+ b\/(.*)$/)
+        {
+            $rpath = $1;
+            $rpaths{$rpath} = 1;
+        }
+        if(/^@@ -([0-9]*),[0-9]* \+([0-9]*),[0-9]* @@/)
+        {
+            $lline = $1;
+            $rline = $2;
+        }
+        if(/^diff/)
+        {
+            $lpath = undef;
+            $rpath = undef;
+            $lline = undef;
+            $rline = undef;
+        }
+        if(/^ /)
+        {
+            die unless(defined($lpath));
+            die unless(defined($lline));
+            die unless(defined($rpath));
+            die unless(defined($rline));
+            ++$lline;
+            ++$rline;
+        }
+        if(/^-(.*)/ && defined($lpath) && defined($lline))
+        {
+            push @lines, ['LEFT', $lpath, $lline, $1];
+            ++$lline;
+        }
+        elsif(/^\+(.*)/ && defined($rpath) && defined($rline))
+        {
+            push @lines, ['RIGHT', $rpath, $rline, $1];
+            ++$rline;
+        }
+        elsif(/^ (.*)/)
+        {
+            push @lines, ['PLAIN', $1];
+        }
+        else
+        {
+            push @lines, ['HEADER', $_];
+        }
+    }
+}
+
+my $lblame = defined($left_commit) ? blame($left_commit, \%lpaths) : {};
+my $rblame = defined($right_commit) ? blame($right_commit, \%rpaths) : {};
+
+my @annotated_lines;
+for my $line (@lines)
+{
+    my ($type, @rest) = @$line;
+
+    if($type eq 'PLAIN')
+    {
+        push @annotated_lines, ["", $rest[0]];
+    }
+    elsif($type eq 'HEADER')
+    {
+        push @annotated_lines, [undef, $rest[0]];
+    }
+    else
+    {
+        my $blame;
+        my $sign;
+        if($type eq 'LEFT')
+        {
+            $sign = '-';
+            $blame = $lblame;
+        }
+        elsif($type eq 'RIGHT')
+        {
+            $sign = '+';
+            $blame = $rblame;
+        }
+        else
+        {
+            die;
+        }
+
+        my ($path, $lineno, $text) = @rest;
+
+        my $path_blame = $blame->{$path} || {};
+        my $data = $path_blame->{$lineno};
+
+        if(defined($data))
+        {
+            push @annotated_lines, [$sign . substr($data->[0], 0, 12) . " " . $data->[1], $text];
+        }
+        else
+        {
+            push @annotated_lines, ["$sign?", $text];
+        }
+    }
+}
+
+my $width = 0;
+for my $annotated_line (@annotated_lines)
+{
+    my $annotation = $annotated_line->[0];
+    if(defined($annotation) && length($annotation) > $width)
+    {
+        $width = length($annotation);
+    }
+}
+
+for my $annotated_line (@annotated_lines)
+{
+    my ($annotation, $line) = @$annotated_line;
+    my $prefix;
+    if(defined($annotation))
+    {
+        $prefix = $annotation . (" " x ($width - length($annotation))) . "|";
+    }
+    else
+    {
+        $prefix = "";
+    }
+    print "$prefix$line\n";
+}
+
+sub blame
+{
+    my $commit = shift;
+    my $paths = shift;
+
+    my %ret;
+    for my $path (keys(%$paths))
+    {
+        open(my $fh, '-|', 'git', 'blame', ($ignore_whitespace ? '-w' : ()), '-p', $commit, '--', $path) || die "Cannot open git blame on $commit:$path: $!";
+        my $current_commit = "xxx";
+        my %commit_author;
+        my %commit_author_mail;
+        my $lineno = 0;
+        my %line_data;
+        while(my $line = <$fh>)
+        {
+            chomp $line;
+            if($line =~ /^([0-9a-f]{40}) /)
+            {
+                $current_commit = $1;
+            }
+            if($line =~ /^author (.*)$/)
+            {
+                $commit_author{$current_commit} = $1;
+            }
+            if($line =~ /^author-mail <(.*)>$/)
+            {
+                $commit_author_mail{$current_commit} = $1;
+            }
+            if($line =~ /^\t/)
+            {
+                ++$lineno;
+                $line_data{$lineno} = [$current_commit, $commit_author{$current_commit} . " <" . $commit_author_mail{$current_commit} . ">"];
+            }
+        }
+        close($fh) || die "Cannot close git blame on $commit:$path: $!";
+        $ret{$path} = \%line_data;
+    }
+
+    return \%ret;
+}
