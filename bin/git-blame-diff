@@ -6,6 +6,7 @@ use strict;
 use warnings;
 
 use Getopt::Long;
+use POSIX;
 
 my $left_commit = undef;
 my $right_commit = undef;
@@ -90,7 +91,7 @@ for my $line (@lines)
 
     if($type eq 'PLAIN')
     {
-        push @annotated_lines, ["", $rest[0]];
+        push @annotated_lines, [["", ""], $rest[0]];
     }
     elsif($type eq 'HEADER')
     {
@@ -119,15 +120,12 @@ for my $line (@lines)
 
         my $path_blame = $blame->{$path} || {};
         my $data = $path_blame->{$lineno};
+        if(!defined($data))
+        {
+            $data = ["(?)", ""];
+        }
 
-        if(defined($data))
-        {
-            push @annotated_lines, [$sign . substr($data->[0], 0, 12) . " " . $data->[1], $text];
-        }
-        else
-        {
-            push @annotated_lines, ["$sign?", $text];
-        }
+        push @annotated_lines, [[$sign . $data->[0], $data->[1]], $text];
     }
 }
 
@@ -135,9 +133,13 @@ my $width = 0;
 for my $annotated_line (@annotated_lines)
 {
     my $annotation = $annotated_line->[0];
-    if(defined($annotation) && length($annotation) > $width)
+    if(defined($annotation))
     {
-        $width = length($annotation);
+        my $awidth = length($annotation->[0]) + length($annotation->[1]);
+        if($awidth > $width)
+        {
+            $width = $awidth;
+        }
     }
 }
 
@@ -147,7 +149,7 @@ for my $annotated_line (@annotated_lines)
     my $prefix;
     if(defined($annotation))
     {
-        $prefix = $annotation . (" " x ($width - length($annotation))) . "|";
+        $prefix = $annotation->[0] . (" " x ($width - length($annotation->[0]) - length($annotation->[1]))) . $annotation->[1] . "|";
     }
     else
     {
@@ -167,7 +169,7 @@ sub blame
         open(my $fh, '-|', 'git', 'blame', ($ignore_whitespace ? '-w' : ()), '-p', $commit, '--', $path) || die "Cannot open git blame on $commit:$path: $!";
         my $current_commit = "xxx";
         my %commit_author;
-        my %commit_author_mail;
+        my %commit_author_time;
         my $lineno = 0;
         my %line_data;
         while(my $line = <$fh>)
@@ -181,14 +183,14 @@ sub blame
             {
                 $commit_author{$current_commit} = $1;
             }
-            if($line =~ /^author-mail <(.*)>$/)
+            if($line =~ /^author-time ([0-9]*)$/)
             {
-                $commit_author_mail{$current_commit} = $1;
+                $commit_author_time{$current_commit} = $1;
             }
             if($line =~ /^\t/)
             {
                 ++$lineno;
-                $line_data{$lineno} = [$current_commit, $commit_author{$current_commit} . " <" . $commit_author_mail{$current_commit} . ">"];
+                $line_data{$lineno} = [substr($current_commit, 0, 12) . " (" . $commit_author{$current_commit} . " ", strftime("%Y/%m/%d %H:%M:%S", localtime($commit_author_time{$current_commit})) . ")"];
             }
         }
         close($fh) || die "Cannot close git blame on $commit:$path: $!";
