@@ -1,0 +1,159 @@
+#!/usr/bin/perl
+
+$| = 1;
+
+use strict;
+use warnings;
+
+use FindBin;
+use lib "$FindBin::RealBin/../libs";
+
+use Amling::Git::Utils;
+
+if(@ARGV != 2)
+{
+    die "Usage: $0 LHS RHS\n";
+}
+
+{
+    my $lhs = Amling::Git::Utils::convert_commitlike($ARGV[0]);
+    my $rhs = Amling::Git::Utils::convert_commitlike($ARGV[1]);
+
+    my %parent_child_1;
+    my %child_parent_1;
+    my %lhs_commits;
+    my %rhs_commits;
+    {
+        my $add_parent_links = sub
+        {
+            my $h = shift;
+
+            for my $parent (@{$h->{'parents'}})
+            {
+                ($parent_child_1{$parent} ||= {})->{$h->{'hash'}} = 1;
+                ($child_parent_1{$h->{'hash'}} ||= {})->{$parent} = 1;
+            }
+        };
+
+        {
+            my $cb = sub
+            {
+                my $h = shift;
+                $lhs_commits{$h->{'hash'}} = $h;
+                $add_parent_links->($h);
+            };
+            Amling::Git::Utils::log_commits(["$rhs..$lhs"], $cb);
+        }
+
+        {
+            my $cb = sub
+            {
+                my $h = shift;
+                $add_parent_links->($h);
+                $rhs_commits{$h->{'hash'}} = $h;
+            };
+            Amling::Git::Utils::log_commits(["$lhs..$rhs"], $cb);
+        }
+    }
+
+    my %min_bad;
+    {
+        my @queue;
+
+        for my $lhs_commit (keys(%lhs_commits))
+        {
+            for my $rhs_commit (keys(%rhs_commits))
+            {
+                push @queue, [$lhs_commit, $rhs_commit];
+            }
+        }
+
+        my %bad;
+        my %good;
+        @queue = (map { $_->[0] } sort { $a->[1] <=> $b->[1] } map { [$_, rand()] } @queue);
+        while(@queue)
+        {
+            my ($lhs_commit, $rhs_commit) = @{shift(@queue)};
+            my $k = "$lhs_commit,$rhs_commit";
+            next if($bad{$k});
+            next if($good{$k});
+
+            if(is_bad($lhs_commit, $rhs_commit))
+            {
+                fill(\%bad, \%min_bad, \%parent_child_1, \%lhs_commits, \%rhs_commits, $lhs_commit, $rhs_commit);
+                $min_bad{$k} = [$lhs_commit, $rhs_commit];
+            }
+            else
+            {
+                fill(\%good, undef, \%child_parent_1, \%lhs_commits, \%rhs_commits, $lhs_commit, $rhs_commit);
+            }
+        }
+    }
+
+    for my $min_bad (values(%min_bad))
+    {
+        print "Minimum conflict: " . $min_bad->[0] . ", " . $min_bad->[1] . "\n";
+    }
+}
+
+sub is_bad
+{
+    my $lhs_commit = shift;
+    my $rhs_commit = shift;
+
+    my $mhs_commit;
+    {
+        open(my $fh, '-|', 'git', 'merge-base', $lhs_commit, $rhs_commit) || die "Cannot open git merge-base $lhs_commit $rhs_commit: $!";
+        my $line = <$fh> || die;
+        if($line =~ /^([0-9a-f]{40})$/)
+        {
+            $mhs_commit = $1;
+        }
+        else
+        {
+            die;
+        }
+        close($fh) || die "Cannot close git merge-base $lhs_commit $rhs_commit: $!";
+    }
+
+    {
+        open(my $fh, '-|', 'git', 'merge-tree', $mhs_commit, $lhs_commit, $rhs_commit) || die "Cannot open git merge-tree $mhs_commit, $lhs_commit, $rhs_commit: $!";
+        while(my $l = <>)
+        {
+            chomp $l;
+            # fuck me, I can't make god-damned heads or tails of this output
+            # "change in both" could mean successful merge or conflict
+        }
+        close($fh) || die "Cannot close git merge-tree $mhs_commit, $lhs_commit, $rhs_commit: $!";
+    }
+
+    die;
+}
+
+sub fill
+{
+    my $already = shift;
+    my $already_min = shift;
+    my $closure = shift;
+    my $lhs_commits = shift;
+    my $rhs_commits = shift;
+    my $lhs_commit = shift;
+    my $rhs_commit = shift;
+
+    my $k = "$lhs_commit,$rhs_commit";
+
+    delete($already_min->{$k}) if(defined($already_min));
+
+    return if($already->{$k});
+    $already->{$k} = 1;
+
+    for my $lhs_commit2 (keys(%{$closure->{$lhs_commit}}))
+    {
+        next unless($lhs_commits->{$lhs_commit2});
+        for my $rhs_commit2 (keys(%{$closure->{$rhs_commit}}))
+        {
+            next unless($rhs_commits->{$rhs_commit2});
+            fill($already, $already_min, $closure, $lhs_commits, $rhs_commits, $lhs_commit2, $rhs_commit2);
+        }
+    }
+}
