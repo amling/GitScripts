@@ -5,6 +5,9 @@ G3MD
         maybe bring slow/exact character merge back
             that example from Carl was handled way less well by `git merge-file`
     help?
+    git integration (pick up conflicts from index, add when no punt afterwards)
+    "auto" resolvers tried automatically on each block (right now "g" is sort of being used like this but we can make it first class and have an option to add "mq" as well)
+        conceivably one might want to force "mr" delegation as well but that's less clear...
 GRD
     various cleanup (in script as TODO)
     maybe try to figure out "already merged" changes and skip them
