@@ -77,6 +77,10 @@ unless(@commands)
     exit 0;
 }
 
+
+print "Detaching HEAD...\n";
+Amling::Git::Utils::run_system("git", "checkout", "HEAD~0") || die "Cannot checkout HEAD~0";
+
 my $ctx = Amling::Git::GRD::Exec::Context->new();
 
 my $ct = scalar(@commands);
