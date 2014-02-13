@@ -23,6 +23,7 @@ use warnings;
 use Getopt::Long;
 
 my $dry_run = 0;
+my $force = 1;
 my $remote;
 my $local_prefix;
 my $remote_prefix;
@@ -31,6 +32,7 @@ my @defaults = (\$remote, \$local_prefix, \$remote_prefix);
 my @options =
 (
     'dry-run|n' => \$dry_run,
+    'force!' => \$force,
     '<>' => sub
     {
         my $arg = '' . $_[0];
@@ -130,6 +132,7 @@ my %local_branches;
     close($fh) || die "Cannot close branch";
 }
 
+my $require_force;
 my @specs;
 {
     for my $name (keys(%local_branches))
@@ -151,11 +154,13 @@ my @specs;
                 else
                 {
                     print "Old version of $combined_prefix$name is $remote_hash (not ancestor), will force update to $local_hash.\n";
+                    $require_force = 1;
                 }
             }
             else
             {
                 print "Old version of $combined_prefix$name is $remote_hash (not even known!), will force update to $local_hash.\n";
+                $require_force = 1;
             }
         }
         else
@@ -170,8 +175,14 @@ my @specs;
     {
         my $remote_hash = $remote_branches{$name};
         print "Stale branch $combined_prefix$name at $remote_hash, will delete.\n";
+        $require_force = 1;
         push @specs, ":refs/heads/$remote_prefix$name";
     }
+}
+
+if($require_force && !$force)
+{
+    die 'Selected operation requires --force.';
 }
 
 if(@specs)
