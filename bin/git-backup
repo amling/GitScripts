@@ -20,11 +20,37 @@ $| = 1;
 use strict;
 use warnings;
 
-my $remote = shift || die "No remote?";
-my $local_prefix = shift;
-defined($local_prefix) || die "No local prefix?";
-my $remote_prefix = shift;
-defined($remote_prefix) || die "No remote prefix?";
+use Getopt::Long;
+
+my $dry_run = 0;
+my $remote;
+my $local_prefix;
+my $remote_prefix;
+my @defaults = (\$remote, \$local_prefix, \$remote_prefix);
+
+my @options =
+(
+    'dry-run|n' => \$dry_run,
+    '<>' => sub
+    {
+        my $arg = '' . $_[0];
+
+        for my $optr (@defaults)
+        {
+            next if(defined($$optr));
+            $$optr = $arg;
+            return;
+        }
+
+        die 'Too many unnamed arguments?';
+    },
+);
+
+GetOptions(@options) || die;
+
+defined($remote) || die 'No remote?';
+defined($local_prefix) || die 'No local prefix?';
+defined($remote_prefix) || die 'No remote prefix?';
 
 my $combined_prefix;
 {
@@ -137,7 +163,12 @@ my @specs;
 if(@specs)
 {
     print "Execing push for update...\n";
-    exec("git", "push", $remote, "--force", @specs);
+    my @command = ("git", "push", $remote, "--force", @specs);
+    if($dry_run)
+    {
+        unshift @command, "echo";
+    }
+    exec(@command);
 }
 else
 {
