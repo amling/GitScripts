@@ -142,7 +142,21 @@ my @specs;
         }
         elsif($remote_hash ne $local_hash)
         {
-            print "Old version of $combined_prefix$name is $remote_hash, will update to $local_hash.\n";
+            if(system('git', 'cat-file', '-e', $remote_hash) == 0)
+            {
+                if(system('git', 'merge-base', '--is-ancestor', $remote_hash, $local_hash) == 0)
+                {
+                    print "Old version of $combined_prefix$name is $remote_hash (ancestor), will fast forward to $local_hash.\n";
+                }
+                else
+                {
+                    print "Old version of $combined_prefix$name is $remote_hash (not ancestor), will force update to $local_hash.\n";
+                }
+            }
+            else
+            {
+                print "Old version of $combined_prefix$name is $remote_hash (not even known!), will force update to $local_hash.\n";
+            }
         }
         else
         {
