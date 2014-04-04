@@ -17,6 +17,7 @@ use Amling::Git::GBD::Action::Load;
 use Amling::Git::GBD::Action::PrintCheckout;
 use Amling::Git::GBD::Action::Save;
 use Amling::Git::GBD::Action::Shell;
+use Amling::Git::GBD::Action::Speculate;
 use Amling::Git::GBD::Action::Status;
 use Amling::Git::GBD::Action::XBad;
 use Amling::Git::GBD::Action::XGood;
@@ -37,6 +38,7 @@ my @handlers =
     'Amling::Git::GBD::Action::PrintCheckout',
     'Amling::Git::GBD::Action::Save',
     'Amling::Git::GBD::Action::Shell',
+    'Amling::Git::GBD::Action::Speculate',
     'Amling::Git::GBD::Action::Status',
     'Amling::Git::GBD::Action::XBad',
     'Amling::Git::GBD::Action::XGood',
