@@ -8,6 +8,10 @@ G3MD
     git integration (pick up conflicts from index, add when no punt afterwards)
     "auto" resolvers tried automatically on each block (right now "g" is sort of being used like this but we can make it first class and have an option to add "mq" as well)
         conceivably one might want to force "mr" delegation as well but that's less clear...
+    redo overall recursive structure
+        in particular we'd like to be able to view context and in some cases merge with context
+        this will require special work for punt and m*
+        in particular, m* structure will almost certainly have to change entirely
 GRD
     various cleanup (in script as TODO)
     maybe try to figure out "already merged" changes and skip them
