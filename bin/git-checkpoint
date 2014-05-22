@@ -15,4 +15,4 @@ then
 fi
 
 git add -A
-git diff --quiet HEAD || git commit -q -m'Checkpoint '"`date +'%Y/%m/%d %H:%M'`"
+git diff --cached --quiet || git commit -q -m'Checkpoint '"`date +'%Y/%m/%d %H:%M'`"
