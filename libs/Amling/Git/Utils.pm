@@ -155,7 +155,6 @@ sub get_dirtyness
         }
     }
 
-    # TODO: doesn't catch untracked files... (?)
     if(system("git", "diff", "--cached", "--quiet"))
     {
         return (1, "There are differences between HEAD and the index.");
