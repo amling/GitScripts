@@ -45,7 +45,6 @@ my @options =
     "skip-edit|q" => \$skip_edit,
     "dry-run|n" => \$dry_run,
     "help" => sub { usage(0); },
-
 );
 
 my $reason = join(" ", "GRD", @ARGV);
