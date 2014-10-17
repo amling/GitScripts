@@ -304,4 +304,29 @@ sub choose_cutpoint
     return Amling::Git::GBD::Strategy::find($this->{'strategy'})->choose_cutpoint($this);
 }
 
+sub get_cumulative_weight
+{
+    my $this = shift;
+    my $commit = shift;
+
+    my $cumulative_weight = 0;
+    my $cb = sub
+    {
+        my $commit = shift;
+
+        my $known = $this->get_known($commit);
+        if(defined($known) && $known eq 'GOOD')
+        {
+            return 0;
+        }
+
+        $cumulative_weight += $this->get_weight($commit);
+        return 1;
+    };
+
+    $this->traverse_up($commit, $cb);
+
+    return $cumulative_weight;
+}
+
 1;

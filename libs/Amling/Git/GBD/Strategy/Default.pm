@@ -25,11 +25,7 @@ sub choose_cutpoint
         die "No BAD?";
     }
     my $root_bad = $minima[0]->[0];
-    my $gap_weight = 0;
-    for my $upstream (@{_find_upstreams($state, {}, $root_bad)})
-    {
-        $gap_weight += $state->get_weight($upstream);
-    }
+    my $gap_weight = $state->get_cumulative_weight($root_bad);
     my $bad = $root_bad;
     my %block;
     while(1)
@@ -54,25 +50,16 @@ sub choose_cutpoint
         }
         my $cut = $upstreams->[int(rand() * @$upstreams)];
 
-        # find all the upstreams between cut and GOOD (not block!) to see how cut does
-        my $cut_upstreams = _find_upstreams($state, {}, $cut);
-        my $cut_upstream_weight = 0;
-        for my $upstream (@$cut_upstreams)
-        {
-            $cut_upstream_weight += $state->get_weight($upstream);
-        }
-        if($cut_upstream_weight >= $gap_weight / 2)
+        # see how cut does
+        if($state->get_cumulative_weight($cut) >= $gap_weight / 2)
         {
             # too far, take it as new $bad
             $bad = $cut;
         }
         else
         {
-            # not too far enough, put $cut's upstreams in %block
-            for my $upstream (@$cut_upstreams)
-            {
-                $block{$upstream} = 1;
-            }
+            # not too far enough, block $cut
+            $block{$cut} = 1;
         }
     }
 }
