@@ -43,8 +43,7 @@ sub execute_state
             sub
             {
                 my $commit = shift;
-                my $known = $state->get_known($commit);
-                if(defined($known) && $known eq 'GOOD')
+                if($state->is_good($commit))
                 {
                     push @good_upstreams, $commit;
                     return 0;

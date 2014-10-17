@@ -108,6 +108,24 @@ sub get_known
     return $commit_state->{'known'};
 }
 
+sub is_good
+{
+    my $this = shift;
+    my $commit = shift;
+
+    my $known = $this->get_known($commit);
+    return defined($known) && $known eq 'GOOD';
+}
+
+sub is_bad
+{
+    my $this = shift;
+    my $commit = shift;
+
+    my $known = $this->get_known($commit);
+    return defined($known) && $known eq 'BAD';
+}
+
 sub get_weight
 {
     my $this = shift;
@@ -207,8 +225,7 @@ sub find_bad_minima
     COMMIT:
     for my $root_commit ($this->get_commits())
     {
-        my $root_known = $this->get_known($root_commit);
-        if(!defined($root_known) || $root_known ne 'BAD')
+        if(!$this->is_bad($root_commit))
         {
             # we're not BAD
             next;
@@ -216,8 +233,7 @@ sub find_bad_minima
 
         for my $parent (@{$this->{'commits'}->{$root_commit}->{'parents'}})
         {
-            my $parent_known = $this->get_known($parent);
-            if(defined($parent_known) && $parent_known eq 'BAD')
+            if($this->is_bad($parent))
             {
                 # we're not minimal BAD
                 next COMMIT;
@@ -314,8 +330,7 @@ sub get_cumulative_weight
     {
         my $commit = shift;
 
-        my $known = $this->get_known($commit);
-        if(defined($known) && $known eq 'GOOD')
+        if($this->is_good($commit))
         {
             return 0;
         }

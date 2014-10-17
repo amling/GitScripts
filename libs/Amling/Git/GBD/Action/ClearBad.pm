@@ -25,8 +25,7 @@ sub execute_state
 
     for my $commit ($state->get_commits())
     {
-        my $known = $state->get_known($commit);
-        if(defined($known) && $known eq 'BAD')
+        if($state->is_bad($commit))
         {
             $state->clear_commit($commit);
         }

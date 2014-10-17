@@ -116,8 +116,7 @@ sub _find_upstreams
         {
             return 0;
         }
-        my $known = $state->get_known($commit);
-        if(defined($known) && $known eq 'GOOD')
+        if($state->is_good($commit))
         {
             return 0;
         }
