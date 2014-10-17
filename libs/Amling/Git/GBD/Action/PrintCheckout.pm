@@ -5,7 +5,6 @@ use warnings;
 
 use Amling::Git::GBD::Action::BaseStateExecutor;
 use Amling::Git::GBD::Action::BaseZeroArg;
-use Amling::Git::GBD::Utils;
 
 use base
 (
@@ -24,7 +23,7 @@ sub execute_state
     my $ctx = shift;
     my $state = shift;
 
-    print "git checkout " . Amling::Git::GBD::Utils::choose_cutpoint($state) . "\n";
+    print "git checkout " . $state->choose_cutpoint() . "\n";
 }
 
 1;

@@ -36,7 +36,7 @@ sub speculate
     my $depth = shift;
     my $prefix = shift;
 
-    my $cutpoint = Amling::Git::GBD::Utils::choose_cutpoint($state);
+    my $cutpoint = $state->choose_cutpoint();
     print "[$prefix] $cutpoint\n";
 
     if(!($depth > 0))

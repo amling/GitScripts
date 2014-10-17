@@ -3,10 +3,13 @@ package Amling::Git::GBD::State;
 use strict;
 use warnings;
 
+use Amling::Git::GBD::Strategy;
+
 sub new
 {
     my $class = shift;
     my $commits_external = shift;
+    my $strategy_external = shift;
 
     my $commits = {};
 
@@ -34,10 +37,10 @@ sub new
         }
     }
 
-    my $self =
-    {
-        'commits' => $commits,
-    };
+    my $self = {};
+
+    $self->{'commits'} = $commits;
+    $self->{'strategy'} = $strategy_external if(defined($strategy_external));
 
     bless $self, $class;
 
@@ -292,6 +295,13 @@ sub _traverse
             }
         }
     }
+}
+
+sub choose_cutpoint
+{
+    my $this = shift;
+
+    return Amling::Git::GBD::Strategy::find($this->{'strategy'})->choose_cutpoint($this);
 }
 
 1;

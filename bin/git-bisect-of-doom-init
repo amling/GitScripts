@@ -32,6 +32,7 @@ my @bad;
 my @good;
 my $weight_str = "1";
 my $file = "-";
+my $strategy = undef;
 
 my @options =
 (
@@ -39,6 +40,7 @@ my @options =
     "good=s" => \@good,
     "weight=s" => \$weight_str,
     "file=s" => \$file,
+    "strategy=s" => \$strategy,
 
     "help" => sub { usage(0); },
 );
@@ -85,7 +87,7 @@ for my $good (@good)
     }
 }
 
-my $state = Amling::Git::GBD::State->new($commits);
+my $state = Amling::Git::GBD::State->new($commits, $strategy);
 
 for my $good (@good)
 {
