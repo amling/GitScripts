@@ -49,11 +49,11 @@ my @fetch;
             my $from = $2;
             my $to = $3;
 
-            next unless($from =~ /^([^*]*)\*([^*]*)$/);
+            next unless($from =~ /^([^*]*\/|^)\*(\/[^*]*|$)$/);
             my $from_prefix = $1;
             my $from_suffix = $2;
 
-            next unless($to =~ /^([^*]*)\*([^*]*)$/);
+            next unless($to =~ /^([^*]*\/|^)\*(\/[^*]*|$)$/);
             my $to_prefix = $1;
             my $to_suffix = $2;
 
