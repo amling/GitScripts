@@ -72,25 +72,31 @@ for my $spec (@args)
         my $commitlike = $2;
         my $tracking = $3;
 
-        $tracking =~ s/^refs\///;
-        $tracking =~ s/^remotes\///;
+        my $tracking_full;
+        {
+            open(my $fh, '-|', 'git', 'rev-parse', '--symbolic-full-name', $tracking) || die "[$spec] Could not open git rev-parse --symbolic-full-name $tracking: $!";
+            my $l = <$fh> || die "[$spec] No output for git rev-parse --symbolic-full-name $tracking";
+            chomp $l;
+            $tracking_full = $l;
+            close($fh) || die "[$spec] Could not open git rev-parse --symbolic-full-name $tracking: $!";
+        }
 
         my @match;
         for my $fetch (@fetch)
         {
             my ($remote, $from_prefix, $from_suffix, $to_prefix, $to_suffix) = @$fetch;
-            if("refs/remotes/$tracking" =~ /^\Q$to_prefix\E(.*)\Q$to_suffix\E$/)
+            if($tracking_full =~ /^\Q$to_prefix\E(.*)\Q$to_suffix\E$/)
             {
                 push @match, [$remote, "$from_prefix$1$from_suffix"];
             }
         }
         if(!@match)
         {
-            die "Unintelligible: $spec";
+            die "[$spec] No fetch matches for $tracking_full";
         }
         if(@match > 1)
         {
-            die "Ambiguous: $spec";
+            die "[$spec] Multiple fetch matches for $tracking_full: " . join(', ', map { $_->[0] . ":" . $_->[1] } @match);
         }
         my $match = $match[0];
         my ($remote, $branch) = @$match;
@@ -99,7 +105,7 @@ for my $spec (@args)
     }
     else
     {
-        die "Unintelligible: $spec"
+        die "[$spec] Doesn't match push format at all?";
     }
 }
 
