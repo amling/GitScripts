@@ -25,9 +25,48 @@ use lib "$FindBin::RealBin/../libs";
 
 use Amling::Git::Utils;
 
-if(!Amling::Git::Utils::run_system("git", "merge", "--no-edit", @ARGV))
+my @args = @ARGV;
+@ARGV = ();
+
+if(!Amling::Git::Utils::run_system("git", "merge", "--no-edit", @args))
 {
-    print "\`git merge --no-edit " . join(" ", @ARGV) . "\` blew chunks, please clean it up (finish commit yourself)...\n";
+    print "\`git merge --no-edit " . join(" ", @args) . "\` blew chunks, please clean it up (finish commit yourself)...\n";
+
+    # TODO: combine with Amling::Git::GRD::Utils::run_shell
     my $shell = $ENV{'SHELL'} || '/bin/sh';
-    system('env', $shell);
+
+    EDITLOOP:
+    while(1)
+    {
+        system('env', $shell);
+
+        my ($dirtyness, $message) = Amling::Git::Utils::get_dirtyness();
+        if(!$dirtyness)
+        {
+            last;
+        }
+
+        while(1)
+        {
+            print "$message\n";
+            print "What should I do?\n";
+            print "s - run a shell\n";
+            print "q - abort entire rebase\n";
+            print "> ";
+            my $ans = <>;
+            chomp $ans;
+
+            if($ans eq "q")
+            {
+                print "Giving up.\n";
+                exit 1;
+            }
+            if($ans eq "s")
+            {
+                next EDITLOOP;
+            }
+
+            print "Not an option: $ans\n";
+        }
+    }
 }
