@@ -44,6 +44,11 @@ sub _handle2
     my $depth = shift;
     my $conflict = shift;
 
+    if($depth == 0)
+    {
+        return ['CONFLICT', @$conflict];
+    }
+
     my ($lhs_title, $lhs_lines, $mhs_title, $mhs_lines, $rhs_title, $rhs_lines) = @$conflict;
 
     my $lhs_lines1 = [@$lhs_lines];
@@ -51,16 +56,35 @@ sub _handle2
     my $rhs_lines1 = [@$rhs_lines];
 
     my @ret;
-    for(my $d = 0; !defined($depth) || $d < $depth; ++$d)
+    my $matched = 0;
+    while(1)
     {
-        my ($one, $two) = @{$class->peel_pair($lhs_lines1, $mhs_lines1, $rhs_lines1)};
-        if(!defined($one) || !defined($two) || $one ne $two)
+        my $lhs_lines2 = [@$lhs_lines1];
+        my $mhs_lines2 = [@$mhs_lines1];
+        my $rhs_lines2 = [@$rhs_lines1];
+        my ($one, $two) = @{$class->peel_pair($lhs_lines2, $mhs_lines2, $rhs_lines2)};
+
+        if(defined($one) && defined($two) && ($one eq $two))
         {
-            last if(!defined($depth));
-            return undef;
+            # lines match, accept change and keep peeling
+            $lhs_lines1 = $lhs_lines2;
+            $mhs_lines1 = $mhs_lines2;
+            $rhs_lines1 = $rhs_lines2;
+            ++$matched;
+            if($matched >= $depth)
+            {
+                last;
+            }
+            next;
+        }
+        if(!defined($depth))
+        {
+            # lines didn't match, but we're ok with that since we're searching for the split
+            last;
         }
 
-        push @ret, ['LINE', $one];
+        # lines didn't match and that means we fail
+        return undef;
     }
 
     if(@$lhs_lines1 || @$mhs_lines1 || @$rhs_lines1)
