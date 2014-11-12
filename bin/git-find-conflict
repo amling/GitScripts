@@ -9,6 +9,7 @@ use FindBin;
 use lib "$FindBin::RealBin/../libs";
 
 use Amling::Git::Utils;
+use File::Temp ('tempdir');
 
 if(@ARGV != 2)
 {
@@ -23,37 +24,21 @@ if(@ARGV != 2)
     my %child_parent_1;
     my %lhs_commits;
     my %rhs_commits;
+    for my $tuple ([$rhs, $lhs, \%lhs_commits], [$lhs, $rhs, \%rhs_commits])
     {
-        my $add_parent_links = sub
+        my ($from, $to, $commits) = @$tuple;
+
+        my $cb = sub
         {
             my $h = shift;
-
+            $commits->{$h->{'hash'}} = $h;
             for my $parent (@{$h->{'parents'}})
             {
                 ($parent_child_1{$parent} ||= {})->{$h->{'hash'}} = 1;
                 ($child_parent_1{$h->{'hash'}} ||= {})->{$parent} = 1;
             }
         };
-
-        {
-            my $cb = sub
-            {
-                my $h = shift;
-                $lhs_commits{$h->{'hash'}} = $h;
-                $add_parent_links->($h);
-            };
-            Amling::Git::Utils::log_commits(["$rhs..$lhs"], $cb);
-        }
-
-        {
-            my $cb = sub
-            {
-                my $h = shift;
-                $add_parent_links->($h);
-                $rhs_commits{$h->{'hash'}} = $h;
-            };
-            Amling::Git::Utils::log_commits(["$lhs..$rhs"], $cb);
-        }
+        Amling::Git::Utils::log_commits(["$from..$to"], $cb);
     }
 
     my %min_bad;
@@ -70,7 +55,8 @@ if(@ARGV != 2)
 
         my %bad;
         my %good;
-        @queue = (map { $_->[0] } sort { $a->[1] <=> $b->[1] } map { [$_, rand()] } @queue);
+        #@queue = (map { $_->[0] } sort { $a->[1] <=> $b->[1] } map { [$_, rand()] } @queue);
+        @queue = sort { ($a->[0] cmp $b->[0]) || ($a->[1] cmp $b->[1]) } @queue;
         while(@queue)
         {
             my ($lhs_commit, $rhs_commit) = @{shift(@queue)};
@@ -117,17 +103,18 @@ sub is_bad
     }
 
     {
-        open(my $fh, '-|', 'git', 'merge-tree', $mhs_commit, $lhs_commit, $rhs_commit) || die "Cannot open git merge-tree $mhs_commit, $lhs_commit, $rhs_commit: $!";
-        while(my $l = <>)
-        {
-            chomp $l;
-            # fuck me, I can't make god-damned heads or tails of this output
-            # "change in both" could mean successful merge or conflict
-        }
-        close($fh) || die "Cannot close git merge-tree $mhs_commit, $lhs_commit, $rhs_commit: $!";
-    }
+        my $tempdir = tempdir('CLEANUP' => 1);
 
-    die;
+        my $wt = "$tempdir/wt";
+        mkdir $wt;
+        local $ENV{'GIT_WORK_TREE'} = $wt;
+
+        my $index = "$tempdir/index";
+        local $ENV{'GIT_INDEX_FILE'} = $index;
+
+        (system('git', 'read-tree', '-im', $mhs_commit, $lhs_commit, $rhs_commit) == 0) || die "Could not system git read-tree -im ...: $!";
+        return system('perl', '-e', 'open(STDOUT, ">/dev/null"); open(STDERR, ">/dev/null"); exec(@ARGV);', 'git', 'merge-index', 'git-merge-one-file', '-a') != 0;
+    }
 }
 
 sub fill
@@ -147,12 +134,13 @@ sub fill
     return if($already->{$k});
     $already->{$k} = 1;
 
-    for my $lhs_commit2 (keys(%{$closure->{$lhs_commit}}))
+    for my $lhs_commit2 ($lhs_commit, keys(%{$closure->{$lhs_commit}}))
     {
         next unless($lhs_commits->{$lhs_commit2});
-        for my $rhs_commit2 (keys(%{$closure->{$rhs_commit}}))
+        for my $rhs_commit2 ($rhs_commit, keys(%{$closure->{$rhs_commit}}))
         {
             next unless($rhs_commits->{$rhs_commit2});
+            next if($lhs_commit2 eq $lhs_commit && $rhs_commit2 eq $rhs_commit);
             fill($already, $already_min, $closure, $lhs_commits, $rhs_commits, $lhs_commit2, $rhs_commit2);
         }
     }
