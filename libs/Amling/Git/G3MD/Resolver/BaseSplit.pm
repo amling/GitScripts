@@ -18,6 +18,10 @@ sub handle
         {
             return $class->_handle2($1, $2, $3, $conflict);
         }
+        if($line =~ /^\s*\Q$name\E\s+(-?\d+|\*)\s*$/)
+        {
+            return $class->_handle2($1, $1, $1, $conflict);
+        }
     }
 
     return undef;
