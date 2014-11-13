@@ -16,51 +16,38 @@ my $master = shift;
 
 my $master_commit;
 my %parents;
+my %subjects;
 {
-    open(my $fh, '-|', 'git', 'log', '--format=%H:%P', $master) || die "Cannot open git log $master: $!";
+    open(my $fh, '-|', 'git', 'log', '--format=%H:%P:%s', $master) || die "Cannot open git log $master: $!";
     while(my $l = <$fh>)
     {
         chomp $l;
-        my ($commit, $parents_string) = split(/:/, $l);
+        my ($commit, $parents_string, $subject);
+        if($l =~ /^([^:]*):([^:]*):(.*)$/)
+        {
+            ($commit, $parents_string, $subject) = ($1, $2, $3);
+        }
+        else
+        {
+            die "Bad: $l";
+        }
         $master_commit = $commit unless(defined($master_commit));
         $parents{$commit} = [split(/ /, $parents_string)];
+        $subjects{$commit} = $subject;
     }
     close($fh) || die "Cannot close git log $master: $!";
 }
 
-my @principal_ancestors;
-for(my $commit = $master_commit; defined($commit); $commit = $parents{$commit}->[0])
-{
-    push @principal_ancestors, $commit;
-}
-
-my %principal_ancestors = map { $_ => 1 } @principal_ancestors;
-
-my @query_commits;
 {
     open(my $fh, '-|', 'git', 'rev-parse', @ARGV) || die "Cannot open git rev-parse " . join(" ", @ARGV) . ": $!";
-    while(my $l = <$fh>)
+    while(my $query_commit = <$fh>)
     {
-        chomp $l;
-        push @query_commits, $l;
+        chomp $query_commit;
+        my $r = find($master_commit, $query_commit, {});
+        $r = "?" unless(defined($r));
+        print "$query_commit: $r\n";
     }
     close($fh) || die "Cannot close git rev-parse " . join(" ", @ARGV) . ": $!";
-}
-
-for my $query_commit (@query_commits)
-{
-    my $found = 0;
-    my %already;
-    for my $principal_commit (reverse(@principal_ancestors))
-    {
-        if(find($principal_commit, $query_commit, \%already))
-        {
-            print "$query_commit first in $principal_commit\n";
-            $found = 1;
-            last;
-        }
-    }
-    print "$query_commit not found?\n" unless($found);
 }
 
 sub find
@@ -71,23 +58,27 @@ sub find
 
     if($query_commit eq $commit)
     {
-        return 1;
+        return "$commit";
     }
 
     if($already_checked->{$commit})
     {
-        return 0;
+        return undef;
     }
-
     $already_checked->{$commit} = 1;
 
-    for my $parent_commit (@{$parents{$commit}})
+    my @parents = @{$parents{$commit}};
+    if(@parents)
     {
-        if(find($parent_commit, $query_commit, $already_checked))
-        {
-            return 1;
-        }
+        my $r = find($parents[0], $query_commit, $already_checked);
+        return $r if(defined($r));
     }
 
-    return 0;
+    for(my $i = 1; $i < @parents; ++$i)
+    {
+        my $r = find($parents[$i], $query_commit, $already_checked);
+        return "$commit, $r" if(defined($r));
+    }
+
+    return undef;
 }
