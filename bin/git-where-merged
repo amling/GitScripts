@@ -7,6 +7,11 @@ use warnings;
 
 no warnings ('recursion');
 
+use FindBin;
+use lib "$FindBin::RealBin/../libs";
+
+use Amling::Git::Utils;
+
 if(@ARGV < 1)
 {
     die "Usage: $0 <main branch> <query commit>...";
@@ -38,16 +43,11 @@ my %subjects;
     close($fh) || die "Cannot close git log $master: $!";
 }
 
+for my $query (@ARGV)
 {
-    open(my $fh, '-|', 'git', 'rev-parse', @ARGV) || die "Cannot open git rev-parse " . join(" ", @ARGV) . ": $!";
-    while(my $query_commit = <$fh>)
-    {
-        chomp $query_commit;
-        my $r = find($master_commit, $query_commit, {});
-        $r = "?" unless(defined($r));
-        print "$query_commit: $r\n";
-    }
-    close($fh) || die "Cannot close git rev-parse " . join(" ", @ARGV) . ": $!";
+    my $r = find($master_commit, Amling::Git::Utils::convert_commitlike($query), {});
+    $r = "?" unless(defined($r));
+    print "$query: $r\n";
 }
 
 sub find
