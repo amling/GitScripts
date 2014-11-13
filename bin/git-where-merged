@@ -34,8 +34,6 @@ for(my $commit = $master_commit; defined($commit); $commit = $parents{$commit}->
     push @principal_ancestors, $commit;
 }
 
-print "...\n";
-
 my %principal_ancestors = map { $_ => 1 } @principal_ancestors;
 
 my @query_commits;
