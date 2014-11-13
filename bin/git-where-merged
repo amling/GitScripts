@@ -19,35 +19,33 @@ if(@ARGV < 1)
 
 my $master = shift;
 
+my %commits;
 my $master_commit;
-my %parents;
-my %subjects;
 {
-    open(my $fh, '-|', 'git', 'log', '--format=%H:%P:%s', $master) || die "Cannot open git log $master: $!";
-    while(my $l = <$fh>)
+    my $cb = sub
     {
-        chomp $l;
-        my ($commit, $parents_string, $subject);
-        if($l =~ /^([^:]*):([^:]*):(.*)$/)
-        {
-            ($commit, $parents_string, $subject) = ($1, $2, $3);
-        }
-        else
-        {
-            die "Bad: $l";
-        }
-        $master_commit = $commit unless(defined($master_commit));
-        $parents{$commit} = [split(/ /, $parents_string)];
-        $subjects{$commit} = $subject;
-    }
-    close($fh) || die "Cannot close git log $master: $!";
+        my $commit = shift;
+        $master_commit = $commit->{'hash'} unless(defined($master_commit));
+        $commits{$commit->{'hash'}} = $commit;
+    };
+    Amling::Git::Utils::log_commits([$master], $cb);
 }
 
 for my $query (@ARGV)
 {
-    my $r = find($master_commit, Amling::Git::Utils::convert_commitlike($query), {});
-    $r = "?" unless(defined($r));
-    print "$query: $r\n";
+    my $path = find($master_commit, Amling::Git::Utils::convert_commitlike($query), {});
+    if(!defined($path))
+    {
+        print "$query: ?\n";
+    }
+    else
+    {
+        print "$query:\n";
+        for my $commit (@$path)
+        {
+            print "    $commit " . $commits{$commit}->{'subj'} . "\n";
+        }
+    }
 }
 
 sub find
@@ -58,7 +56,7 @@ sub find
 
     if($query_commit eq $commit)
     {
-        return "$commit";
+        return [$commit];
     }
 
     if($already_checked->{$commit})
@@ -67,17 +65,17 @@ sub find
     }
     $already_checked->{$commit} = 1;
 
-    my @parents = @{$parents{$commit}};
+    my @parents = @{$commits{$commit}->{'parents'}};
     if(@parents)
     {
-        my $r = find($parents[0], $query_commit, $already_checked);
-        return $r if(defined($r));
+        my $path = find($parents[0], $query_commit, $already_checked);
+        return $path if(defined($path));
     }
 
     for(my $i = 1; $i < @parents; ++$i)
     {
-        my $r = find($parents[$i], $query_commit, $already_checked);
-        return "$commit, $r" if(defined($r));
+        my $path = find($parents[$i], $query_commit, $already_checked);
+        return [$commit, @$path] if(defined($path));
     }
 
     return undef;
