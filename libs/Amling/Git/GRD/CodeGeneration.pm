@@ -3,6 +3,8 @@ package Amling::Git::GRD::CodeGeneration;
 use strict;
 use warnings;
 
+no warnings ('recursion');
+
 use Amling::Git::GRD::Utils;
 use Amling::Git::Utils;
 
