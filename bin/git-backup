@@ -22,6 +22,7 @@ use warnings;
 
 use Getopt::Long;
 
+my $quiet = 0;
 my $dry_run = 0;
 my $force = 1;
 my $remote;
@@ -33,6 +34,7 @@ my @options =
 (
     'dry-run|n' => \$dry_run,
     'force!' => \$force,
+    'q|quiet!' => \$quiet,
     '<>' => sub
     {
         my $arg = '' . $_[0];
@@ -197,5 +199,8 @@ if(@specs)
 }
 else
 {
-    print "Everything is up to date.\n";
+    if(!$quiet)
+    {
+        print "Everything is up to date.\n";
+    }
 }
