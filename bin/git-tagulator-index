@@ -1,0 +1,354 @@
+#!/usr/bin/perl
+
+$| = 1;
+
+use strict;
+use warnings;
+
+use FindBin;
+use lib "$FindBin::RealBin/../libs";
+
+use Getopt::Long;
+
+# (inheritted from original tagulator verbatim)
+# TODO: allow custom metadata per match (derived from filename, line number, or matched line) (where would this be stored?  in the DB?)
+# TODO: allow match against custom metadata
+# TODO: allow custom format for list (for extra metadata fields)
+
+my $verbose = 0;
+my $repo = undef;
+my @dbs;
+
+my @options =
+(
+    "verbose!" => \$verbose,
+    "repo=s" => \$repo,
+    "db=s" => \@dbs,
+    "help" => sub { usage(0); },
+);
+GetOptions(@options) || usage(1);
+
+die "No --repo given?" unless(defined($repo));
+
+# for all the git commands we're gonna run
+chdir($repo) || die "Cannot chdir to $repo: $!";
+
+if(!@dbs)
+{
+    for my $ent (@{slurp_dir("$repo/.git/tagulator")})
+    {
+        if($ent =~ /^(.*)\.cfg$/)
+        {
+            push @dbs, $1;
+        }
+    }
+}
+
+for my $db (@dbs)
+{
+    my $config_file = "$repo/.git/tagulator/$db.cfg";
+    my $db_file = "$repo/.git/tagulator/$db.db";
+    my $ql_file = "$repo/.git/tagulator/$db.ql";
+    my $config;
+    {
+        open(my $fh, "<", $config_file) || die "Cannot open $config_file: $!";
+
+        my $code = join('', <$fh>);
+
+        close($fh) || die "Cannot close $config_file: $!";
+
+        $config = eval $code;
+        die "[$config_file] $@" if($@);
+    }
+
+    my $path_match_raw = $config->{'path_match'};
+    my $path_match_sub;
+    if(0)
+    {
+    }
+    elsif(!defined($path_match_raw))
+    {
+        $path_match_sub = sub
+        {
+            return 1;
+        };
+    }
+    elsif(ref($path_match_raw) eq 'Regexp')
+    {
+        $path_match_sub = sub
+        {
+            return $_[0] =~ $path_match_raw;
+        };
+    }
+    elsif(ref($path_match_raw) eq 'CODE')
+    {
+        $path_match_sub = $path_match_raw;
+    }
+    else
+    {
+        die "Cannot understand path_match";
+    }
+
+    my $line_match_raw = $config->{'line_match'};
+    my $line_match_sub;
+    if(0)
+    {
+    }
+    elsif(ref($line_match_raw) eq 'Regexp')
+    {
+        $line_match_sub = sub
+        {
+            if($_[0] =~ $line_match_raw)
+            {
+                return $1;
+            }
+            return undef;
+        };
+    }
+    elsif(ref($line_match_raw) eq 'CODE')
+    {
+        $line_match_sub = $line_match_raw;
+    }
+    else
+    {
+        die "Cannot understand line_match";
+    }
+
+    print "Reading DB...\n" if($verbose);
+    my $db_tree;
+    my %db_file_key_line_1;
+    my %db_key_file_line_1;
+    my %db_extrafile_1;
+    my $db_dirty = 0;
+    {
+        if(-f $db_file)
+        {
+            open(my $fh, '<', $db_file) || die "Cannot open $db_file: $!";
+            while(my $l = <$fh>)
+            {
+                chomp $l;
+
+                if(0)
+                {
+                }
+                elsif($l =~ /^TREE:(.*)$/)
+                {
+                    $db_tree = $1;
+                }
+                elsif($l =~ /^EXTRAFILE:(.*)$/)
+                {
+                    my ($extrafile) = ($1);
+                    $db_extrafile_1{$extrafile} = 1;
+                }
+                elsif($l =~ /^MATCH:(.*):(.*):(.*)$/)
+                {
+                    my ($file, $line, $key) = ($1, $2, $3);
+                    $db_file_key_line_1{$file}->{$key}->{$line} = 1;
+                    $db_key_file_line_1{$key}->{$file}->{$line} = 1;
+                }
+                else
+                {
+                    die "Bad line: $l";
+                }
+            }
+            close($fh) || die "Cannot close $db_file: $!";
+        }
+    }
+
+    print "Compiling delta and extra list...\n" if($verbose);
+    my %extrafile_1;
+    my %deltafile_1 = %db_extrafile_1;
+    my @delta_cmds;
+
+    # "extra" changes, always checked
+    push @delta_cmds, [1, 'git', 'diff', 'HEAD', '--name-only', '--relative'];
+    push @delta_cmds, [1, 'git', 'ls-files', '-o'];
+
+    if(defined($db_tree))
+    {
+        # delta against old tree
+        push @delta_cmds, [0, 'git', 'diff', $db_tree, 'HEAD', '--name-only', '--relative'];
+    }
+    else
+    {
+        # totally fresh list
+        push @delta_cmds, [0, 'git', 'ls-files'];
+    }
+
+    for my $cmd (@delta_cmds)
+    {
+        my ($is_extra, @cmd) = @$cmd;
+        print "Running " . join(" ", @cmd) . "...\n" if($verbose);
+        open(my $fh, '-|', @cmd) || die "Cannot open exec " . join(" ", @cmd) . ": $!";
+        while(my $l = <$fh>)
+        {
+            chomp($l);
+            if(!$path_match_sub->($l))
+            {
+                next;
+            }
+            $deltafile_1{$l} = 1;
+            if($is_extra)
+            {
+                $extrafile_1{$l} = 1;
+            }
+        }
+        close($fh) || die "Cannot close exec " . join(" ", @cmd) . ": $!";
+    }
+
+    print "Rereading delta...\n" if($verbose);
+    for my $deltafile (keys(%deltafile_1))
+    {
+        $db_dirty = 1;
+
+        # delete the old
+        my $key_line_1 = ((delete $db_file_key_line_1{$deltafile}) || {});
+        for my $key (keys(%$key_line_1))
+        {
+            for my $line (keys(%{$key_line_1->{$key}}))
+            {
+                delete $db_key_file_line_1{$key}->{$deltafile}->{$line};
+            }
+        }
+
+        # add the new
+        if(-f $deltafile)
+        {
+            open(my $fh, "<", $deltafile) || die "Cannot open $deltafile: $!";
+            my $n = 1;
+            while(my $l = <$fh>)
+            {
+                my $key = $line_match_sub->($l);
+                if(defined($key))
+                {
+                    $db_file_key_line_1{$deltafile}->{$key}->{$n} = 1;
+                    $db_key_file_line_1{$key}->{$deltafile}->{$n} = 1;
+                }
+                ++$n;
+            }
+        }
+    }
+
+    print "Renormalizing DB...\n" if($verbose);
+    my $db2_tree;
+    my %db2_file_key_line_1;
+    my %db2_key_file_line_1;
+    my %db2_extrafile_1;
+    {
+        open(my $fh, '-|', 'git', 'log', '-1', '--format=%H') || die "Cannot open exec git log ...: $!";
+        my $l = <$fh>;
+        chomp $l;
+        if($l =~ /^([0-9a-f]{40})$/)
+        {
+            $db2_tree = $1;
+        }
+        else
+        {
+            die "Bad show-ref HEAD: $l";
+        }
+        close($fh) || die "Cannot close exec git show-ref HEAD: $!";
+
+        for my $file (keys(%db_file_key_line_1))
+        {
+            for my $key (keys(%{$db_file_key_line_1{$file}}))
+            {
+                for my $line (keys(%{$db_file_key_line_1{$file}->{$key}}))
+                {
+                    $db2_file_key_line_1{$file}->{$key}->{$line} = 1;
+                }
+            }
+        }
+
+        for my $key (keys(%db_key_file_line_1))
+        {
+            for my $file (keys(%{$db_key_file_line_1{$key}}))
+            {
+                for my $line (keys(%{$db_key_file_line_1{$key}->{$file}}))
+                {
+                    $db2_key_file_line_1{$key}->{$file}->{$line} = 1;
+                }
+            }
+        }
+
+        %db2_extrafile_1 = %extrafile_1;
+    }
+
+    $db_tree = $db2_tree;
+    %db_file_key_line_1 = %db2_file_key_line_1;
+    %db_key_file_line_1 = %db2_key_file_line_1;
+    %db_extrafile_1 = %db2_extrafile_1;
+
+    if($db_dirty)
+    {
+        {
+            print "Writing DB...\n" if($verbose);
+            my $tmp = "$db_file.tmp.$$";
+            open(my $fh, '>', $tmp) || die "Cannot open $tmp: $!";
+            print $fh "TREE:$db_tree\n";
+            for my $extrafile (keys(%db_extrafile_1))
+            {
+                print $fh "EXTRAFILE:$extrafile\n";
+            }
+            for my $file (sort(keys(%db_file_key_line_1)))
+            {
+                for my $key (sort(keys(%{$db_file_key_line_1{$file}})))
+                {
+                    for my $line (sort { $a <=> $b } (keys(%{$db_file_key_line_1{$file}->{$key}})))
+                    {
+                        print $fh "MATCH:$file:$line:$key\n";
+                    }
+                }
+            }
+            close($fh) || die "Cannot close $tmp: $!";
+            (system('mv', '-f', '--', $tmp, $db_file) == 0) || die "Cannot overwrite $db_file with $tmp";
+        }
+
+        {
+            print "Writing QL...\n" if($verbose);
+            my $tmp = "$ql_file.tmp.$$";
+            open(my $fh, '>', $tmp) || die "Cannot open $tmp: $!";
+            for my $file (sort(keys(%db_file_key_line_1)))
+            {
+                for my $key (sort(keys(%{$db_file_key_line_1{$file}})))
+                {
+                    for my $line (sort { $a <=> $b } (keys(%{$db_file_key_line_1{$file}->{$key}})))
+                    {
+                        print $fh "../../$file:$line:$key\n";
+                    }
+                }
+            }
+            close($fh) || die "Cannot close $tmp: $!";
+            (system('mv', '-f', '--', $tmp, $ql_file) == 0) || die "Cannot overwrite $ql_file with $tmp";
+        }
+    }
+}
+
+sub usage
+{
+    my $ec = shift;
+
+    print <<EOF;
+Usage: $0 <options>
+    --repo <path>                     Indicate repo to reindex DBs for
+    --db <name>                       Indicate DB(s) to reindex (default is all)
+    --verbose                         Be verbose.
+   --help                             Print this help.
+EOF
+
+    exit $ec;
+}
+
+sub slurp_dir
+{
+    my $dir = shift;
+    opendir(my $fh, $dir) || die "Could not openddir $dir: $!";
+    my @ret;
+    while(my $ent = readdir($fh))
+    {
+        next if($ent eq '.' || $ent eq '..');
+        push @ret, $ent;
+    }
+    closedir($fh) || die "Could not openddir $dir: $!";
+    @ret = sort @ret;
+    return [@ret];
+}

@@ -1,0 +1,149 @@
+#!/usr/bin/perl
+
+$| = 1;
+
+use strict;
+use warnings;
+
+use FindBin;
+use lib "$FindBin::RealBin/../libs";
+
+use Getopt::Long;
+
+my $verbose = 0;
+my $accept_bin = "/bin/echo";
+my $limit = 30;
+my @qls;
+
+my @options =
+(
+    "verbose!" => \$verbose,
+    "ql=s" => \@qls,
+    "accept=s" => \$accept_bin,
+    "help" => sub { usage(0); },
+);
+GetOptions(@options) || usage(1);
+
+my @matches;
+for my $ql_file (@qls)
+{
+    open(my $fh, "<", $ql_file) || die "Cannot open $ql_file: $!";
+    while(my $l = <$fh>)
+    {
+        if($l =~ /^([^:]*):([0-9]*):(.*)$/)
+        {
+            push @matches, [$3, $1, $2];
+        }
+    }
+    close($fh) || die "Cannot close $ql_file: $!";
+}
+@matches = sort { ($a->[0] cmp $b->[0]) || ($a->[1] cmp $b->[1]) || ($a->[2] <=> $b->[2]) } @matches;
+
+my $force_display = 0;
+while(1)
+{
+    if(@matches == 1)
+    {
+        my ($key, $file, $line) = @{$matches[0]};
+        print "Accept $key at $file:$line\n" if($verbose);
+        exec($accept_bin, $file, $line);
+    }
+    elsif($force_display || (@matches < $limit))
+    {
+        print scalar(@matches) . " options:\n";
+        for(my $i = 0; $i < @matches; ++$i)
+        {
+            my ($key, $file, $line) = @{$matches[$i]};
+
+            print "" . ($i + 1) . ") $key at $file:$line\n";
+        }
+    }
+    else
+    {
+        print scalar(@matches) . " options (too many).\n";
+    }
+
+    print "> ";
+    my $l = <>;
+
+    if(!defined($l))
+    {
+        print "Bail.\n";
+        exit 0;
+    }
+
+    chomp $l;
+
+    if($l eq '')
+    {
+        if(@matches)
+        {
+            $force_display = 1;
+        }
+        else
+        {
+            print "Bail.\n";
+            exit 0;
+        }
+    }
+    elsif($l =~ /^[0-9]*$/)
+    {
+        my $i = $l - 1;
+        @matches = ($matches[$i]);
+    }
+    elsif($l =~ /^\/(.*)\/(i?)$/)
+    {
+        my $s = $1;
+        my $ic = $2;
+        my $re = ($ic ne '') ? qr/$s/i : qr/$s/;
+
+        my @matches2;
+        for my $option (@matches)
+        {
+            if($option->[0] =~ $re)
+            {
+                push @matches2, $option;
+            }
+        }
+
+        @matches = @matches2;
+    }
+    elsif($l =~ /^(([A-Z][a-z0-9_]*)|\*)*\$?$/)
+    {
+        my $re = $l;
+        $re =~ s/\*/.*/g;
+        $re =~ s/([A-Z][a-z0-9_]*)/${1}[0-9a-z_]*/g;
+        $re = qr/^$re/;
+
+        my @matches2;
+        for my $option (@matches)
+        {
+            if($option->[0] =~ $re)
+            {
+                push @matches2, $option;
+            }
+        }
+
+        @matches = @matches2;
+    }
+    else
+    {
+        die "WTF: $l";
+    }
+}
+
+sub usage
+{
+    my $ec = shift;
+
+    print <<EOF;
+Usage: $0 <options>
+    --ql <file>                       "Quicklist" file to read
+    --accept <binary>                 Program to run on selected file and line number (defaults to "/bin/echo")
+    --limit <number>                  Automatically displaying matchsets smaller than this (defaults to 30)
+    --verbose                         Be verbose.
+   --help                             Print this help.
+EOF
+
+    exit $ec;
+}
