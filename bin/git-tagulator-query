@@ -8,6 +8,8 @@ use warnings;
 use FindBin;
 use lib "$FindBin::RealBin/../libs";
 
+use Cwd ('abs_path');
+use File::Basename ('dirname');
 use Getopt::Long;
 
 my $verbose = 0;
@@ -32,7 +34,15 @@ for my $ql_file (@qls)
     {
         if($l =~ /^([^:]*):([0-9]*):(.*)$/)
         {
-            push @matches, [$3, $1, $2];
+            my $file = $1;
+            my $line = $2;
+            my $key = $3;
+            if($file !~ /^\//)
+            {
+                $file = dirname($ql_file) . "/" . $file;
+                $file = abs_path($file);
+            }
+            push @matches, [$key, $file, $line];
         }
     }
     close($fh) || die "Cannot close $ql_file: $!";
