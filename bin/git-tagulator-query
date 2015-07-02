@@ -41,7 +41,9 @@ for my $ql_file (@qls)
             {
                 $file = dirname($ql_file) . "/" . $file;
                 $file = abs_path($file);
+                next unless(defined($file));
             }
+            next unless(-f $file);
             push @matches, [$key, $file, $line];
         }
     }
