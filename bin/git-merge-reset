@@ -1,0 +1,37 @@
+#!/usr/bin/perl
+
+$| = 1;
+
+use strict;
+use warnings;
+
+for my $path (@ARGV)
+{
+    die "$path does not seem to be a file?" unless(-f $path);
+    my $read_stage = sub
+    {
+        my $stage = shift;
+        open(my $fh, '-|', 'git', 'show', ":$stage:./$path") || die "Could not open 'git show :$stage:./$path': $!";
+        my @l;
+        while(my $l = <$fh>)
+        {
+            chomp $l;
+            push @l, $l;
+        }
+        close($fh) || die "Could not close 'git show :$stage:./$path': $!";
+        return \@l;
+    };
+    my $mhs = $read_stage->(1);
+    my $lhs = $read_stage->(2);
+    my $rhs = $read_stage->(3);
+
+    open(my $fh, '>', $path) || die "Cannot open $path for write: $!";
+    print $fh "<<<<<<< LHS\n";
+    print $fh map { "$_\n" } @$lhs;
+    print $fh "||||||| MHS\n";
+    print $fh map { "$_\n" } @$mhs;
+    print $fh "=======\n";
+    print $fh map { "$_\n" } @$rhs;
+    print $fh ">>>>>>> RHS\n";
+    close($fh) || die "Cannot close $path for write: $!";
+}
