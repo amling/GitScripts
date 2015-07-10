@@ -44,11 +44,6 @@ sub _handle2
     my $depth = shift;
     my $conflict = shift;
 
-    if($depth == 0)
-    {
-        return ['CONFLICT', @$conflict];
-    }
-
     my ($lhs_title, $lhs_lines, $mhs_title, $mhs_lines, $rhs_title, $rhs_lines) = @$conflict;
 
     my $lhs_lines1 = [@$lhs_lines];
@@ -59,6 +54,11 @@ sub _handle2
     my $matched = 0;
     while(1)
     {
+        if(defined($depth) && $matched >= $depth)
+        {
+            # great, we're set
+            last;
+        }
         my $lhs_lines2 = [@$lhs_lines1];
         my $mhs_lines2 = [@$mhs_lines1];
         my $rhs_lines2 = [@$rhs_lines1];
@@ -71,10 +71,6 @@ sub _handle2
             $mhs_lines1 = $mhs_lines2;
             $rhs_lines1 = $rhs_lines2;
             ++$matched;
-            if($matched >= $depth)
-            {
-                last;
-            }
             next;
         }
         if(!defined($depth))
