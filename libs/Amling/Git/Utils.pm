@@ -115,7 +115,7 @@ sub convert_commitlike
 {
     my $commitlike = shift;
 
-    open(my $fh, '-|', 'git', 'rev-parse', $commitlike) || die "Cannot open rev-parse $commitlike: $!";
+    open(my $fh, '-|', 'git', 'rev-parse', "$commitlike^{commit}") || die "Cannot open rev-parse $commitlike^{commit}: $!";
     my $commit = <$fh> || die "Could not read head commit for $commitlike";
     close($fh) || die "Cannot open log $commitlike: $!";
     chomp $commit;
