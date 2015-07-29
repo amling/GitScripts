@@ -115,7 +115,6 @@ sub usage
 Usage: git-3way-merge-of-doom <options> [<files>]
    --read-index                  Read file contents out of conflicted git index
                                  instead of file contents in working tree.
-                                 onto and add it as a minus.
    --write-index                 Add files to git index if resolution looks
                                  clean (no conflict blocks remain).
    --help                        Print this help.
