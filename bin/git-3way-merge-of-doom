@@ -30,10 +30,12 @@ use Amling::Git::Utils;
 use Getopt::Long;
 
 my $read_index = 0;
+my $write_index;
 
 my @options =
 (
     'read-index!' => \$read_index,
+    'write-index!' => \$write_index,
     'help' => sub { usage(0); },
 );
 
@@ -68,6 +70,40 @@ for my $f (@f)
     }
     my $lines2 = Amling::Git::G3MD::Resolver::resolve_blocks($blocks);
     Amling::Git::Utils::unslurp($f, $lines2);
+    if($write_index)
+    {
+        my $blocks2 = Amling::Git::G3MD::Parser::parse_3way($lines2);
+        my $conflict = 0;
+        for my $block (@$blocks2)
+        {
+            my $type = $block->[0];
+
+            if(0)
+            {
+            }
+            elsif($type eq 'LINE')
+            {
+                next;
+            }
+            elsif($type eq 'CONFLICT')
+            {
+                $conflict = 1;
+            }
+            else
+            {
+                die;
+            }
+        }
+        if($conflict)
+        {
+            print "$f: still has conflicts, not adding to git index!\n";
+        }
+        else
+        {
+            (system('git', 'add', $f) == 0) || die "Could not system git add $f: $!";
+            print "$f: successfully resolved and added to git index.\n";
+        }
+    }
 }
 
 sub usage
@@ -79,6 +115,8 @@ Usage: git-3way-merge-of-doom <options> [<files>]
    --read-index                  Read file contents out of conflicted git index
                                  instead of file contents in working tree.
                                  onto and add it as a minus.
+   --write-index                 Add files to git index if resolution looks
+                                 clean (no conflict blocks remain).
    --help                        Print this help.
 
 Options to resolve at the prompt are:
