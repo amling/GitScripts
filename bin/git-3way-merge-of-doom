@@ -29,14 +29,16 @@ use Amling::Git::G3MD::Resolver;
 use Amling::Git::Utils;
 use Getopt::Long;
 
-my $read_index = 0;
-my $write_index;
+my $index_files = 0;
+my $index_read = 0;
+my $index_write = 0;
 
 my @options =
 (
-    'read-index!' => \$read_index,
-    'write-index!' => \$write_index,
-    'git!' => sub { $read_index = 1; $write_index = 1; },
+    'index-files!' => \$index_files,
+    'index-read!' => \$index_read,
+    'index-write!' => \$index_write,
+    'index!' => sub { $index_files = 1; $index_read = 1; $index_write = 1; },
     'help' => sub { usage(0); },
 );
 
@@ -45,21 +47,66 @@ GetOptions(@options) || usage(1);
 my @f = @ARGV;
 @ARGV = ();
 
+my $index_data;
+{
+    my $index_data_cached;
+    $index_data = sub
+    {
+        if(!defined($index_data_cached))
+        {
+            $index_data_cached = {};
+            open(my $fh, '-|', 'git', 'ls-files', '-u') || die "Could not open git ls-files -u: $!";
+            while(my $l = <$fh>)
+            {
+                chomp $l;
+                if($l =~ /^\d+ [0-9a-f]{40} ([123])\t(.*)$/)
+                {
+                    ($index_data_cached->{$2} ||= {})->{$1} = 1;
+                }
+            }
+            close($fh) || die "Could not open git ls-files -u: $!";
+        }
+        return $index_data_cached;
+    };
+}
+
+if($index_files)
+{
+    push @f, sort(keys(%{$index_data->()}));
+}
+
 for my $f (@f)
 {
     my $blocks;
-    if($read_index)
+    if($index_read)
     {
+        my $stages = $index_data->()->{$f};
+        if(!defined($stages))
+        {
+            die "$f is not conflicted in the index!";
+        }
+        my $stage_contents = sub
+        {
+            my $stage = shift;
+            if($stages->{$stage})
+            {
+                return Amling::Git::Utils::show(":$stage:./$f"),
+            }
+            else
+            {
+                return [];
+            }
+        };
         $blocks =
         [
             [
                 'CONFLICT',
                 "$f:LHS",
-                Amling::Git::Utils::show(":2:./$f"),
+                $stage_contents->(2),
                 "$f:MHS",
-                Amling::Git::Utils::show(":1:./$f"),
+                $stage_contents->(1),
                 "$f:RHS",
-                Amling::Git::Utils::show(":3:./$f"),
+                $stage_contents->(3),
             ],
         ];
         $blocks = Amling::Git::G3MD::Resolver::Git->resolve_blocks($blocks);
@@ -71,7 +118,7 @@ for my $f (@f)
     }
     my $lines2 = Amling::Git::G3MD::Resolver::resolve_blocks($blocks);
     Amling::Git::Utils::unslurp($f, $lines2);
-    if($write_index)
+    if($index_write)
     {
         my $blocks2 = Amling::Git::G3MD::Parser::parse_3way($lines2);
         my $conflict = 0;
@@ -113,10 +160,13 @@ sub usage
 
     print <<EOF;
 Usage: git-3way-merge-of-doom <options> [<files>]
-   --read-index                  Read file contents out of conflicted git index
+   --index-files                 Operate on all conflicted files in the git
+                                 index.
+   --index-read                  Read file contents out of conflicted git index
                                  instead of file contents in working tree.
-   --write-index                 Add files to git index if resolution looks
+   --index-write                 Add files to git index if resolution looks
                                  clean (no conflict blocks remain).
+   --index                       Enables all --index-* options.
    --help                        Print this help.
 
 Options to resolve at the prompt are:
