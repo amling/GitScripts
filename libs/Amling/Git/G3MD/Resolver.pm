@@ -68,18 +68,7 @@ sub resolve_conflict
 
         if($ans eq 'h' || $ans eq '?')
         {
-            my @help;
-            for my $resolver (@resolvers)
-            {
-                push @help, $resolver->help();
-            }
-            @help = sort { $a->[0] cmp $b->[0] } @help;
-
-            for my $help (@help)
-            {
-                print $help->[1] . "\n";
-            }
-
+            print map { "$_\n" } @{all_help()};
             next;
         }
 
@@ -92,6 +81,18 @@ sub resolve_conflict
 
         print "?\n";
     }
+}
+
+sub all_help
+{
+    my @help;
+    for my $resolver (@resolvers)
+    {
+        push @help, $resolver->help();
+    }
+    @help = sort { $a->[0] cmp $b->[0] } @help;
+    @help = map { $_->[1] } @help;
+    return \@help;
 }
 
 use Amling::Git::G3MD::Resolver::Auto;

@@ -26,6 +26,14 @@ use lib "$FindBin::RealBin/../libs";
 use Amling::Git::G3MD::Parser;
 use Amling::Git::G3MD::Resolver;
 use Amling::Git::Utils;
+use Getopt::Long;
+
+my @options =
+(
+    'help' => sub { usage(0); },
+);
+
+GetOptions(@options) || usage(1);
 
 my @f = @ARGV;
 @ARGV = ();
@@ -36,4 +44,22 @@ for my $f (@f)
     my $blocks = Amling::Git::G3MD::Parser::parse_3way($lines);
     my $lines2 = Amling::Git::G3MD::Resolver::resolve_blocks($blocks);
     Amling::Git::Utils::unslurp($f, $lines2);
+}
+
+sub usage
+{
+    my $ec = shift;
+
+    print <<EOF;
+Usage: git-3way-merge-of-doom <options> [<files>]
+   --read-index                  Read file contents out of conflicted git index
+                                 instead of file contents in working tree.
+                                 onto and add it as a minus.
+   --help                        Print this help.
+
+Options to resolve at the prompt are:
+EOF
+    print map { "   $_\n" } @{Amling::Git::G3MD::Resolver->all_help()};
+
+    exit $ec;
 }
