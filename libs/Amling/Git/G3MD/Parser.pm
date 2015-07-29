@@ -94,7 +94,7 @@ sub parse_3way
 
     if($s != 0)
     {
-        die;
+        die "Parser error, s=$s, is input in diff3 format?";
     }
 
     return \@blocks;
