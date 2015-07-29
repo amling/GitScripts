@@ -12,21 +12,35 @@ sub parse_3way
     my $s = 0;
     my $lhs_title = undef;
     my $mhs_title = undef;
-    my $rhs_title = undef;
     my @lhs;
     my @mhs;
     my @rhs;
     for my $line (@$lines)
     {
+        my $marker = undef;
+        my $marker_title = undef;
+        if($line =~ /^([<|>=])\1{6}(?: (.*))?$/)
+        {
+            $marker = $1;
+            $marker_title = $2;
+        }
+
         if(0)
         {
         }
         elsif($s == 0)
         {
-            if($line =~ /^<<<<<<< (.*)$/)
+            if(defined($marker))
             {
-                $s = 1;
-                $lhs_title = $1;
+                if($marker eq '<')
+                {
+                    $s = 1;
+                    $lhs_title = $marker_title || 'LHS';
+                }
+                else
+                {
+                    die "Bad marker $marker found starting block?";
+                }
             }
             else
             {
@@ -35,10 +49,22 @@ sub parse_3way
         }
         elsif($s == 1)
         {
-            if($line =~ /^\|\|\|\|\|\|\| (.*)$/)
+            if(defined($marker))
             {
-                $s = 2;
-                $mhs_title = $1;
+                if($marker eq '|')
+                {
+                    $s = 2;
+                    $mhs_title = $marker_title || 'MHS';
+                }
+                else
+                {
+                    my $note = '';
+                    if($marker eq '=')
+                    {
+                        $note = " are you sure your conflict blocks are in diff3 style";
+                    }
+                    die "Bad marker $marker found in LHS$note?";
+                }
             }
             else
             {
@@ -47,9 +73,16 @@ sub parse_3way
         }
         elsif($s == 2)
         {
-            if($line =~ /^=======$/)
+            if(defined($marker))
             {
-                $s = 3;
+                if($marker eq '=')
+                {
+                    $s = 3;
+                }
+                else
+                {
+                    die "Bad marker $marker found in MHS?";
+                }
             }
             else
             {
@@ -58,28 +91,35 @@ sub parse_3way
         }
         elsif($s == 3)
         {
-            if($line =~ /^>>>>>>> (.*)$/)
+            if(defined($marker))
             {
-                $rhs_title = $1;
+                if($marker eq '>')
+                {
+                    my $rhs_title = $marker_title;
 
-                push @blocks,
-                [
-                    'CONFLICT',
-                    $lhs_title,
-                    [@lhs],
-                    $mhs_title,
-                    [@mhs],
-                    $rhs_title,
-                    [@rhs],
-                ];
+                    push @blocks,
+                    [
+                        'CONFLICT',
+                        $lhs_title,
+                        [@lhs],
+                        $mhs_title,
+                        [@mhs],
+                        $rhs_title,
+                        [@rhs],
+                    ];
 
-                $s = 0;
-                $lhs_title = undef;
-                $mhs_title = undef;
-                $rhs_title = undef;
-                @lhs = ();
-                @mhs = ();
-                @rhs = ();
+                    $s = 0;
+                    $lhs_title = undef;
+                    $mhs_title = undef;
+                    $rhs_title = undef;
+                    @lhs = ();
+                    @mhs = ();
+                    @rhs = ();
+                }
+                else
+                {
+                    die "Bad marker $marker found in RHS?";
+                }
             }
             else
             {
@@ -94,7 +134,7 @@ sub parse_3way
 
     if($s != 0)
     {
-        die;
+        die "Block did not complete by EOF?";
     }
 
     return \@blocks;
