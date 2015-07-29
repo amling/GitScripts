@@ -203,4 +203,19 @@ sub unslurp
     close($fh) || die "Cannot close $f for writing: $!";
 }
 
+sub show
+{
+    my @cmd = ('git', 'show', @_);
+    my $cmd = join(' ', @cmd);
+    open(my $fh, '-|', @cmd) || die "Could not open $cmd: $!";
+    my @l;
+    while(my $l = <$fh>)
+    {
+        chomp $l;
+        push @l, $l;
+    }
+    close($fh) || die "Could not close $cmd: $!";
+    return \@l;
+}
+
 1;

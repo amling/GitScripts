@@ -24,12 +24,16 @@ use FindBin;
 use lib "$FindBin::RealBin/../libs";
 
 use Amling::Git::G3MD::Parser;
+use Amling::Git::G3MD::Resolver::Git;
 use Amling::Git::G3MD::Resolver;
 use Amling::Git::Utils;
 use Getopt::Long;
 
+my $read_index = 0;
+
 my @options =
 (
+    'read-index!' => \$read_index,
     'help' => sub { usage(0); },
 );
 
@@ -40,8 +44,28 @@ my @f = @ARGV;
 
 for my $f (@f)
 {
-    my $lines = Amling::Git::Utils::slurp($f);
-    my $blocks = Amling::Git::G3MD::Parser::parse_3way($lines);
+    my $blocks;
+    if($read_index)
+    {
+        $blocks =
+        [
+            [
+                'CONFLICT',
+                "$f:LHS",
+                Amling::Git::Utils::show(":2:./$f"),
+                "$f:MHS",
+                Amling::Git::Utils::show(":1:./$f"),
+                "$f:RHS",
+                Amling::Git::Utils::show(":3:./$f"),
+            ],
+        ];
+        $blocks = Amling::Git::G3MD::Resolver::Git->resolve_blocks($blocks);
+    }
+    else
+    {
+        my $lines = Amling::Git::Utils::slurp($f);
+        $blocks = Amling::Git::G3MD::Parser::parse_3way($lines);
+    }
     my $lines2 = Amling::Git::G3MD::Resolver::resolve_blocks($blocks);
     Amling::Git::Utils::unslurp($f, $lines2);
 }
