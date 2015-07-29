@@ -36,6 +36,7 @@ my @options =
 (
     'read-index!' => \$read_index,
     'write-index!' => \$write_index,
+    'git!' => sub { $read_index = 1; $write_index = 1; },
     'help' => sub { usage(0); },
 );
 
