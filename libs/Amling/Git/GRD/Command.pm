@@ -42,7 +42,9 @@ use Amling::Git::GRD::Command::Pick;
 use Amling::Git::GRD::Command::Pop;
 use Amling::Git::GRD::Command::Push;
 use Amling::Git::GRD::Command::Save;
+use Amling::Git::GRD::Command::Shell;
 use Amling::Git::GRD::Command::Splatter;
 use Amling::Git::GRD::Command::Squash;
+use Amling::Git::GRD::Command::Verify;
 
 1;
