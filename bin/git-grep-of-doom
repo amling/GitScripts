@@ -22,6 +22,8 @@ use warnings;
 
 use Getopt::Long;
 
+Getopt::Long::Configure('no_ignore_case');
+
 my $debug = 0;
 my @options;
 my $pattern = undef;
