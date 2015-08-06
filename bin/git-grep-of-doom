@@ -1,0 +1,141 @@
+#!/usr/bin/perl
+
+# Copyright (C) 2010   Keith Amling, keith.amling@gmail.com
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+$| = 1;
+
+use strict;
+use warnings;
+
+use Getopt::Long;
+
+my $debug = 0;
+my @options;
+my $pattern = undef;
+my $tree = undef;
+my @args;
+my @paths;
+
+sub add0
+{
+    my $name = shift . "";
+    push @options, "-$name";
+}
+
+sub add1
+{
+    my $name = shift . "";
+    my $value = shift . "";
+    push @options, "-$name", $value;
+}
+
+GetOptions(
+    (map { ("$_=i" => \&add1) } qw(A B C)),
+    (map { ("$_!" => \&add0) } qw(L c i l n q r v)),
+    'pattern=s' => \$pattern,
+    'tree|commit=s' => \$tree,
+    'path=s' => \@paths,
+    'debug|D!' => \$debug,
+    '<>' => sub
+    {
+        my $arg = '' . $_[0];
+        push @args, $arg;
+    },
+    'help!' => sub { usage(0); },
+) || usage(1);
+
+for my $e (['pattern', \$pattern], ['tree', \$tree])
+{
+    my ($name, $r) = @$e;
+    if(defined($$r))
+    {
+        if($debug)
+        {
+            print "$name already set...\n";
+        }
+        next;
+    }
+    if(!@args)
+    {
+        if($debug)
+        {
+            print "No arguments left!\n";
+        }
+        last;
+    }
+    my $value = shift(@args);
+    if($debug)
+    {
+        print "Implicit $name set to $value\n";
+    }
+    $$r = $value;
+}
+for my $path (@args)
+{
+    if($debug)
+    {
+        print "Implicit path: $path\n";
+    }
+    push @paths, $path;
+}
+
+defined($pattern) || die "No pattern?";
+
+push @options, "-e", $pattern;
+if(defined($tree) && ($tree ne 'NONE'))
+{
+    push @options, $tree;
+}
+push @options, "--";
+push @options, @paths;
+
+if($debug)
+{
+    print "Final options:\n";
+    for my $option (@options)
+    {
+        print "   $option\n";
+    }
+}
+else
+{
+    exec("git", "grep", @options);
+}
+
+sub usage
+{
+    my $ec = shift;
+
+    print <<EOF;
+Usage: git-grep-of-doom <options> [<extra arguments>]
+
+Options passed to git grep as per normal:
+   -[ABC] <N>
+   -[Lcilnqrv]
+
+Options mangled into unmarked arguments to git grep.  Any unmarked arguments to
+git-grep-of-doom will fill into these, in order:
+   --pattern <pattern>           Specify pattern (in any order).
+   (--tree|--commit) <treeish>   Specify tree (in any order).  May be "NONE" to omit.
+   --path <path>                 Specify path (in any order).
+
+Other options:
+   --debug|-D                    Debug interpretation of arguments.
+   --help                        Print this help.
+EOF
+
+    exit $ec;
+}
