@@ -44,12 +44,15 @@ sub add1
     push @options, "-$name", $value;
 }
 
+my $ZERO_ARG_OPTIONS = 'EFGHLPchilnqrv';
+my $ONE_ARG_OPTIONS = 'ABCf';
 GetOptions(
-    (map { ("$_=i" => \&add1) } qw(A B C)),
-    (map { ("$_!" => \&add0) } qw(L c i l n q r v)),
+    (map { ("$_!" => \&add0) } split('', $ZERO_ARG_OPTIONS)),
+    (map { ("$_=s" => \&add1) } split('', $ONE_ARG_OPTIONS)),
     'pattern=s' => \$pattern,
     'tree|commit=s' => \$tree,
     'path=s' => \@paths,
+    'raw=s' => \@options,
     'debug|D!' => \$debug,
     '<>' => sub
     {
@@ -125,8 +128,8 @@ sub usage
 Usage: git-grep-of-doom <options> [<extra arguments>]
 
 Options passed to git grep as per normal:
-   -[ABC] <N>
-   -[Lcilnqrv]
+   -[$ZERO_ARG_OPTIONS]
+   -[$ONE_ARG_OPTIONS] <arg>
 
 Options mangled into unmarked arguments to git grep.  Any unmarked arguments to
 git-grep-of-doom will fill into these, in order:
@@ -135,6 +138,7 @@ git-grep-of-doom will fill into these, in order:
    --path <path>                 Specify path (in any order).
 
 Other options:
+   --raw <option>                Pass this option to `git grep` raw (will be put before tree, pattern, etc.)
    --debug|-D                    Debug interpretation of arguments.
    --help                        Print this help.
 EOF
