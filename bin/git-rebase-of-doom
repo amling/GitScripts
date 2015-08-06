@@ -265,6 +265,12 @@ push
 save <tag>
     Save HEAD's current position as a tag (see load/merge).
 
+shell
+    Run an interactive shell (same as `edit`).
+
+shell <command>
+    Run specified shell command.
+
 splatter [<message>]
     Pop a commit off the commit stack (see push/pop).  Then flatten all changes
     "since" then into one.  If the commit message for the flat commit is not
@@ -277,6 +283,11 @@ squash <commitlike> [<message>]
     Equivalent to "pick <commitlike> [<message>]" followed by a splatter to
     HEAD~2.  In particular a long string of these in a row is not what you want
     to replicated rebase's squash (see splatter).
+
+verify <command>
+    Run specified shell command, and drop into an interactive shell if it
+    fails.  The verify command is not rerun after the interactive shell so if
+    you want to ensure it passes run it [again] yourself.
 EOF
 
     exit $ec;
