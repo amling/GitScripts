@@ -47,31 +47,9 @@ sub execute_simple
     if(defined($cmd))
     {
         print "Invoking: $cmd\n";
-        my $ret = system('/bin/sh', '-c', $cmd);
-        if($ret)
-        {
-            my $failure;
-            if($? == -1)
-            {
-                $failure = "failed to execute";
-            }
-            elsif($? & 127)
-            {
-                $failure = "signal " . ($? & 127);
-            }
-            else
-            {
-                $failure = "exit value " . ($? >> 8);
-            }
-            print "Invoking failed: $failure, dropping into shell...\n";
-            Amling::Git::GRD::Utils::run_shell(1, 0, 0);
-            print "Shell complete, continuing...\n";
-        }
-        else
-        {
-            Amling::Git::GRD::Utils::run_shell(0, 0, 0);
-            print "Invoking complete, continuing...\n";
-        }
+        system('/bin/sh', '-c', $cmd);
+        Amling::Git::GRD::Utils::run_shell(0, 0, 0);
+        print "Invoking complete, continuing...\n";
     }
     else
     {
