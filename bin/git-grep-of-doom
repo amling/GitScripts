@@ -59,7 +59,7 @@ GetOptions(
         my $arg = '' . $_[0];
         push @args, $arg;
     },
-    'help!' => sub { usage(0); },
+    'help|h!' => sub { usage(0); },
 ) || usage(1);
 
 my @DEFAULT_OPTIONS =
